@@ -11,6 +11,7 @@ import { toCssVars } from '@/themes/css';
 import { resolveColors } from '@/themes/resolve';
 import type { Theme } from '@/themes/types';
 import { copyText } from '@/viewer/clipboard';
+import type { JsonKind } from '@/detect/detect';
 import type { ParseError } from '@/parse/parse';
 import { downloadName, downloadText } from '@/viewer/download';
 import { defaultFeatures, FOLD_ALL_LEVEL, richValues, type Features, type ViewerOptions } from '@/viewer/options';
@@ -29,8 +30,8 @@ const props = withDefaults(
     source?: { url: string; loadedAt: Date };
     toggleLabel?: string;
     font?: FontSettings;
-    /** Shown in the status bar. */
-    format?: string;
+    /** How the raw text wraps its JSON. NDJSON sent as JSON is recognized anyway; the status bar shows the result. */
+    format?: JsonKind;
     shortcuts?: Shortcuts;
     /** Optional features: the JSONPath filter and the value decorations follow them. */
     features?: Features;
@@ -46,7 +47,7 @@ const props = withDefaults(
     source: undefined,
     toggleLabel: undefined,
     font: undefined,
-    format: 'JSON',
+    format: 'json',
     shortcuts: () => defaultShortcuts,
     features: () => defaultFeatures,
     documentShortcuts: false,
@@ -64,8 +65,14 @@ const sortOverride = ref<boolean | null>(null);
 const sortKeys = computed(() => sortOverride.value ?? props.options.sortKeys);
 const indentCStyle = computed(() => props.options.indentCStyle);
 const prepared = computed(() =>
-  prepareDocument(props.raw, { tabSize: tabSize.value, sortKeys: sortKeys.value, indentCStyle: indentCStyle.value }),
+  prepareDocument(
+    props.raw,
+    { tabSize: tabSize.value, sortKeys: sortKeys.value, indentCStyle: indentCStyle.value },
+    props.format,
+  ),
 );
+const FORMAT_LABELS: Record<JsonKind, string> = { json: 'JSON', jsonp: 'JSONP', ndjson: 'NDJSON' };
+const formatLabel = computed(() => FORMAT_LABELS[prepared.value.kind]);
 const filterText = ref('');
 /** The filter in effect; applied on Enter so big documents aren't re-queried on every keystroke. */
 const appliedPath = ref<string | null>(null);
@@ -301,7 +308,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKeydown,
       :path="mode === 'code' ? cursorPath : null"
       :size="size"
       :lines="lines"
-      :format="format"
+      :format="formatLabel"
       :message="message"
       :note="matches"
       :light-mode="lightMode ? options.lightModeThresholdMB : null"

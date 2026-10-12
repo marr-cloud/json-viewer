@@ -3,6 +3,7 @@ import { foldedRanges } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, reactive, type App } from 'vue';
+import type { JsonKind } from '@/detect/detect';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
@@ -24,6 +25,7 @@ type Props = {
   options?: ViewerOptions;
   features?: Features;
   documentShortcuts?: boolean;
+  format?: JsonKind;
 };
 
 function mount(props: Props = {}) {
@@ -89,6 +91,25 @@ describe('JsonViewer', () => {
     expect(info.textContent).toContain('7 B');
     expect(info.textContent).toContain('3 lines');
     expect(info.textContent).toContain('JSON');
+  });
+
+  it('unwraps JSONP and shows NDJSON as an array, naming the format', () => {
+    const jsonp = mount({ raw: 'cb({"a":1});', format: 'jsonp' });
+    expect(editorOf(jsonp).state.doc.toString()).toBe('{\n  "a": 1\n}');
+    expect(jsonp.querySelector('.jv-status-info')!.textContent).toContain('JSONP');
+    expect(jsonp.querySelector('.jv-error')).toBeNull();
+    app?.unmount();
+    document.body.innerHTML = '';
+    // Sent as JSON, recognized as NDJSON.
+    const ndjson = mount({ raw: '{"a":1}\n{"a":2}' });
+    expect(editorOf(ndjson).state.doc.toString()).toBe('[\n  {\n    "a": 1\n  },\n  {\n    "a": 2\n  }\n]');
+    expect(ndjson.querySelector('.jv-status-info')!.textContent).toContain('NDJSON');
+  });
+
+  it('locates a JSONP error in the raw text', () => {
+    const host = mount({ raw: 'cb({"a":})', format: 'jsonp' });
+    expect(host.querySelector('.jv-error')!.textContent).toContain('line 1, column 9');
+    expect(host.querySelector('.jv-status-info')!.textContent).toContain('JSONP');
   });
 
   it('shows the cursor path and copies it on click', async () => {

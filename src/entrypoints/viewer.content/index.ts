@@ -2,6 +2,7 @@ import '@/components/viewer.css';
 import { browser } from 'wxt/browser';
 import { computed, createApp, h, reactive } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
+import { detect, sniffKind } from '@/detect/detect';
 import { readRawText } from '@/detect/readRawText';
 import { createFontLoader } from '@/fonts/loader';
 import { trackStoredFont } from '@/fonts/track';
@@ -26,6 +27,7 @@ export default defineContentScript({
     const raw = readRawText(document);
     if (raw === null) return;
     root.setAttribute(GUARD, '');
+    const format = detect(document.contentType, raw)?.kind ?? sniffKind(raw);
 
     let restore: (() => void) | undefined;
     let ui: Awaited<ReturnType<typeof createShadowRootUi>> | undefined;
@@ -99,6 +101,7 @@ export default defineContentScript({
               h('div', { class: 'jv-page' }, [
                 h(JsonViewer, {
                   raw,
+                  format,
                   options: state.settings.viewer,
                   font: state.settings.font,
                   shortcuts: state.settings.shortcuts,
