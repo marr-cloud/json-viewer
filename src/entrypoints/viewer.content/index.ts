@@ -10,6 +10,8 @@ const GUARD = 'data-json-viewer';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
+  // Avoid broadcasting the extension ID to every page via window.postMessage.
+  noScriptStartedPostMessage: true,
   registration: 'runtime',
   cssInjectionMode: 'ui',
   async main(ctx) {

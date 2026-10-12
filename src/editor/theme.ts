@@ -46,6 +46,10 @@ function editorTheme(dark: boolean): Extension {
       },
       '.cm-url, .cm-url span': { color: v('link'), textDecoration: 'underline', cursor: 'pointer' },
       '.cm-jv-error-line': { backgroundColor: 'rgba(255, 64, 64, 0.18)' },
+      '.cm-jv-error-char': {
+        backgroundColor: 'rgba(255, 64, 64, 0.6)',
+        outline: '1px solid rgba(255, 64, 64, 0.9)',
+      },
       '.cm-panels': { backgroundColor: v('toolbarBackground'), color: v('foreground') },
       '.cm-panels.cm-panels-top': { borderBottom: `1px solid ${v('border')}` },
     },

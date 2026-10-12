@@ -13,7 +13,7 @@ import {
 } from '@codemirror/view';
 import type { Theme } from '@/themes/types';
 import type { ViewerOptions } from '@/viewer/options';
-import { errorLine } from './errorLine';
+import { errorMarker, type ErrorLocation } from './errorLine';
 import { foldSummaries } from './foldSummary';
 import { toCodeMirrorTheme } from './theme';
 import { clickableUrls } from './urls';
@@ -21,10 +21,10 @@ import { clickableUrls } from './urls';
 export interface EditorSetup {
   options: ViewerOptions;
   theme: Theme;
-  errorLine: number | null;
+  error: ErrorLocation | null;
 }
 
-export function buildExtensions({ options, theme, errorLine: line }: EditorSetup): Extension[] {
+export function buildExtensions({ options, theme, error }: EditorSetup): Extension[] {
   const extensions: Extension[] = [
     // Read-only but still focusable, so the cursor, search and keyboard navigation work.
     EditorState.readOnly.of(true),
@@ -42,6 +42,6 @@ export function buildExtensions({ options, theme, errorLine: line }: EditorSetup
   if (options.showArraySize) extensions.push(foldSummaries());
   if (options.lineWrapping) extensions.push(EditorView.lineWrapping);
   if (options.clickableUrls) extensions.push(clickableUrls(options));
-  if (line !== null) extensions.push(errorLine(line));
+  if (error !== null) extensions.push(errorMarker(error));
   return extensions;
 }

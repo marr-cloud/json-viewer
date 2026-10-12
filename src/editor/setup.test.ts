@@ -4,12 +4,13 @@ import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defaultTheme } from '@/themes/builtin';
 import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
+import type { ErrorLocation } from './errorLine';
 import { buildExtensions } from './setup';
 
-const create = (options: ViewerOptions, errorLine: number | null = null) =>
+const create = (options: ViewerOptions, error: ErrorLocation | null = null) =>
   EditorState.create({
     doc: '{\n  "a": "https://example.com"\n}',
-    extensions: buildExtensions({ options, theme: defaultTheme, errorLine }),
+    extensions: buildExtensions({ options, theme: defaultTheme, error }),
   });
 
 describe('buildExtensions', () => {
@@ -21,7 +22,7 @@ describe('buildExtensions', () => {
 
   it('accepts every feature switched on', () => {
     const all = { ...defaultViewerOptions, showArraySize: true, wrapLinkWithAnchorTag: true };
-    expect(() => create(all, 2)).not.toThrow();
+    expect(() => create(all, { line: 2, offset: 2 })).not.toThrow();
   });
 
   it('accepts every feature switched off', () => {
@@ -39,8 +40,8 @@ describe('buildExtensions', () => {
 
 describe('buildExtensions in a mounted view', () => {
   let view: EditorView | undefined;
-  const mount = (options: ViewerOptions, errorLine: number | null = null) => {
-    view = new EditorView({ state: create(options, errorLine), parent: document.body });
+  const mount = (options: ViewerOptions, error: ErrorLocation | null = null) => {
+    view = new EditorView({ state: create(options, error), parent: document.body });
     return view;
   };
   afterEach(() => {
@@ -63,9 +64,34 @@ describe('buildExtensions in a mounted view', () => {
   });
 
   it('marks exactly the requested error line', () => {
-    const v = mount(defaultViewerOptions, 2);
+    const v = mount(defaultViewerOptions, { line: 2, offset: null });
     const marked = v.dom.querySelectorAll('.cm-jv-error-line');
     expect(marked).toHaveLength(1);
     expect(v.dom.querySelectorAll('.cm-line')[1]).toBe(marked[0]);
+  });
+
+  it('marks the character at the error offset', () => {
+    const v = mount(defaultViewerOptions, { line: 2, offset: 2 });
+    const chars = v.dom.querySelectorAll('.cm-jv-error-char');
+    expect(chars).toHaveLength(1);
+    expect(chars[0]?.textContent).toBe(' ');
+    expect(v.dom.querySelectorAll('.cm-jv-error-line')).toHaveLength(1);
+  });
+
+  it('does not paint a very long line, only the offending character', () => {
+    const doc = '[' + '1,'.repeat(2000) + ']';
+    view = new EditorView({
+      state: EditorState.create({
+        doc,
+        extensions: buildExtensions({
+          options: defaultViewerOptions,
+          theme: defaultTheme,
+          error: { line: 1, offset: 100 },
+        }),
+      }),
+      parent: document.body,
+    });
+    expect(view.dom.querySelectorAll('.cm-jv-error-line')).toHaveLength(0);
+    expect(view.dom.querySelectorAll('.cm-jv-error-char')).toHaveLength(1);
   });
 });

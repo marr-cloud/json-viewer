@@ -36,7 +36,7 @@ const mode = ref<'code' | 'raw'>(props.options.autoHighlight ? 'code' : 'raw');
       :doc="prepared.text"
       :options="options"
       :theme="theme"
-      :error-line="prepared.ok ? null : prepared.error.line"
+      :error="prepared.ok ? null : prepared.error"
     />
     <pre v-else class="jv-body jv-raw">{{ raw }}</pre>
   </div>

@@ -15,6 +15,9 @@ const bigJson = JSON.stringify(
   })),
 );
 
+const minifiedInvalid =
+  '[' + Array.from({ length: 20_000 }, (_, i) => `{"id":${i}}`).join(',') + ',]';
+
 const routes: Record<string, { type: string; body: string }> = {
   '/data.json': {
     type: 'application/json',
@@ -25,7 +28,8 @@ const routes: Record<string, { type: string; body: string }> = {
   '/plain-log': { type: 'text/plain', body: '[INFO] server started' },
   '/page.html': { type: 'text/html', body: '<!doctype html><title>t</title><pre>{"a":1}</pre>' },
   '/invalid.json': { type: 'application/json', body: '{\n  "a": 1,\n}' },
-  '/bom.json': { type: 'application/json', body: '﻿{"a":1}' },
+  '/bom.json': { type: 'application/json', body: '\uFEFF{"a":1}' },
+  '/minified-invalid.json': { type: 'application/json', body: minifiedInvalid },
   '/big.json': { type: 'application/json', body: bigJson },
 };
 

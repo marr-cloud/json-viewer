@@ -87,3 +87,53 @@ test('opens clicked URLs in a new tab', async ({ context, server }) => {
   ]);
   await popup.waitForURL('https://example.com/a');
 });
+
+test('does not open tabs when double-clicking a URL', async ({ context, server }) => {
+  await context.route('https://example.com/**', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<p>ok</p>' }),
+  );
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const url = page.locator(`${viewer} .cm-url`).first();
+  await expect(url).toBeVisible();
+  const before = context.pages().length;
+  const opened = context.waitForEvent('page', { timeout: 1000 });
+  const outcome = opened.then(
+    () => 'opened',
+    () => 'none',
+  );
+  await url.dblclick();
+  expect(await outcome).toBe('none');
+  expect(context.pages().length).toBe(before);
+});
+
+test('focuses the editor so Ctrl+F opens the in-editor search', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name"');
+  await page.keyboard.press('Control+f');
+  await expect(page.locator(`${viewer} .cm-search`)).toBeVisible();
+});
+
+test('brings the error of a minified invalid document into view', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/minified-invalid.json'));
+  await expect(page.locator(`${viewer} .jv-error`)).toContainText('line 1, column');
+  await expect(page.locator(`${viewer} .cm-jv-error-char`)).toBeInViewport();
+  await expect(page.locator(`${viewer} .cm-jv-error-line`)).toHaveCount(0);
+});
+
+test('the always-on detector does not post messages to the page', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    const w = window as unknown as { __jvMessages: unknown[] };
+    w.__jvMessages = [];
+    window.addEventListener('message', (e) => w.__jvMessages.push(e.data));
+  });
+  await page.goto(server.url('/page.html'));
+  await page.waitForTimeout(500);
+  const messages = await page.evaluate(
+    () => (window as unknown as { __jvMessages: unknown[] }).__jvMessages,
+  );
+  expect(JSON.stringify(messages)).not.toMatch(/wxt|content-script-started/);
+});
