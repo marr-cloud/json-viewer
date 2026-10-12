@@ -43,6 +43,9 @@ solos y se aplican en vivo a las pestañas abiertas.
 - **Barra superior:** filtro JSONPath (Enter aplica, Esc vuelve al documento; admite filtros como
   `$..items[?(@.price > 10)]`), plegar todo / desplegar todo / plegar por nivel, copiar formateado o minificado,
   descargar `.json` y ordenar claves (solo en esa pestaña).
+- **Búsqueda (`Ctrl+F`):** panel compacto al estilo VS Code con mayúsculas (`Aa`), palabra completa (`ab`) y
+  expresión regular (`.*`), contador "2 of 12" (hasta 1000; sin contador en documentos de más de ~4 MB), Enter /
+  Shift+Enter para siguiente / anterior, Alt+Enter para seleccionar todas y Esc para cerrar.
 - **Valores enriquecidos:** muestra de color junto a `#ff5500`, `rgb(…)` o `hsl(…)`; al pasar el ratón por una fecha
   Unix (segundos o milisegundos) o ISO 8601, su hora local y UTC; al pasarlo por la URL de una imagen, una miniatura.
   Por encima del umbral de **modo ligero** (20 MB por defecto) se desactivan y la barra inferior lo indica.

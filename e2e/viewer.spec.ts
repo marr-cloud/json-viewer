@@ -115,6 +115,25 @@ test('focuses the editor so Ctrl+F opens the in-editor search', async ({ context
   await expect(page.locator(`${viewer} .cm-search`)).toBeVisible();
 });
 
+test('searches with the compact panel: count, Enter to move, Escape to close', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name"');
+  await page.keyboard.press('Control+f');
+  const find = page.getByRole('textbox', { name: 'Find' });
+  await expect(find).toBeFocused();
+  await find.fill('name');
+  const count = page.locator(`${viewer} .cm-jv-search-count`);
+  await expect(count).toHaveText(/^\d+ match(es)?$/);
+  await find.press('Enter');
+  await expect(count).toHaveText(/^1 of \d+$/);
+  await page.getByRole('button', { name: 'Match case' }).click();
+  await expect(page.getByRole('button', { name: 'Match case' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(find).toBeFocused();
+  await find.press('Escape');
+  await expect(page.locator(`${viewer} .cm-search`)).toHaveCount(0);
+});
+
 test('brings the error of a minified invalid document into view', async ({ context, server }) => {
   const page = await context.newPage();
   await page.goto(server.url('/minified-invalid.json'));

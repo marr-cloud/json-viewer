@@ -18,6 +18,7 @@ import { colorSwatches } from './colorSwatches';
 import { dateTooltips } from './dateTooltips';
 import { foldSummaries } from './foldSummary';
 import { imagePreview } from './imagePreview';
+import { createSearchPanel } from './searchPanel';
 import { toCodeMirrorTheme } from './theme';
 import { clickableUrls } from './urls';
 
@@ -36,9 +37,11 @@ export function buildExtensions({ options, theme, error, rich = NO_RICH_VALUES }
     EditorState.tabSize.of(options.tabSize),
     json(),
     drawSelection(),
+    // "Select all matches" in the search panel.
+    EditorState.allowMultipleSelections.of(true),
     highlightActiveLine(),
     highlightSelectionMatches(),
-    search({ top: true }),
+    search({ top: true, createPanel: createSearchPanel }),
     // Ctrl+F is a configurable viewer shortcut (JsonViewer), so CodeMirror must not claim it.
     keymap.of([...searchKeymap.filter((binding) => binding.key !== 'Mod-f'), ...foldKeymap, ...defaultKeymap]),
     toCodeMirrorTheme(theme),

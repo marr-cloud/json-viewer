@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { openSearchPanel } from '@codemirror/search';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -116,5 +117,12 @@ describe('buildExtensions in a mounted view', () => {
 
   it('accepts every value decoration switched on', () => {
     expect(() => mountRich({ colorSwatches: true, dateTooltips: true, imagePreview: true })).not.toThrow();
+  });
+
+  it('uses the compact search panel, which can select every match', () => {
+    const v = mountRich(undefined);
+    openSearchPanel(v);
+    expect(v.dom.querySelector('.cm-jv-search [aria-label="Find"]')).not.toBeNull();
+    expect(v.state.facet(EditorState.allowMultipleSelections)).toBe(true);
   });
 });
