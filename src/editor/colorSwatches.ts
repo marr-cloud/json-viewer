@@ -54,9 +54,11 @@ class SwatchWidget extends WidgetType {
 
 const decorator = new MatchDecorator({
   regexp: COLOR_STRING,
-  decorate(add, from, _to, match, view) {
-    // Keys are PropertyName nodes: only string values get a swatch.
-    if (syntaxTree(view.state).resolveInner(from + 1, 1).name !== 'String') return;
+  decorate(add, from, to, match, view) {
+    // Keys are PropertyName nodes: only a String node spanning exactly the match gets a swatch.
+    // A match can start at an escaped quote inside a longer string, so the span check rejects it.
+    const node = syntaxTree(view.state).resolveInner(from + 1, 1);
+    if (node.name !== 'String' || node.from !== from || node.to !== to) return;
     add(from + 1, from + 1, Decoration.widget({ widget: new SwatchWidget(match[1]!), side: -1 }));
   },
 });

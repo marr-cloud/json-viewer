@@ -78,4 +78,9 @@ describe('colorSwatches', () => {
     v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: '["#111", "#222"]' } });
     expect(swatches(v)).toHaveLength(2);
   });
+
+  it('ignores a color that starts at an escaped quote inside another string', () => {
+    const v = mount('["a\\"#fff", "#000"]');
+    expect(swatches(v)).toHaveLength(1);
+  });
 });

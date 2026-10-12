@@ -69,6 +69,17 @@ describe('imageTooltipAt', () => {
     expect(dom.textContent).toBe('The image could not be loaded.');
   });
 
+  it('shows the natural size once the image loads', () => {
+    const v = mount();
+    const dom = tooltipAt(v, '"https://example.com/i.png"')!.create(v).dom;
+    const img = dom.querySelector('img')!;
+    Object.defineProperty(img, 'naturalWidth', { value: 2 });
+    Object.defineProperty(img, 'naturalHeight', { value: 3 });
+    img.dispatchEvent(new Event('load'));
+    expect(dom.querySelector('.cm-jv-image-info')!.textContent).toBe('2 × 3');
+    expect(dom.querySelector('img')).not.toBeNull();
+  });
+
   it('ignores keys and URLs that are not images', () => {
     const v = mount();
     expect(tooltipAt(v, '"https://example.com/k.png"')).toBeNull();
