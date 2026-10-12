@@ -2,14 +2,6 @@
 
 Hallazgos menores de las revisiones de la Fase 2 (por tarea y final) que se dejaron para después.
 
-## Decidir antes de la Fase 3
-- **Claves desconocidas en settings**: `validateSettings` descarta las claves que no conoce y la página de
-  opciones reescribe el objeto entero. Cuando la Fase 3 añada campos, un dispositivo con una versión vieja
-  los borrará del item sincronizado. Opciones: fusionar sobre el valor crudo guardado o conservar las claves
-  desconocidas.
-- `validateSettings` trata `tabSize` aparte y asume que el resto de `viewer` son booleanos: pasar a
-  validadores por campo cuando lleguen campos no booleanos.
-
 ## Sincronización y almacenamiento
 - La página de opciones no observa storage: una segunda pestaña o un cambio sincronizado se pisa en la
   siguiente edición.

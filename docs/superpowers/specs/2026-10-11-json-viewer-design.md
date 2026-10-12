@@ -63,7 +63,7 @@ Cada módulo tiene una responsabilidad y una interfaz pequeña; la lógica es pu
 | `parse/` | Parseo tolerante: quita el wrapper JSONP, divide NDJSON, conserva números grandes como texto, errores con línea/columna | `parse(text, kind): { ok: true, value, text } \| { ok: false, error: { message, line, column } }` |
 | `settings/` | Esquema tipado, valores por defecto, validación, migraciones | `settingsItem` (`storage.defineItem('sync:settings', { fallback, version, migrations })`), `validateSettings(unknown): Settings` |
 | `themes/` | Formato compacto, conversión VS Code→compacto, compacto→CodeMirror/variables CSS, registro de temas incluidos | `fromVSCode(jsonc: string): { theme, warnings }`, `toCssVars(theme)`, `toCodeMirrorTheme(theme)`, `builtinThemes` |
-| `fonts/` | Catálogo curado, descarga vía API CSS2, almacenamiento, registro con `FontFace` | `parseCss2(css, subsets)`, `downloadFont(family, weights, subsets)`, `loadFontIntoDocument(doc, family)` |
+| `fonts/` | Catálogo curado, descarga vía API CSS2, almacenamiento, registro con `FontFace` | `parseCss2(css)`, `selectFaces(faces, subsets)`, `downloadFont(family, subsets)`, `createFontLoader(document.fonts)`, `trackStoredFont(family, loader)` |
 | `editor/` | Extensiones de CodeMirror propias | `clickableUrls()`, `colorSwatches()`, `dateTooltips()`, `imagePreview()`, `arraySize()`, `cursorPath(onChange)`, `foldToLevel(view, n)` |
 | `components/` | Componentes Vue compartidos (visor, barra, barra de estado, vista previa) | `<JsonViewer :text :kind :settings :theme />` |
 
@@ -135,10 +135,10 @@ Solo `id`, `name`, `type`, `colors.background` y `colors.foreground` son obligat
 
 ## 5. Fuentes
 
-- **Catálogo curado** (`fonts/catalog.ts`) de ~20 familias monoespaciadas de Google Fonts. Candidatas: JetBrains Mono, Fira Code, Source Code Pro, IBM Plex Mono, Roboto Mono, Ubuntu Mono, Inconsolata, Space Mono, Red Hat Mono, DM Mono, Geist Mono, Martian Mono, Victor Mono, Cascadia Code, Noto Sans Mono, Azeret Mono, Sometype Mono, Commit Mono. La disponibilidad de cada una se verifica contra Google Fonts durante la implementación; las que no estén se eliminan del catálogo.
+- **Catálogo curado** (`fonts/catalog.ts`) de ~20 familias monoespaciadas de Google Fonts. Lista final (verificada contra Google Fonts el 2026-10-12): JetBrains Mono, Fira Code, Source Code Pro, IBM Plex Mono, Roboto Mono, Ubuntu Mono, Inconsolata, Space Mono, Red Hat Mono, DM Mono, Geist Mono, Martian Mono, Victor Mono, Cascadia Code, Noto Sans Mono, Azeret Mono, Sometype Mono, Fragment Mono, Spline Sans Mono, Reddit Mono. Commit Mono no está en Google Fonts y se quitó.
 - **Campo libre** para cualquier familia de Google Fonts, y opción **fuente del sistema** (texto libre, sin descarga).
-- **Descarga**: `GET https://fonts.googleapis.com/css2?family=<Familia>:wght@400;700&display=swap` → `parseCss2` extrae bloques `@font-face` (familia, peso, `unicode-range`, URL `woff2`) filtrando por subsets (por defecto `latin`, `latin-ext`; configurable) → descarga cada `woff2` desde `fonts.gstatic.com` → guarda en `local:fonts/<familia>` como `{ family, faces: [{ weight, unicodeRange, dataBase64 }], bytes, downloadedAt }`.
-- **Permisos**: los dos hosts se piden con `permissions.request` la primera vez.
+- **Descarga**: `GET https://fonts.googleapis.com/css2?family=<Familia>:wght@300;400;500;600;700&display=swap` → `parseCss2` extrae los bloques `@font-face` (subset del comentario, peso, `unicode-range`, URL `woff2` de `fonts.gstatic.com`) → filtra por subsets (por defecto `latin`, `latin-ext`) → une en un rango (`"300 700"`) los pesos que comparten archivo (fuentes variables) → descarga cada archivo una vez (máx. 2 MB por familia) → guarda `local:fonts/<familia>` = `{ family, faces: [{ weight, unicodeRange, subset, dataBase64 }], bytes, subsets, downloadedAt }` y el índice `local:fontFamilies`.
+- **Permisos**: ninguno extra. Ambos hosts responden `Access-Control-Allow-Origin: *`, así que la página de opciones descarga con `fetch` sin `host_permissions` (decisión de la Fase 3).
 - **En el visor**: por cada face, `new FontFace(family, arrayBuffer, { weight, unicodeRange })` y `document.fonts.add(face)` (independiente de la CSP de la página). Pila final: `"<familia>", ui-monospace, Consolas, monospace`.
 - **Controles**: tamaño (px), interlineado, ligaduras (`font-variant-ligatures`), peso.
 - **Gestión**: lista de fuentes descargadas con tamaño ocupado y botón borrar.

@@ -27,6 +27,9 @@ solos y se aplican en vivo a las pestañas abiertas.
 
 - **Apariencia:** modo claro/oscuro (sigue al sistema o fijo), un tema para cada modo, importar temas de VS Code
   (pega el JSON del tema o elige el archivo) y un editor para duplicar y retocar cualquier tema.
+- **Fuentes:** una fuente instalada en el equipo o cualquier familia de Google Fonts (con sugerencias de fuentes
+  monoespaciadas). Las de Google se descargan una vez desde las opciones y luego funcionan sin conexión, incluso en
+  páginas con CSP estricta. Tamaño, interlineado, grosor y ligaduras.
 - **Comportamiento** y **Estructura:** las mismas opciones del json-viewer original, con interruptores.
 - **Avanzado:** CSS propio para el visor.
 
