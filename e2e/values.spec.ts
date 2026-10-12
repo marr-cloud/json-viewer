@@ -32,6 +32,14 @@ test('previews images on hover', async ({ context, server }) => {
   await expect(page.locator(`${viewer} .cm-jv-image-info`)).toHaveText('2 × 3');
 });
 
+// Chromium doesn't apply the page CSP to the content script's image requests; this pins it.
+test('loads image previews even when the page CSP blocks images', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/rich-csp.json'));
+  await page.locator(`${viewer} .cm-url`, { hasText: 'pixel.svg' }).hover();
+  await expect(page.locator(`${viewer} .cm-jv-image-info`)).toHaveText('2 × 3');
+});
+
 // Chromium does not apply the page's CSP to the content script's images, so the
 // failure is simulated with an image that returns 404.
 test('says when the image cannot be loaded', async ({ context, server }) => {
