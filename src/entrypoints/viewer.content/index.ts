@@ -1,5 +1,5 @@
-import './style.css';
-import { createApp } from 'vue';
+import '@/components/viewer.css';
+import { createApp, h } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { readRawText } from '@/detect/readRawText';
 import { defaultTheme } from '@/themes/builtin';
@@ -40,11 +40,16 @@ export default defineContentScript({
         position: 'inline',
         anchor: 'body',
         onMount(container) {
-          const app = createApp(JsonViewer, {
-            raw,
-            options: defaultViewerOptions,
-            theme: defaultTheme,
-            source: { url: location.href, loadedAt: new Date() },
+          const app = createApp({
+            render: () =>
+              h('div', { class: 'jv-page' }, [
+                h(JsonViewer, {
+                  raw,
+                  options: defaultViewerOptions,
+                  theme: defaultTheme,
+                  source: { url: location.href, loadedAt: new Date() },
+                }),
+              ]),
           });
           app.config.errorHandler = fail;
           app.mount(container);

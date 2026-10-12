@@ -1,5 +1,6 @@
 <script setup lang="ts">
-defineProps<{ source?: { url: string; loadedAt: Date } }>();
+defineProps<{ source?: { url: string; loadedAt: Date }; themeType: 'dark' | 'light' }>();
+const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
 const mode = defineModel<'code' | 'raw'>('mode', { required: true });
 </script>
 
@@ -12,6 +13,20 @@ const mode = defineModel<'code' | 'raw'>('mode', { required: true });
     <div v-if="source" class="jv-source" :title="source.url">
       <span class="jv-url">{{ source.url }}</span>
       <time :datetime="source.loadedAt.toISOString()">{{ source.loadedAt.toLocaleString() }}</time>
+    </div>
+    <div class="jv-actions">
+      <button
+        type="button"
+        class="jv-icon-button"
+        aria-label="Toggle light/dark theme"
+        :title="themeType === 'dark' ? 'Switch to a light theme' : 'Switch to a dark theme'"
+        @click="emit('toggleTheme')"
+      >
+        {{ themeType === 'dark' ? '☀' : '☾' }}
+      </button>
+      <button type="button" class="jv-icon-button" aria-label="Open settings" title="Settings" @click="emit('openSettings')">
+        ⚙
+      </button>
     </div>
   </header>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { errorPosition, type ErrorLocation } from '@/editor/errorLine';
@@ -15,13 +15,11 @@ const props = defineProps<{
 }>();
 
 const host = ref<HTMLDivElement>();
+const config = new Compartment();
 let view: EditorView | undefined;
 
-function createState(): EditorState {
-  return EditorState.create({
-    doc: props.doc,
-    extensions: buildExtensions({ options: props.options, theme: props.theme, error: props.error }),
-  });
+function currentExtensions() {
+  return buildExtensions({ options: props.options, theme: props.theme, error: props.error });
 }
 
 function revealError(): void {
@@ -35,19 +33,33 @@ function revealError(): void {
 }
 
 onMounted(() => {
-  view = new EditorView({ state: createState(), parent: host.value! });
+  view = new EditorView({
+    state: EditorState.create({ doc: props.doc, extensions: config.of(currentExtensions()) }),
+    parent: host.value!,
+  });
   revealError();
   // Without focus Ctrl+F opens the browser find, which misses virtualized content.
   view.focus();
 });
 
 watch(
-  () => [props.doc, props.options, props.theme, props.error],
-  () => {
-    view?.setState(createState());
-    revealError();
-    view?.focus();
+  () => props.doc,
+  (doc) => {
+    if (!view) return;
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: doc } });
   },
+);
+
+// Reconfigure in place so scroll position, folds and selection survive option and theme changes.
+watch(
+  () => [props.options, props.theme, props.error] as const,
+  () => view?.dispatch({ effects: config.reconfigure(currentExtensions()) }),
+);
+
+watch(
+  () => [props.doc, props.error] as const,
+  () => revealError(),
+  { flush: 'post' },
 );
 
 onBeforeUnmount(() => view?.destroy());
