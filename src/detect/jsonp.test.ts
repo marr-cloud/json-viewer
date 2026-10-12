@@ -22,6 +22,12 @@ describe('jsonpBounds', () => {
     }
   });
 
+  it("accepts Express's typeof guard when it names the same callback", () => {
+    expect(inner(`/**/ typeof cb === 'function' && cb({"a":1});`)).toEqual({ callback: 'cb', json: '{"a":1}' });
+    expect(inner(`typeof a.cb=="function"&&a.cb([1])`)).toEqual({ callback: 'a.cb', json: '[1]' });
+    expect(jsonpBounds(`typeof other === 'function' && cb({"a":1})`)).toBeNull();
+  });
+
   it('accepts an empty call, which then fails to parse', () => {
     expect(inner('cb()')).toEqual({ callback: 'cb', json: '' });
   });

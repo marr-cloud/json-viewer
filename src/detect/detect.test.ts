@@ -43,6 +43,7 @@ describe('detect', () => {
     ['text/javascript; charset=utf-8', '/**/ jQuery123.cb([1, 2]);'],
     ['application/x-javascript', 'cb([1])'],
     ['text/plain', 'cb({"a":1})'],
+    ['text/javascript', "/**/ typeof cb === 'function' && cb({\"a\":1});"],
   ])('detects %s with %j as JSONP', (type, text) => {
     expect(detect(type, text)).toEqual({ kind: 'jsonp' });
   });
