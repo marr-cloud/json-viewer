@@ -1,0 +1,23 @@
+/** Monospaced Google Fonts families offered as suggestions (all verified on fonts.googleapis.com, 2026-10-12). */
+export const FONT_CATALOG: readonly string[] = [
+  'JetBrains Mono',
+  'Fira Code',
+  'Source Code Pro',
+  'IBM Plex Mono',
+  'Roboto Mono',
+  'Ubuntu Mono',
+  'Inconsolata',
+  'Space Mono',
+  'Red Hat Mono',
+  'DM Mono',
+  'Geist Mono',
+  'Martian Mono',
+  'Victor Mono',
+  'Cascadia Code',
+  'Noto Sans Mono',
+  'Azeret Mono',
+  'Sometype Mono',
+  'Fragment Mono',
+  'Spline Sans Mono',
+  'Reddit Mono',
+];
