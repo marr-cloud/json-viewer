@@ -1,0 +1,47 @@
+import { defaultKeymap } from '@codemirror/commands';
+import { json } from '@codemirror/lang-json';
+import { foldGutter, foldKeymap } from '@codemirror/language';
+import { highlightSelectionMatches, search, searchKeymap } from '@codemirror/search';
+import { EditorState, type Extension } from '@codemirror/state';
+import {
+  drawSelection,
+  EditorView,
+  highlightActiveLine,
+  highlightActiveLineGutter,
+  keymap,
+  lineNumbers,
+} from '@codemirror/view';
+import type { Theme } from '@/themes/types';
+import type { ViewerOptions } from '@/viewer/options';
+import { errorLine } from './errorLine';
+import { foldSummaries } from './foldSummary';
+import { toCodeMirrorTheme } from './theme';
+import { clickableUrls } from './urls';
+
+export interface EditorSetup {
+  options: ViewerOptions;
+  theme: Theme;
+  errorLine: number | null;
+}
+
+export function buildExtensions({ options, theme, errorLine: line }: EditorSetup): Extension[] {
+  const extensions: Extension[] = [
+    // Read-only but still focusable, so the cursor, search and keyboard navigation work.
+    EditorState.readOnly.of(true),
+    EditorState.tabSize.of(options.tabSize),
+    json(),
+    drawSelection(),
+    highlightActiveLine(),
+    highlightSelectionMatches(),
+    search({ top: true }),
+    keymap.of([...searchKeymap, ...foldKeymap, ...defaultKeymap]),
+    toCodeMirrorTheme(theme),
+  ];
+  if (options.lineNumbers) extensions.push(lineNumbers(), highlightActiveLineGutter());
+  if (options.foldGutter) extensions.push(foldGutter());
+  if (options.showArraySize) extensions.push(foldSummaries());
+  if (options.lineWrapping) extensions.push(EditorView.lineWrapping);
+  if (options.clickableUrls) extensions.push(clickableUrls(options));
+  if (line !== null) extensions.push(errorLine(line));
+  return extensions;
+}
