@@ -45,6 +45,7 @@ test('custom CSS from the editor applies to the viewer', async ({ context, serve
   await options.getByLabel('Custom CSS').click();
   await options.keyboard.type('.cm-content { letter-spacing: 3px; }');
   await expect(options.locator('.opt-preview .cm-content')).toHaveCSS('letter-spacing', '3px');
+  await expect(options.locator('.opt-css .cm-content')).not.toHaveCSS('letter-spacing', '3px');
   await options.waitForTimeout(500);
   const page = await context.newPage();
   await page.goto(server.url('/data.json'));
@@ -69,4 +70,15 @@ test('reset restores the defaults', async ({ context, extensionId }) => {
   options.once('dialog', (dialog) => void dialog.accept());
   await options.getByRole('button', { name: 'Reset to defaults' }).click();
   await expect(sortKeys).not.toBeChecked();
+});
+
+test('the preview reacts to line number changes', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await expect(options.locator('.opt-preview .cm-lineNumbers')).toBeVisible();
+  const toggle = options.getByRole('switch', { name: 'Show line numbers' });
+  await toggle.uncheck();
+  await expect(options.locator('.opt-preview .cm-lineNumbers')).toHaveCount(0);
+  await toggle.check();
+  await expect(options.locator('.opt-preview .cm-lineNumbers')).toBeVisible();
 });

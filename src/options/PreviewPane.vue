@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { SAMPLE_JSON, SAMPLE_URL } from './sample';
 import JsonViewer from '@/components/JsonViewer.vue';
+import viewerCss from '@/components/viewer.css?inline';
 import type { Settings } from '@/settings/schema';
 import { activeTheme, type ThemeKind } from '@/themes/active';
 import type { Theme } from '@/themes/types';
@@ -19,7 +20,14 @@ const override = ref<ThemeKind | null>(null);
 const onMediaChange = (event: MediaQueryListEvent) => {
   prefersDark.value = event.matches;
 };
-onMounted(() => media.addEventListener('change', onMediaChange));
+// The viewer's custom CSS is a plain <style>; a shadow root keeps it from leaking into the options page.
+const host = ref<HTMLDivElement>();
+const shadowRoot = shallowRef<ShadowRoot>();
+const viewerOptions = computed(() => ({ ...props.settings.viewer }));
+onMounted(() => {
+  shadowRoot.value = host.value!.attachShadow({ mode: 'open' });
+  media.addEventListener('change', onMediaChange);
+});
 onBeforeUnmount(() => media.removeEventListener('change', onMediaChange));
 
 const theme = computed(
@@ -34,15 +42,21 @@ function toggleTheme(): void {
 
 <template>
   <div class="opt-preview-frame">
-    <!-- autoHighlight only sets the initial tab, so remount when it changes. -->
-    <JsonViewer
-      :key="String(settings.viewer.autoHighlight)"
-      :raw="SAMPLE_JSON"
-      :options="settings.viewer"
-      :theme="theme"
-      :custom-css="customCss"
-      :source="source"
-      @toggle-theme="toggleTheme"
-    />
+    <div ref="host" class="opt-preview-host" />
+    <Teleport v-if="shadowRoot" :to="shadowRoot">
+      <component :is="'style'">{{ viewerCss }}</component>
+      <div class="opt-preview-root">
+        <!-- autoHighlight only sets the initial tab, so remount when it changes. -->
+        <JsonViewer
+          :key="String(settings.viewer.autoHighlight)"
+          :raw="SAMPLE_JSON"
+          :options="viewerOptions"
+          :theme="theme"
+          :custom-css="customCss"
+          :source="source"
+          @toggle-theme="toggleTheme"
+        />
+      </div>
+    </Teleport>
   </div>
 </template>

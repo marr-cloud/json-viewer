@@ -193,6 +193,12 @@ button:disabled {
   border-radius: 8px;
 }
 
+.opt-preview-host,
+.opt-preview-root {
+  display: block;
+  height: 100%;
+}
+
 .opt-errors {
   color: var(--opt-danger);
 }
