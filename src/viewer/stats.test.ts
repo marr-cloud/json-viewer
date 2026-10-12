@@ -20,6 +20,11 @@ describe('byteLength', () => {
     const text = 'aé€😀\ud800z'.repeat(100);
     expect(byteLength(text)).toBe(new TextEncoder().encode(text).length);
   });
+
+  it('does not split a surrogate pair at a chunk boundary', () => {
+    const text = 'a'.repeat((1 << 20) - 1) + '😀' + 'b';
+    expect(byteLength(text)).toBe(new TextEncoder().encode(text).length);
+  });
 });
 
 describe('isLightMode', () => {

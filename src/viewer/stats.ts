@@ -1,20 +1,25 @@
 const KB = 1024;
 const MB = KB * 1024;
 
-/** UTF-8 bytes, counted without encoding the text (documents can be tens of MB). */
+const CHUNK = 1 << 20;
+let encoder: TextEncoder | undefined;
+let buffer: Uint8Array | undefined;
+
+/** UTF-8 bytes, counted in chunks without encoding the whole text at once (documents can be tens of MB). */
 export function byteLength(text: string): number {
+  encoder ??= new TextEncoder();
+  // A UTF-16 unit takes at most 3 bytes, so a chunk always fits.
+  buffer ??= new Uint8Array(3 * CHUNK);
   let bytes = 0;
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    if (code < 0x80) bytes += 1;
-    else if (code < 0x800) bytes += 2;
-    else if (code >= 0xd800 && code <= 0xdbff && (text.charCodeAt(i + 1) & 0xfc00) === 0xdc00) {
-      bytes += 4;
-      i++;
-    } else {
-      // Other BMP characters, and lone surrogates (encoded as U+FFFD).
-      bytes += 3;
+  for (let start = 0; start < text.length; ) {
+    let end = Math.min(start + CHUNK, text.length);
+    if (end < text.length) {
+      // Keep a surrogate pair in one slice.
+      const last = text.charCodeAt(end - 1);
+      if (last >= 0xd800 && last <= 0xdbff) end--;
     }
+    bytes += encoder.encodeInto(text.slice(start, end), buffer).written;
+    start = end;
   }
   return bytes;
 }
