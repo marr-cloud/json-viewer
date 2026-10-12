@@ -14,7 +14,7 @@ describe('imageUrl', () => {
       'https://example.com/d.jpeg?size=2#x',
       'https://example.com/e.gif',
       'https://example.com/f.webp',
-      'https://api.iconify.design/vscode-icons:file-type-json.svg',
+      'https://upload.wikimedia.org/wikipedia/commons/c/c9/JSON_vector_logo.svg',
       'https://example.com/g.avif',
     ]) {
       expect(imageUrl(url), url).toBe(new URL(url).href);
