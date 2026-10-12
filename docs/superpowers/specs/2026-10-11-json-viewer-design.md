@@ -189,7 +189,7 @@ Decisiones de la Fase 4:
 | Plegar todo / desplegar todo | `Alt+[` / `Alt+]` |
 | Copiar ruta del cursor | `Ctrl+Shift+C` |
 
-Se guardan como `"Ctrl+Shift+F"` y se comparan por tecla física (`KeyboardEvent.code`), así Shift, Alt y AltGr no cambian la tecla; AltGr llega como Ctrl+Alt y no coincide con un atajo `Alt+…`. Exigen Ctrl, Alt o Meta (o una tecla F). `""` desactiva la acción; si dos acciones comparten combinación gana la primera y opciones avisa.
+Se guardan como `"Ctrl+Shift+F"` y se comparan por tecla física (`KeyboardEvent.code`), así Shift, Alt y AltGr no cambian la tecla; AltGr llega como Ctrl+Alt y no coincide con un atajo `Alt+…`. Exigen Ctrl, Alt o Meta (o una tecla F). `""` desactiva la acción; si dos acciones comparten combinación gana la primera y opciones avisa. En Mac, Cmd cuenta como Ctrl (al comparar y al grabar), así que los ajustes guardados sirven en todas las plataformas; opciones muestra Cmd y Option.
 
 ### 6.5 Valores enriquecidos
 
@@ -200,6 +200,16 @@ Decoraciones de CodeMirror calculadas solo sobre el rango visible:
 - **Imágenes**: tooltip con miniatura (carga diferida) para URLs que terminan en `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.avif`. Desactivable.
 - **URLs clicables**: respetan `wrapLinkWithAnchorTag` y `openLinksInNewWindow`.
 - **Tamaño de arrays**: texto `// N items` en el placeholder de plegado si `showArraySize`.
+
+Decisiones de la Fase 5:
+
+- Colores: solo valores completos `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()/rgba()` y `hsl()/hsla()` (sintaxis con comas
+  o con espacios); ni nombres (`red`) ni claves. La muestra va dentro de las comillas.
+- Fechas: enteros (no fracciones) en segundos o milisegundos; ISO 8601 `YYYY-MM-DD[THH:mm[:ss[.fff]]][Z|±HH:mm]`, sin
+  días imposibles. El tooltip muestra hora local con su desfase, UTC y, en números, la unidad.
+- Imágenes: la petición sale solo al abrir el tooltip y sin referrer; si no carga (404, red, contenido mixto), el
+  tooltip lo dice. En Chromium la CSP de la página no afecta a estas peticiones del content script.
+- Modo ligero: `lightModeThresholdMB` (1–1000, en MiB) sobre el texto crudo; apaga colores, fechas e imágenes.
 
 ### 6.6 Detección y entrada
 
@@ -213,7 +223,7 @@ Decoraciones de CodeMirror calculadas solo sobre el rango visible:
 | Original | Nuevo |
 |---|---|
 | `prependHeader` (true) | `showHeader` (true): URL y fecha en la barra |
-| `maxJsonSize` (400 KB) | `lightModeThresholdMB` (20) |
+| `maxJsonSize` (400 KB) | `lightModeThresholdMB` (20; 1–1000 MiB) |
 | `alwaysFold` (false) | `foldFromLevel` (0 = no plegar; 2 = `alwaysFold`) |
 | `alwaysRenderAllContent` | eliminado (CodeMirror 6 virtualiza) |
 | `sortKeys` (false) | `sortKeys` |
@@ -231,7 +241,7 @@ Nuevos: `themeMode`, `lightThemeId`, `darkThemeId`, `font: { source: 'google' \|
 
 ### 6.8 Página de opciones
 
-Navegación lateral: Apariencia (temas), Fuentes, Comportamiento, Estructura, Funciones, Sitios, Avanzado, Acerca de. Vista previa en vivo fija a la derecha usando `<JsonViewer>` con un JSON de ejemplo. Al pie: exportar / importar configuración (archivo JSON con settings + temas personalizados; las fuentes no se incluyen) y restablecer valores por defecto.
+Navegación lateral: Apariencia (temas), Fuentes, Comportamiento, Estructura, Funciones (Features), Atajos (Shortcuts), Sitios, Avanzado, Acerca de. Vista previa en vivo fija a la derecha usando `<JsonViewer>` con un JSON de ejemplo. Al pie: exportar / importar configuración (archivo JSON con settings + temas personalizados; las fuentes no se incluyen) y restablecer valores por defecto.
 
 ### 6.9 Idiomas
 

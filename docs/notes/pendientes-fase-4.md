@@ -11,21 +11,13 @@
   mientras tanto se queda desplegado.
 
 ## Rendimiento (documentos de ~4 MB)
-- El presupuesto síncrono inicial de `foldFromLevel` (1 s, `src/editor/foldLevel.ts`) no produce pliegues visibles en
-  documentos de más de ~3 MB formateados cuando se agota (solo avanza el parseo; la primera pasada usa el árbol de
-  campos anterior). Valorar un presupuesto inicial menor (~100 ms) para documentos grandes.
 - Replegar al mismo nivel despliega y vuelve a plegar todo.
 - Cambiar el nivel en vivo, o alternar el orden, descarta los pliegues manuales.
-- `byteLength` reserva un Uint8Array completo.
 - El recorrido de índices de array de `jsonPathAt` es O(n) por movimiento del cursor (bien con 50k elementos; podría
   ir lento con arrays de más de 100k).
 
 ## Visor (UX)
-- Mac: quitar el `Mod-f` de CodeMirror y dejar `Ctrl+F` por defecto envía Cmd+F a la búsqueda del navegador, que no
-  puede buscar en contenido virtualizado. Hace falta un valor por plataforma (`Meta+F`) o un alias de Meta.
 - Los títulos de los botones de la barra no muestran el atajo configurado (p. ej. "Fold all (Alt+[)").
-- Los atajos dejan de funcionar cuando el foco cae en `body` tras hacer clic en una zona no enfocable del visor;
-  prioridad para la Fase 5: un listener a nivel de documento limitado a la página del visor.
 - "Sort keys" sigue habilitado en Raw y con JSON inválido (el cambio no hace nada visible).
 - Esc puede ser consumido antes por `simplifySelection` de CodeMirror; Enter durante una composición IME aplica el
   filtro antes de tiempo.
