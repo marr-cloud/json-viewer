@@ -135,6 +135,8 @@ describe('on a Mac', () => {
     expect(shortcutLabel('Ctrl+Alt+Shift+F', false)).toBe('Ctrl+Alt+Shift+F');
     expect(shortcutLabel('', true)).toBe('');
     expect(shortcutLabel('Ctrl+Meta+F', true)).toBe('Ctrl+Cmd+F');
+    // Recorded on a Mac before Cmd counted as Ctrl: it can't match there, so it keeps its stored name.
+    expect(shortcutLabel('Meta+K', true)).toBe('Meta+K');
   });
 
   it('names the modifiers in the hint', () => {

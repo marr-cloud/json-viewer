@@ -101,12 +101,15 @@ export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
 export function shortcutLabel(combo: string, mac = IS_MAC): string {
   if (!mac) return combo;
   const parts = combo.split('+');
-  // With both Ctrl and Meta stored, Ctrl is the real Control key.
-  const keepCtrl = parts.includes('Ctrl') && parts.includes('Meta');
+  // With both stored, Ctrl is the real Control key and Meta is Cmd. A Meta without Ctrl was recorded
+  // before Cmd counted as Ctrl and can't match on a Mac, so it keeps its stored name.
+  const both = parts.includes('Ctrl') && parts.includes('Meta');
   return parts
-    .map((part) =>
-      part === 'Ctrl' ? (keepCtrl ? 'Ctrl' : 'Cmd') : part === 'Meta' ? 'Cmd' : part === 'Alt' ? 'Option' : part,
-    )
+    .map((part) => {
+      if (part === 'Ctrl') return both ? 'Ctrl' : 'Cmd';
+      if (part === 'Meta') return both ? 'Cmd' : 'Meta';
+      return part === 'Alt' ? 'Option' : part;
+    })
     .join('+');
 }
 
