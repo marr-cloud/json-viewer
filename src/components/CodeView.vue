@@ -58,18 +58,16 @@ onMounted(() => {
   view.focus();
 });
 
+// One watcher so a document and fold level that change together fold once, not twice.
 watch(
-  () => props.doc,
-  (doc) => {
+  [() => props.doc, () => props.options.foldFromLevel],
+  ([doc], [previous]) => {
     if (!view) return;
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: doc } });
+    if (doc !== previous) {
+      view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: doc } });
+    }
     applyFoldOnOpen();
   },
-);
-
-watch(
-  () => props.options.foldFromLevel,
-  () => applyFoldOnOpen(),
 );
 
 // Reconfigure in place so scroll position, folds and selection survive option and theme changes.

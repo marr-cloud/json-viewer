@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
-import { foldAll, foldedRanges } from '@codemirror/language';
+import { foldAll, foldEffect, foldedRanges } from '@codemirror/language';
+import type { TransactionSpec } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, reactive, ref, type App } from 'vue';
 import type { ErrorLocation } from '@/editor/errorLine';
 import { defaultTheme } from '@/themes/builtin';
@@ -45,6 +46,19 @@ describe('CodeView', () => {
     state.doc = '{\n  "x": {\n    "y": [\n      2\n    ]\n  }\n}';
     await nextTick();
     expect(foldCount(view)).toBe(1);
+  });
+
+  it('folds once when the document and the level change together', async () => {
+    const { state, view } = mount(NESTED);
+    const dispatch = vi.spyOn(view, 'dispatch');
+    state.doc = '{\n  "x": {\n    "y": [\n      2\n    ]\n  }\n}';
+    state.options = { ...state.options, foldFromLevel: 2 };
+    await nextTick();
+    const folding = dispatch.mock.calls.filter(([spec]) =>
+      [(spec as TransactionSpec).effects ?? []].flat().some((effect) => effect.is(foldEffect)),
+    );
+    expect(folding).toHaveLength(1);
+    expect(foldCount(view)).toBe(2);
   });
 
   it('applies a new level live and unfolds at 0', async () => {
