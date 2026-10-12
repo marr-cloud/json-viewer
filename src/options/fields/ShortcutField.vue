@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { comboFromEvent, isValidShortcut } from '@/settings/shortcuts';
+import { comboFromEvent, IS_MAC, isValidShortcut, modifierHint, shortcutLabel } from '@/settings/shortcuts';
 
-defineProps<{ label: string; defaultValue: string; conflict?: string }>();
+const props = withDefaults(
+  defineProps<{ label: string; defaultValue: string; conflict?: string; /** Defaults to this platform. */ mac?: boolean }>(),
+  { conflict: undefined, mac: IS_MAC },
+);
 const model = defineModel<string>({ required: true });
 const recording = ref(false);
 const invalid = ref(false);
@@ -36,7 +39,7 @@ function onKeydown(event: KeyboardEvent): void {
   event.stopPropagation();
   if (plain && event.code === 'Escape') return finish();
   if (plain && (event.code === 'Backspace' || event.code === 'Delete')) return finish('');
-  const combo = comboFromEvent(event);
+  const combo = comboFromEvent(event, props.mac);
   // A modifier on its own: wait for the rest of the combination.
   if (combo === null) return;
   if (isValidShortcut(combo)) finish(combo);
@@ -63,13 +66,13 @@ function onKeyup(event: KeyboardEvent): void {
         @keyup="onKeyup"
         @blur="recording = false"
       >
-        {{ recording ? 'Press keys…' : model || 'None' }}
+        {{ recording ? 'Press keys…' : model ? shortcutLabel(model, mac) : 'None' }}
       </button>
       <button v-if="model !== defaultValue" type="button" :aria-label="`Reset ${label} shortcut`" @click="model = defaultValue">
         Reset
       </button>
     </div>
-    <small v-if="invalid" class="opt-hint opt-errors" role="alert">Use Ctrl, Alt or a function key (F1–F24).</small>
+    <small v-if="invalid" class="opt-hint opt-errors" role="alert">{{ modifierHint(mac) }}</small>
     <small v-else-if="conflict" class="opt-hint opt-errors">Also assigned to {{ conflict }}.</small>
   </div>
 </template>

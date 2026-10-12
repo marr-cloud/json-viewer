@@ -28,6 +28,7 @@ const shadowRoot = shallowRef<ShadowRoot>();
 const viewerOptions = computed(() => ({ ...props.settings.viewer }));
 const viewerFont = computed(() => ({ ...props.settings.font }));
 const viewerShortcuts = computed(() => ({ ...props.settings.shortcuts }));
+const viewerFeatures = computed(() => ({ ...props.settings.features }));
 let stopFont: (() => void) | undefined;
 onMounted(() => {
   shadowRoot.value = host.value!.attachShadow({ mode: 'open' });
@@ -65,6 +66,7 @@ function toggleTheme(): void {
         :options="viewerOptions"
         :font="viewerFont"
         :shortcuts="viewerShortcuts"
+        :features="viewerFeatures"
         :theme="theme"
         :kind="kind"
         :custom-css="customCss"

@@ -77,18 +77,45 @@ function keyFromCode(code: string): string | null {
 
 type KeyPress = Pick<KeyboardEvent, 'code' | 'ctrlKey' | 'altKey' | 'shiftKey' | 'metaKey'>;
 
-/** "Ctrl+Alt+Shift+Meta+Key" for a key press; null for modifier keys on their own and unknown keys. */
-export function comboFromEvent(event: KeyPress): string | null {
+/** On a Mac, Cmd plays Ctrl's role: a stored "Ctrl+F" means Cmd+F there, so settings sync across platforms. */
+export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+
+/**
+ * "Ctrl+Alt+Shift+Meta+Key" for a key press; null for modifier keys on their own and unknown keys.
+ * On a Mac, Cmd counts as Ctrl, unless Ctrl is held too (Ctrl+Cmd+F is macOS's full screen): then both are kept.
+ */
+export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
   const key = keyFromCode(event.code);
   if (key === null) return null;
   const parts = [
-    event.ctrlKey ? 'Ctrl' : '',
+    event.ctrlKey || (mac && event.metaKey) ? 'Ctrl' : '',
     event.altKey ? 'Alt' : '',
     event.shiftKey ? 'Shift' : '',
-    event.metaKey ? 'Meta' : '',
+    event.metaKey && (!mac || event.ctrlKey) ? 'Meta' : '',
     key,
   ];
   return parts.filter((part) => part !== '').join('+');
+}
+
+/** How a combination reads on this platform: "Cmd" and "Option" on a Mac. */
+export function shortcutLabel(combo: string, mac = IS_MAC): string {
+  if (!mac) return combo;
+  const parts = combo.split('+');
+  // With both stored, Ctrl is the real Control key and Meta is Cmd. A Meta without Ctrl was recorded
+  // before Cmd counted as Ctrl and can't match on a Mac, so it keeps its stored name.
+  const both = parts.includes('Ctrl') && parts.includes('Meta');
+  return parts
+    .map((part) => {
+      if (part === 'Ctrl') return both ? 'Ctrl' : 'Cmd';
+      if (part === 'Meta') return both ? 'Cmd' : 'Meta';
+      return part === 'Alt' ? 'Option' : part;
+    })
+    .join('+');
+}
+
+/** Why a key press can't be a shortcut, naming this platform's modifiers. */
+export function modifierHint(mac = IS_MAC): string {
+  return mac ? 'Use Cmd, Option or a function key (F1–F24).' : 'Use Ctrl, Alt or a function key (F1–F24).';
 }
 
 const COMBO = /^(Ctrl\+)?(Alt\+)?(Shift\+)?(Meta\+)?(.+)$/;

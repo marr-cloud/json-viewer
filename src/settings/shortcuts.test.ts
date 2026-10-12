@@ -5,6 +5,8 @@ import {
   conflictWith,
   defaultShortcuts,
   isValidShortcut,
+  modifierHint,
+  shortcutLabel,
   SHORTCUT_ACTIONS,
   validateShortcuts,
 } from './shortcuts';
@@ -113,5 +115,32 @@ describe('conflictWith', () => {
 
   it('never reports disabled shortcuts as conflicting', () => {
     expect(conflictWith({ ...defaultShortcuts, search: '', filter: '' }, 'search')).toBeNull();
+  });
+});
+
+describe('on a Mac', () => {
+  it('reads Cmd as Ctrl, so the same settings work on every platform', () => {
+    expect(comboFromEvent(press('KeyF', { metaKey: true }), true)).toBe('Ctrl+F');
+    expect(comboFromEvent(press('KeyF', { ctrlKey: true, shiftKey: true }), true)).toBe('Ctrl+Shift+F');
+    expect(comboFromEvent(press('KeyF', { ctrlKey: true, metaKey: true }), true)).toBe('Ctrl+Meta+F');
+  });
+
+  it('keeps Meta apart on other platforms', () => {
+    expect(comboFromEvent(press('KeyF', { metaKey: true }), false)).toBe('Meta+F');
+    expect(comboFromEvent(press('KeyF', { ctrlKey: true, metaKey: true }), false)).toBe('Ctrl+Meta+F');
+  });
+
+  it('shows Cmd and Option', () => {
+    expect(shortcutLabel('Ctrl+Alt+Shift+F', true)).toBe('Cmd+Option+Shift+F');
+    expect(shortcutLabel('Ctrl+Alt+Shift+F', false)).toBe('Ctrl+Alt+Shift+F');
+    expect(shortcutLabel('', true)).toBe('');
+    expect(shortcutLabel('Ctrl+Meta+F', true)).toBe('Ctrl+Cmd+F');
+    // Recorded on a Mac before Cmd counted as Ctrl: it can't match there, so it keeps its stored name.
+    expect(shortcutLabel('Meta+K', true)).toBe('Meta+K');
+  });
+
+  it('names the modifiers in the hint', () => {
+    expect(modifierHint(true)).toBe('Use Cmd, Option or a function key (F1–F24).');
+    expect(modifierHint(false)).toBe('Use Ctrl, Alt or a function key (F1–F24).');
   });
 });

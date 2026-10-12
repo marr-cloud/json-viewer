@@ -1,8 +1,27 @@
 const KB = 1024;
 const MB = KB * 1024;
 
+const CHUNK = 1 << 20;
+let encoder: TextEncoder | undefined;
+let buffer: Uint8Array | undefined;
+
+/** UTF-8 bytes, counted in chunks without encoding the whole text at once (documents can be tens of MB). */
 export function byteLength(text: string): number {
-  return new TextEncoder().encode(text).length;
+  encoder ??= new TextEncoder();
+  // A UTF-16 unit takes at most 3 bytes, so a chunk always fits.
+  buffer ??= new Uint8Array(3 * CHUNK);
+  let bytes = 0;
+  for (let start = 0; start < text.length; ) {
+    let end = Math.min(start + CHUNK, text.length);
+    if (end < text.length) {
+      // Keep a surrogate pair in one slice.
+      const last = text.charCodeAt(end - 1);
+      if (last >= 0xd800 && last <= 0xdbff) end--;
+    }
+    bytes += encoder.encodeInto(text.slice(start, end), buffer).written;
+    start = end;
+  }
+  return bytes;
 }
 
 export function formatBytes(bytes: number): string {
@@ -23,4 +42,9 @@ export function countLines(text: string): number {
 
 export function formatCount(count: number, singular: string, plural = `${singular}s`): string {
   return `${count.toLocaleString('en-US')} ${count === 1 ? singular : plural}`;
+}
+
+/** Light mode: the document is bigger than the threshold (in MiB, like the status bar). */
+export function isLightMode(bytes: number, thresholdMB: number): boolean {
+  return bytes > thresholdMB * MB;
 }

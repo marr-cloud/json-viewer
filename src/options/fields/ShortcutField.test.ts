@@ -10,7 +10,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-function mount(initial = 'Alt+R', conflict?: string) {
+function mount(initial = 'Alt+R', conflict?: string, mac = false) {
   const value = ref(initial);
   const host = document.createElement('div');
   document.body.append(host);
@@ -20,6 +20,7 @@ function mount(initial = 'Alt+R', conflict?: string) {
         label: 'Toggle Raw',
         defaultValue: 'Alt+R',
         conflict,
+        mac,
         modelValue: value.value,
         'onUpdate:modelValue': (next: string) => {
           value.value = next;
@@ -97,6 +98,20 @@ describe('ShortcutField', () => {
     await nextTick();
     expect(value.value).toBe('Alt+R');
     expect(host.querySelector('[aria-label="Reset Toggle Raw shortcut"]')).toBeNull();
+  });
+
+  it('records Cmd as Ctrl and shows Cmd and Option on a Mac', async () => {
+    const { host, button, value } = mount('Alt+R', undefined, true);
+    expect(text(button)).toBe('Option+R');
+    button.click();
+    await nextTick();
+    press(button, 'KeyK');
+    await nextTick();
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('Use Cmd, Option or a function key');
+    press(button, 'KeyK', { metaKey: true, shiftKey: true });
+    await nextTick();
+    expect(value.value).toBe('Ctrl+Shift+K');
+    expect(text(button)).toBe('Cmd+Shift+K');
   });
 
   it('shows a conflict', () => {

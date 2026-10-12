@@ -181,6 +181,10 @@
   opacity: 0.8;
 }
 
+.jv-light-mode {
+  font-weight: 600;
+}
+
 .jv-group {
   display: flex;
   align-items: center;

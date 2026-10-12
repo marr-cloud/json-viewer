@@ -1,7 +1,15 @@
 import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
 import { defaultFontSettings, validateFontSettings, type FontSettings } from './font';
 import { defaultShortcuts, validateShortcuts, type Shortcuts } from './shortcuts';
-import { defaultViewerOptions, FOLD_LEVELS, type ViewerOptions } from '@/viewer/options';
+import {
+  defaultFeatures,
+  defaultViewerOptions,
+  FOLD_LEVELS,
+  LIGHT_MODE_MAX_MB,
+  LIGHT_MODE_MIN_MB,
+  type Features,
+  type ViewerOptions,
+} from '@/viewer/options';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
@@ -12,6 +20,7 @@ export interface Settings {
   darkThemeId: string;
   font: FontSettings;
   shortcuts: Shortcuts;
+  features: Features;
 }
 
 export const defaultSettings: Settings = {
@@ -21,6 +30,7 @@ export const defaultSettings: Settings = {
   darkThemeId: 'dark-plus',
   font: defaultFontSettings,
   shortcuts: defaultShortcuts,
+  features: defaultFeatures,
 };
 
 export const TAB_SIZE_MIN = 1;
@@ -40,6 +50,14 @@ const viewerValidators: ObjectValidators<ViewerOptions> = {
   indentCStyle: bool,
   showArraySize: bool,
   foldFromLevel: oneOf<number>([0, ...FOLD_LEVELS]),
+  lightModeThresholdMB: intInRange(LIGHT_MODE_MIN_MB, LIGHT_MODE_MAX_MB),
+};
+
+const featureValidators: ObjectValidators<Features> = {
+  jsonPath: bool,
+  colorSwatches: bool,
+  dateTooltips: bool,
+  imagePreview: bool,
 };
 
 const settingsValidators: ObjectValidators<Settings> = {
@@ -49,6 +67,7 @@ const settingsValidators: ObjectValidators<Settings> = {
   darkThemeId: nonEmptyId,
   font: (value) => validateFontSettings(value),
   shortcuts: (value) => validateShortcuts(value),
+  features: (value) => validateFields(value, defaultFeatures, featureValidators),
 };
 
 /** Returns complete settings; every missing or invalid field falls back to its default. */

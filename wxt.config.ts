@@ -10,7 +10,12 @@ export default defineConfig({
   // Chrome refuses to inject scripts containing non-characters (U+FFFF in CodeMirror),
   // so the minifier must emit ASCII-only output.
   vite: () => ({
-    build: { rolldownOptions: { output: { minify: { codegen: { asciiOnly: true } } } } },
+    build: {
+      rolldownOptions: { output: { minify: { codegen: { asciiOnly: true } } } },
+      // The viewer and options bundles carry all of CodeMirror (~550 kB). An extension loads them from
+      // disk, so the web-oriented 500 kB warning doesn't apply; warn only if they grow well past that.
+      chunkSizeWarningLimit: 800,
+    },
   }),
   manifest: {
     name: 'JSON Viewer',

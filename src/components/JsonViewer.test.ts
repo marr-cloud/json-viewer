@@ -2,12 +2,12 @@
 import { foldedRanges } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createApp, h, nextTick, type App } from 'vue';
+import { createApp, h, nextTick, reactive, type App } from 'vue';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
 import { defaultShortcuts, type Shortcuts } from '@/settings/shortcuts';
-import { defaultViewerOptions } from '@/viewer/options';
+import { defaultFeatures, defaultViewerOptions, type Features, type ViewerOptions } from '@/viewer/options';
 import JsonViewer from './JsonViewer.vue';
 
 let app: App | undefined;
@@ -21,6 +21,9 @@ type Props = {
   onToggleTheme?: () => void;
   onOpenSettings?: () => void;
   shortcuts?: Shortcuts;
+  options?: ViewerOptions;
+  features?: Features;
+  documentShortcuts?: boolean;
 };
 
 function mount(props: Props = {}) {
@@ -333,5 +336,78 @@ describe('JsonViewer', () => {
     host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
     await nextTick();
     expect(key(host.querySelector('.jv-raw')!, 'KeyF', { key: 'f', ctrlKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('hides the JSONPath filter when the feature is off and lets its shortcut through', () => {
+    const host = mount({ features: { ...defaultFeatures, jsonPath: false } });
+    expect(host.querySelector('[aria-label="JSONPath filter"]')).toBeNull();
+    const event = key(editorOf(host).contentDOM, 'KeyF', { key: 'F', ctrlKey: true, shiftKey: true });
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('clears an applied filter when the JSONPath feature is switched off', async () => {
+    const state = reactive({ features: defaultFeatures });
+    const host = document.createElement('div');
+    document.body.append(host);
+    app = createApp({
+      render: () => h(JsonViewer, { raw: '{"items":[1]}', options: defaultViewerOptions, theme: defaultTheme, features: state.features }),
+    });
+    app.mount(host);
+    await runFilter(host, '$.items');
+    expect(editorOf(host).state.doc.toString()).toBe('[\n  [\n    1\n  ]\n]');
+    state.features = { ...defaultFeatures, jsonPath: false };
+    await nextTick();
+    state.features = defaultFeatures;
+    await nextTick();
+    expect(editorOf(host).state.doc.toString()).toBe('{\n  "items": [\n    1\n  ]\n}');
+    expect(filterInput(host).value).toBe('');
+  });
+
+  it('draws the value decorations below the size threshold', () => {
+    const host = mount({ raw: '["#ff0000"]' });
+    expect(host.querySelector('.jv-light-mode')).toBeNull();
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
+  });
+
+  it('leaves out the value decorations that are switched off', () => {
+    const host = mount({ raw: '["#ff0000"]', features: { ...defaultFeatures, colorSwatches: false } });
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+  });
+
+  it('switches to light mode above the size threshold', () => {
+    // Just over 1 MB, starting with a color value that would get a swatch.
+    const raw = `["#ff0000","${'x'.repeat(1_100_000)}"]`;
+    const host = mount({ raw, options: { ...defaultViewerOptions, lightModeThresholdMB: 1 } });
+    const light = host.querySelector<HTMLElement>('.jv-light-mode')!;
+    expect(light.textContent).toBe('Light mode');
+    expect(light.title).toContain('1 MB');
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+  });
+
+  it('catches shortcuts on the page itself when asked to', async () => {
+    const host = mount({ documentShortcuts: true });
+    const event = key(document.body, 'KeyR', { key: 'r', altKey: true });
+    expect(event.defaultPrevented).toBe(true);
+    await nextTick();
+    expect(host.querySelector('.jv-raw')).not.toBeNull();
+  });
+
+  it('leaves other page keys alone', () => {
+    mount({ documentShortcuts: true });
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(key(input, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('only listens on the page when asked to, and stops when unmounted', () => {
+    mount();
+    expect(key(document.body, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
+    app?.unmount();
+    app = undefined;
+    mount({ documentShortcuts: true });
+    // mount() reassigns the module-level app; TypeScript still narrows it to undefined here.
+    (app as App | undefined)?.unmount();
+    app = undefined;
+    expect(key(document.body, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
   });
 });
