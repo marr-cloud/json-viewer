@@ -6,6 +6,7 @@ import { createApp, h, nextTick, type App } from 'vue';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
+import { defaultShortcuts, type Shortcuts } from '@/settings/shortcuts';
 import { defaultViewerOptions } from '@/viewer/options';
 import JsonViewer from './JsonViewer.vue';
 
@@ -19,6 +20,7 @@ type Props = {
   source?: { url: string; loadedAt: Date };
   onToggleTheme?: () => void;
   onOpenSettings?: () => void;
+  shortcuts?: Shortcuts;
 };
 
 function mount(props: Props = {}) {
@@ -214,7 +216,9 @@ describe('JsonViewer', () => {
   it('shows syntax errors under the field and keeps the document', async () => {
     const host = mount({ raw: '{"a":[1]}' });
     await runFilter(host, '$.a[?(@ >');
-    expect(host.querySelector('.jv-filter-error')?.textContent).not.toBe('');
+    const error = host.querySelector('.jv-filter-error');
+    expect(error).not.toBeNull();
+    expect(error!.textContent).not.toBe('');
     expect(editorOf(host).state.doc.toString()).toBe('{\n  "a": [\n    1\n  ]\n}');
   });
 
@@ -236,5 +240,85 @@ describe('JsonViewer', () => {
 
   it('disables the filter for invalid JSON', () => {
     expect(filterInput(mount({ raw: '{' })).disabled).toBe(true);
+  });
+
+  function key(target: EventTarget, code: string, init: KeyboardEventInit = {}): KeyboardEvent {
+    const event = new KeyboardEvent('keydown', { code, bubbles: true, cancelable: true, composed: true, ...init });
+    target.dispatchEvent(event);
+    return event;
+  }
+
+  it('toggles Raw with the shortcut and focuses the new content', async () => {
+    const host = mount();
+    key(editorOf(host).contentDOM, 'KeyR', { key: 'r', altKey: true });
+    await vi.waitFor(() => expect(document.activeElement).toBe(host.querySelector('.jv-raw')));
+    key(host.querySelector('.jv-raw')!, 'KeyR', { key: 'r', altKey: true });
+    await nextTick();
+    expect(host.querySelector('.cm-editor')).not.toBeNull();
+  });
+
+  it('focuses the filter with the shortcut', () => {
+    const host = mount();
+    key(editorOf(host).contentDOM, 'KeyF', { key: 'F', ctrlKey: true, shiftKey: true });
+    expect(document.activeElement).toBe(host.querySelector('[aria-label="JSONPath filter"]'));
+  });
+
+  it('folds and unfolds everything with the shortcuts', () => {
+    const host = mount({ raw: '{"a":{"b":[1]}}' });
+    const view = editorOf(host);
+    key(view.contentDOM, 'BracketLeft', { key: '[', altKey: true });
+    expect(foldedRanges(view.state).size).toBe(2);
+    key(view.contentDOM, 'BracketRight', { key: ']', altKey: true });
+    expect(foldedRanges(view.state).size).toBe(0);
+  });
+
+  it('copies the cursor path with the shortcut', async () => {
+    const writeText = mockClipboard();
+    const host = mount();
+    key(editorOf(host).contentDOM, 'KeyC', { key: 'C', ctrlKey: true, shiftKey: true });
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('$'));
+  });
+
+  it('opens the editor search with the shortcut', () => {
+    const host = mount();
+    const event = key(editorOf(host).contentDOM, 'KeyF', { key: 'f', ctrlKey: true });
+    expect(event.defaultPrevented).toBe(true);
+    expect(host.querySelector('.cm-search')).not.toBeNull();
+  });
+
+  it('uses custom shortcuts and lets disabled ones reach the browser', async () => {
+    const host = mount({ shortcuts: { ...defaultShortcuts, search: '', toggleRaw: 'Ctrl+Alt+Y' } });
+    const content = editorOf(host).contentDOM;
+    const find = key(content, 'KeyF', { key: 'f', ctrlKey: true });
+    expect(find.defaultPrevented).toBe(false);
+    expect(host.querySelector('.cm-search')).toBeNull();
+    key(content, 'KeyR', { key: 'r', altKey: true });
+    await nextTick();
+    expect(host.querySelector('.cm-editor')).not.toBeNull();
+    key(content, 'KeyY', { key: 'y', ctrlKey: true, altKey: true });
+    await nextTick();
+    expect(host.querySelector('.jv-raw')).not.toBeNull();
+  });
+
+  it('typing in the filter does not trigger shortcuts', async () => {
+    const host = mount({ raw: '{"a":{"b":[1]}}' });
+    const input = host.querySelector<HTMLInputElement>('[aria-label="JSONPath filter"]')!;
+    const typed = [
+      key(input, 'KeyR', { key: 'r' }),
+      key(input, 'KeyR', { key: 'R', shiftKey: true }),
+      // AltGr+[ on a Spanish keyboard arrives as Ctrl+Alt.
+      key(input, 'BracketLeft', { key: '[', ctrlKey: true, altKey: true }),
+    ];
+    await nextTick();
+    expect(typed.map((event) => event.defaultPrevented)).toEqual([false, false, false]);
+    expect(host.querySelector('.cm-editor')).not.toBeNull();
+    expect(foldedRanges(editorOf(host).state).size).toBe(0);
+  });
+
+  it('lets Ctrl+F through to the browser on the Raw tab', async () => {
+    const host = mount();
+    host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
+    await nextTick();
+    expect(key(host.querySelector('.jv-raw')!, 'KeyF', { key: 'f', ctrlKey: true }).defaultPrevented).toBe(false);
   });
 });

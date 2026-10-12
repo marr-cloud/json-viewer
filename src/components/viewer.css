@@ -257,3 +257,7 @@
   background: var(--jv-toolbar-background);
   font-size: 12px;
 }
+
+.jv-raw:focus:not(:focus-visible) {
+  outline: none;
+}

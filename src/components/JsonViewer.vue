@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 import CodeView from './CodeView.vue';
 import JsonPathFilter from './JsonPathFilter.vue';
 import ViewerStatusBar from './ViewerStatusBar.vue';
 import ViewerToolbar from './ViewerToolbar.vue';
 import { fontCssVars } from '@/fonts/css';
 import type { FontSettings } from '@/settings/font';
+import { actionFor, comboFromEvent, defaultShortcuts, type ShortcutAction, type Shortcuts } from '@/settings/shortcuts';
 import { toCssVars } from '@/themes/css';
 import { resolveColors } from '@/themes/resolve';
 import type { Theme } from '@/themes/types';
@@ -30,8 +31,17 @@ const props = withDefaults(
     font?: FontSettings;
     /** Shown in the status bar. */
     format?: string;
+    shortcuts?: Shortcuts;
   }>(),
-  { customCss: '', kind: undefined, source: undefined, toggleLabel: undefined, font: undefined, format: 'JSON' },
+  {
+    customCss: '',
+    kind: undefined,
+    source: undefined,
+    toggleLabel: undefined,
+    font: undefined,
+    format: 'JSON',
+    shortcuts: () => defaultShortcuts,
+  },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
 
@@ -151,10 +161,56 @@ function onEscape(event: KeyboardEvent): void {
   event.preventDefault();
   clearFilter();
 }
+
+const rawPre = ref<HTMLPreElement>();
+
+async function setMode(next: 'code' | 'raw'): Promise<void> {
+  mode.value = next;
+  // CodeView focuses itself on mount; the Raw text needs focus so the next shortcut still reaches us.
+  if (next === 'raw') {
+    await nextTick();
+    rawPre.value?.focus();
+  }
+}
+
+/** Runs a shortcut's action; false when it doesn't apply here, so the key keeps its usual meaning. */
+function runShortcut(action: ShortcutAction): boolean {
+  const onCode = mode.value === 'code';
+  switch (action) {
+    case 'search':
+      if (onCode) codeView.value?.openSearch();
+      return onCode;
+    case 'filter':
+      filter.value?.focus();
+      return true;
+    case 'toggleRaw':
+      void setMode(onCode ? 'raw' : 'code');
+      return true;
+    case 'foldAll':
+      if (onCode) foldTo(FOLD_ALL_LEVEL);
+      return onCode;
+    case 'unfoldAll':
+      if (onCode) unfoldEverything();
+      return onCode;
+    case 'copyPath':
+      if (onCode) copyPath();
+      return onCode;
+  }
+}
+
+/** Capture phase: configured shortcuts win over CodeMirror's own key bindings. */
+function onShortcut(event: KeyboardEvent): void {
+  if (event.isComposing) return;
+  const combo = comboFromEvent(event);
+  const action = combo === null ? null : actionFor(props.shortcuts, combo);
+  if (action === null || !runShortcut(action)) return;
+  event.preventDefault();
+  event.stopPropagation();
+}
 </script>
 
 <template>
-  <div ref="root" class="jv-root" :class="`jv-${theme.type}`" :style="cssVars" @keydown="onEscape">
+  <div ref="root" class="jv-root" :class="`jv-${theme.type}`" :style="cssVars" @keydown.capture="onShortcut" @keydown="onEscape">
     <component :is="'style'" v-if="customCss">{{ customCss }}</component>
     <ViewerToolbar
       v-model:mode="mode"
@@ -201,7 +257,7 @@ function onEscape(event: KeyboardEvent): void {
       :error="shown.error"
       @path="cursorPath = $event"
     />
-    <pre v-else class="jv-body jv-raw">{{ raw }}</pre>
+    <pre v-else ref="rawPre" class="jv-body jv-raw" tabindex="0">{{ raw }}</pre>
     <ViewerStatusBar
       :path="mode === 'code' ? cursorPath : null"
       :size="size"

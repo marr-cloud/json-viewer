@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { unfoldAll } from '@codemirror/language';
+import { openSearchPanel } from '@codemirror/search';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -96,6 +97,12 @@ defineExpose({
     if (!view) return;
     cancelPendingFold(view);
     unfoldAll(view);
+  },
+  openSearch(): void {
+    if (view) openSearchPanel(view);
+  },
+  focus(): void {
+    view?.focus();
   },
 });
 </script>

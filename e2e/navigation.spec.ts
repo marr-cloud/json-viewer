@@ -196,3 +196,40 @@ test('filters a 4 MB document', async ({ context, server }) => {
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 49999"', { timeout: 15_000 });
   await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('1 match');
 });
+
+test('works with the default keyboard shortcuts', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const content = page.locator(`${viewer} .cm-content`);
+  await expect(content).toContainText('"list"');
+  await page.keyboard.press('Alt+BracketLeft');
+  await expect(content).not.toContainText('"list"');
+  await page.keyboard.press('Alt+BracketRight');
+  await expect(content).toContainText('"list"');
+  await page.keyboard.press('Control+Shift+KeyF');
+  await expect(page.getByRole('textbox', { name: 'JSONPath filter' })).toBeFocused();
+  await page.keyboard.press('Alt+KeyR');
+  await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
+  await page.keyboard.press('Alt+KeyR');
+  await expect(content).toBeVisible();
+});
+
+test('copies the cursor path with Ctrl+Shift+C', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await page.locator(`${viewer} .cm-line`, { hasText: '"list"' }).click();
+  await page.keyboard.press('Control+Shift+KeyC');
+  await expect(page.locator(`${viewer} .jv-status-message`)).toHaveText('Copied path');
+  expect(await readClipboard(page)).toBe('$.nested.list');
+});
+
+test('uses the shortcuts from the settings', async ({ context, server }) => {
+  await setStorage(context, 'sync', { settings: { shortcuts: { toggleRaw: 'Ctrl+Alt+Y' } } });
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name"');
+  // If Alt+R still toggled, the next shortcut would toggle back to Code and the check would fail.
+  await page.keyboard.press('Alt+KeyR');
+  await page.keyboard.press('Control+Alt+KeyY');
+  await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
+});

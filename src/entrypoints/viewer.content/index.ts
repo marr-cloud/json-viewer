@@ -101,6 +101,7 @@ export default defineContentScript({
                   raw,
                   options: state.settings.viewer,
                   font: state.settings.font,
+                  shortcuts: state.settings.shortcuts,
                   theme: theme.value,
                   kind: kind.value,
                   customCss: state.customCss,
