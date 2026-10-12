@@ -5,9 +5,6 @@ Hallazgos de las revisiones que se dejaron para fases siguientes (triage de la r
 ## Fase 2 (opciones, temas)
 - Test de `showArraySize` desde la página de opciones.
 
-## Fase 4 (navegación)
-- Clic en URL: limpiar el temporizador de 400 ms al destruir la vista; cancelar también ante selección por teclado.
-
 ## Fase 5 (rendimiento)
 - La ruta con reviver (números largos) es ~10× más lenta; revisar junto al modo ligero.
 - `text/plain` se parsea entero en el detector, sin límite de tamaño.
