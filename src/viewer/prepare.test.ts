@@ -18,6 +18,7 @@ describe('defaultViewerOptions', () => {
       indentCStyle: false,
       showArraySize: false,
       foldFromLevel: 0,
+      lightModeThresholdMB: 20,
     });
   });
 });

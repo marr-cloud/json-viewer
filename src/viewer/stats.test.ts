@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { byteLength, countLines, formatBytes, formatCount } from './stats';
+import { byteLength, countLines, formatBytes, formatCount, isLightMode } from './stats';
 
 describe('byteLength', () => {
   it('counts UTF-8 bytes', () => {
@@ -8,6 +8,25 @@ describe('byteLength', () => {
     expect(byteLength('ñ')).toBe(2);
     expect(byteLength('こ')).toBe(3);
     expect(byteLength('😀')).toBe(4);
+  });
+
+  it('counts a lone surrogate as the 3-byte replacement character, like TextEncoder', () => {
+    expect(byteLength('\ud800')).toBe(3);
+    expect(byteLength('a\udc00b')).toBe(5);
+    expect(byteLength('😀\ud83d')).toBe(7);
+  });
+
+  it('matches TextEncoder on mixed text', () => {
+    const text = 'aé€😀\ud800z'.repeat(100);
+    expect(byteLength(text)).toBe(new TextEncoder().encode(text).length);
+  });
+});
+
+describe('isLightMode', () => {
+  it('is on above the threshold, in MiB', () => {
+    expect(isLightMode(20 * 1024 * 1024, 20)).toBe(false);
+    expect(isLightMode(20 * 1024 * 1024 + 1, 20)).toBe(true);
+    expect(isLightMode(0, 1)).toBe(false);
   });
 });
 

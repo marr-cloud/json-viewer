@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultViewerOptions } from '@/viewer/options';
+import { defaultFeatures, defaultViewerOptions } from '@/viewer/options';
 import { defaultFontSettings } from './font';
 import { defaultSettings, validateSettings } from './schema';
 import { defaultShortcuts } from './shortcuts';
@@ -33,6 +33,7 @@ describe('validateSettings', () => {
       darkThemeId: 'dark-plus',
       font: defaultFontSettings,
       shortcuts: defaultShortcuts,
+      features: defaultFeatures,
     });
   });
 
@@ -44,6 +45,7 @@ describe('validateSettings', () => {
       darkThemeId: 'dracula',
       font: { ...defaultFontSettings, source: 'google', family: 'JetBrains Mono' },
       shortcuts: { ...defaultShortcuts, toggleRaw: 'Ctrl+Alt+R' },
+      features: { ...defaultFeatures, imagePreview: false },
     };
     expect(validateSettings(input)).toEqual(input);
   });
@@ -63,7 +65,23 @@ describe('validateSettings', () => {
       darkThemeId: 'nord',
       font: defaultFontSettings,
       shortcuts: defaultShortcuts,
+      features: defaultFeatures,
     });
+  });
+
+  it('validates the features one by one', () => {
+    const result = validateSettings({ features: { colorSwatches: false, imagePreview: 'no', extra: true } });
+    expect(result.features).toEqual({ ...defaultFeatures, colorSwatches: false });
+  });
+
+  it('clamps and rounds the light mode threshold to 1..1000 MB', () => {
+    const threshold = (value: unknown) =>
+      validateSettings({ viewer: { lightModeThresholdMB: value } }).viewer.lightModeThresholdMB;
+    expect(threshold(50)).toBe(50);
+    expect(threshold(0)).toBe(1);
+    expect(threshold(5000)).toBe(1000);
+    expect(threshold(2.6)).toBe(3);
+    expect(threshold('5')).toBe(20);
   });
 
   it('clamps and rounds the tab size to 1..10', () => {
