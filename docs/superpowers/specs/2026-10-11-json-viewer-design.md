@@ -31,7 +31,7 @@ Uso personal primero (Edge y Chrome, cargada sin empaquetar), con estructura lis
 - **WXT** (Manifest V3), TypeScript, **pnpm**.
 - **Vue 3** (`@wxt-dev/module-vue`) para visor, opciones y scratchpad.
 - **CodeMirror 6** (`@codemirror/lang-json`, fold, search, view, state).
-- `jsonpath-plus` (con `eval: false`) para el filtro.
+- `jsonpath-plus` (con `eval: 'safe'`: intérprete propio, sin `eval`/`Function`; ver §6.2) para el filtro.
 - `@wxt-dev/i18n` para en/es.
 - `tm-themes` (devDependency) como fuente de los temas incluidos.
 - Vitest (`WxtVitest`, `fakeBrowser`) y Playwright.
@@ -161,12 +161,18 @@ Todo dentro de un shadow root; el tema se aplica con variables CSS (`toCssVars`)
 ### 6.2 Barra superior
 
 - Selector Código / Raw.
-- Filtro JSONPath (`jsonpath-plus`, `eval: false`): el resultado se muestra formateado en el editor (solo lectura); `Esc` vuelve al documento completo; errores de sintaxis se muestran bajo el campo.
+- Filtro JSONPath (`jsonpath-plus`, `eval: 'safe'`): el resultado se muestra formateado en el editor (solo lectura); `Esc` vuelve al documento completo; errores de sintaxis se muestran bajo el campo.
 - Plegar todo, desplegar todo, plegar hasta nivel N.
 - Copiar formateado, copiar minificado, descargar `.json`.
 - Ordenar claves (re-formatea el documento sin recargar).
 - Alternar claro/oscuro (solo pestaña).
 - Abrir opciones.
+
+Decisiones de la Fase 4:
+
+- El filtro usa `eval: 'safe'` en vez de `eval: false`: con `false` ningún filtro `[?(...)]` funciona, y `'safe'` no ejecuta código ni accede a globales (compatible con CSP). Se aplica con Enter, no al escribir; el resultado es siempre un array y se abre sin plegar.
+- Niveles: el valor raíz es el nivel 1. "Plegar todo" deja abierto el raíz (nivel 2); la UI muestra "Show N levels" (= nivel N + 1).
+- Copiar y descargar actúan sobre lo que muestra Code (el resultado del filtro si hay uno). Sin API de portapapeles (http no local) se usa `execCommand('copy')`.
 
 ### 6.3 Barra inferior
 
@@ -182,6 +188,8 @@ Todo dentro de un shadow root; el tema se aplica con variables CSS (`toCssVars`)
 | Alternar Raw | `Alt+R` |
 | Plegar todo / desplegar todo | `Alt+[` / `Alt+]` |
 | Copiar ruta del cursor | `Ctrl+Shift+C` |
+
+Se guardan como `"Ctrl+Shift+F"` y se comparan por tecla física (`KeyboardEvent.code`), así Shift, Alt y AltGr no cambian la tecla; AltGr llega como Ctrl+Alt y no coincide con un atajo `Alt+…`. Exigen Ctrl, Alt o Meta (o una tecla F). `""` desactiva la acción; si dos acciones comparten combinación gana la primera y opciones avisa.
 
 ### 6.5 Valores enriquecidos
 
@@ -206,7 +214,7 @@ Decoraciones de CodeMirror calculadas solo sobre el rango visible:
 |---|---|
 | `prependHeader` (true) | `showHeader` (true): URL y fecha en la barra |
 | `maxJsonSize` (400 KB) | `lightModeThresholdMB` (20) |
-| `alwaysFold` (false) | `foldFromLevel` (0 = no plegar) |
+| `alwaysFold` (false) | `foldFromLevel` (0 = no plegar; 2 = `alwaysFold`) |
 | `alwaysRenderAllContent` | eliminado (CodeMirror 6 virtualiza) |
 | `sortKeys` (false) | `sortKeys` |
 | `clickableUrls` (true) | `clickableUrls` |
