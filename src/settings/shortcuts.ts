@@ -82,7 +82,7 @@ export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test
 
 /**
  * "Ctrl+Alt+Shift+Meta+Key" for a key press; null for modifier keys on their own and unknown keys.
- * On a Mac, Cmd and Ctrl both count as Ctrl, so Meta never appears.
+ * On a Mac, Cmd counts as Ctrl, unless Ctrl is held too (Ctrl+Cmd+F is macOS's full screen): then both are kept.
  */
 export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
   const key = keyFromCode(event.code);
@@ -91,7 +91,7 @@ export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
     event.ctrlKey || (mac && event.metaKey) ? 'Ctrl' : '',
     event.altKey ? 'Alt' : '',
     event.shiftKey ? 'Shift' : '',
-    event.metaKey && !mac ? 'Meta' : '',
+    event.metaKey && (!mac || event.ctrlKey) ? 'Meta' : '',
     key,
   ];
   return parts.filter((part) => part !== '').join('+');
@@ -100,9 +100,13 @@ export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
 /** How a combination reads on this platform: "Cmd" and "Option" on a Mac. */
 export function shortcutLabel(combo: string, mac = IS_MAC): string {
   if (!mac) return combo;
-  return combo
-    .split('+')
-    .map((part) => (part === 'Ctrl' ? 'Cmd' : part === 'Alt' ? 'Option' : part))
+  const parts = combo.split('+');
+  // With both Ctrl and Meta stored, Ctrl is the real Control key.
+  const keepCtrl = parts.includes('Ctrl') && parts.includes('Meta');
+  return parts
+    .map((part) =>
+      part === 'Ctrl' ? (keepCtrl ? 'Ctrl' : 'Cmd') : part === 'Meta' ? 'Cmd' : part === 'Alt' ? 'Option' : part,
+    )
     .join('+');
 }
 

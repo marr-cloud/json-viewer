@@ -122,7 +122,7 @@ describe('on a Mac', () => {
   it('reads Cmd as Ctrl, so the same settings work on every platform', () => {
     expect(comboFromEvent(press('KeyF', { metaKey: true }), true)).toBe('Ctrl+F');
     expect(comboFromEvent(press('KeyF', { ctrlKey: true, shiftKey: true }), true)).toBe('Ctrl+Shift+F');
-    expect(comboFromEvent(press('KeyF', { ctrlKey: true, metaKey: true }), true)).toBe('Ctrl+F');
+    expect(comboFromEvent(press('KeyF', { ctrlKey: true, metaKey: true }), true)).toBe('Ctrl+Meta+F');
   });
 
   it('keeps Meta apart on other platforms', () => {
@@ -134,6 +134,7 @@ describe('on a Mac', () => {
     expect(shortcutLabel('Ctrl+Alt+Shift+F', true)).toBe('Cmd+Option+Shift+F');
     expect(shortcutLabel('Ctrl+Alt+Shift+F', false)).toBe('Ctrl+Alt+Shift+F');
     expect(shortcutLabel('', true)).toBe('');
+    expect(shortcutLabel('Ctrl+Meta+F', true)).toBe('Ctrl+Cmd+F');
   });
 
   it('names the modifiers in the hint', () => {
