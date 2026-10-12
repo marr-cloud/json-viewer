@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { fromVSCode, ThemeImportError } from '@/themes/fromVSCode';
 import { saveCustomTheme, uniqueThemeId } from '@/themes/store';
 import type { Theme } from '@/themes/types';
 
@@ -12,6 +11,8 @@ const errors = ref<string[]>([]);
 const warnings = ref<string[]>([]);
 const message = ref('');
 const importing = ref(false);
+// Set once the converter has loaded on demand (it and jsonc-parser are only needed when importing).
+let ImportError: typeof import('@/themes/fromVSCode').ThemeImportError | undefined;
 
 async function importTheme(input: string | File): Promise<void> {
   errors.value = [];
@@ -20,6 +21,8 @@ async function importTheme(input: string | File): Promise<void> {
   importing.value = true;
   try {
     const source = typeof input === 'string' ? input : await input.text();
+    const { fromVSCode, ThemeImportError } = await import('@/themes/fromVSCode');
+    ImportError = ThemeImportError;
     const result = fromVSCode(source, 'imported');
     const theme: Theme = { ...result.theme, id: uniqueThemeId(result.theme.name, props.takenIds) };
     await saveCustomTheme(theme);
@@ -28,7 +31,7 @@ async function importTheme(input: string | File): Promise<void> {
     text.value = '';
     emit('imported', theme);
   } catch (error) {
-    errors.value = error instanceof ThemeImportError ? error.errors : [error instanceof Error ? error.message : String(error)];
+    errors.value = ImportError && error instanceof ImportError ? error.errors : [error instanceof Error ? error.message : String(error)];
   } finally {
     importing.value = false;
   }

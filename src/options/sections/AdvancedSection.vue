@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import CssEditor from '../CssEditor.vue';
+import { defineAsyncComponent } from 'vue';
+
+// Split out with @codemirror/lang-css so the options entry chunk stays small.
+const CssEditor = defineAsyncComponent(() => import('../CssEditor.vue'));
 
 const customCss = defineModel<string>('customCss', { required: true });
 </script>
