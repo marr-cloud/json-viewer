@@ -35,6 +35,7 @@ solos y se aplican en vivo a las pestañas abiertas.
   En Mac, Cmd hace de Ctrl.
 - **Funciones:** activar o desactivar el filtro JSONPath, las muestras de color y las vistas previas de fechas e
   imágenes, y el umbral del modo ligero.
+- **Sitios:** hosts donde no abrir el visor (uno por línea; `*.example.com` incluye `example.com`, `*` comodín).
 - **Avanzado:** CSS propio para el visor.
 
 ## En el visor
@@ -46,11 +47,21 @@ solos y se aplican en vivo a las pestañas abiertas.
 - **Búsqueda (`Ctrl+F`):** panel compacto al estilo VS Code con mayúsculas (`Aa`), palabra completa (`ab`) y
   expresión regular (`.*`), contador "2 of 12" (hasta 1000; sin contador en documentos de más de ~4 MB), Enter /
   Shift+Enter para siguiente / anterior, Alt+Enter para seleccionar todas y Esc para cerrar.
+- **Formatos:** además de JSON, JSONP (`callback({...})`, se muestra el JSON de dentro) y NDJSON / JSON Lines (un
+  valor por línea, se muestra como array). `text/plain` y JavaScript solo se abren si el cuerpo es JSON o JSONP
+  válido. La barra inferior indica el formato.
 - **Valores enriquecidos:** muestra de color junto a `#ff5500`, `rgb(…)` o `hsl(…)`; al pasar el ratón por una fecha
   Unix (segundos o milisegundos) o ISO 8601, su hora local y UTC; al pasarlo por la URL de una imagen, una miniatura.
   Por encima del umbral de **modo ligero** (20 MB por defecto) se desactivan y la barra inferior lo indica.
 - **Atajos por defecto:** buscar `Ctrl+F`, filtro `Ctrl+Shift+F`, Raw `Alt+R`, plegar / desplegar todo `Alt+[` /
   `Alt+]`, copiar ruta `Ctrl+Shift+C`. Se reconocen por la posición física de la tecla.
+
+## Fuera de las páginas JSON
+
+- **Scratchpad:** el ícono de la extensión abre una pestaña donde pegar JSON, JSONP o NDJSON y verlo en el visor.
+- **Menú contextual:** "View as JSON" abre el visor en cualquier página (también en sitios excluidos); "View
+  selection as JSON" abre lo seleccionado en el scratchpad. Si el navegador no deja ejecutar la extensión en la
+  página, el ícono muestra un "!" y el motivo al pasar el ratón.
 
 ## Temas incluidos
 
