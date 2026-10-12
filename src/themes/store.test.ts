@@ -15,6 +15,7 @@ describe('uniqueThemeId', () => {
   it('slugifies names', () => {
     expect(uniqueThemeId('Dracula Theme', [])).toBe('dracula-theme');
     expect(uniqueThemeId('Café Night!', [])).toBe('cafe-night');
+    expect(uniqueThemeId('Crème Brûlée', [])).toBe('creme-brulee');
     expect(uniqueThemeId('***', [])).toBe('theme');
   });
 

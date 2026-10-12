@@ -25,6 +25,7 @@ export function uniqueThemeId(name: string, taken: Iterable<string>): string {
   const base =
     name
       .normalize('NFKD')
+      .replace(/\p{M}/gu, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
