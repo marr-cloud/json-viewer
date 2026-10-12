@@ -97,6 +97,13 @@ describe('parseJson', () => {
     expect(result.error.column).toBe(column);
     expect(result.error.message.length).toBeGreaterThan(0);
   });
+
+  it('locates errors in CRLF documents by line and column', () => {
+    const result = parseJson('{\r\n  "a": 1,\r\n}');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ line: 3, column: 1 });
+  });
 });
 
 describe('stripBom', () => {
@@ -149,5 +156,13 @@ describe('locateError', () => {
 describe('offsetToLineColumn', () => {
   it('counts lines and 1-based columns', () => {
     expect(offsetToLineColumn('ab\ncd\nef', 7)).toEqual({ line: 3, column: 2 });
+  });
+
+  it('treats a lone carriage return as a line break', () => {
+    expect(offsetToLineColumn('a\rb', 2)).toEqual({ line: 2, column: 1 });
+  });
+
+  it('treats CRLF as a single line break', () => {
+    expect(offsetToLineColumn('a\r\nb\r\nc', 6)).toEqual({ line: 3, column: 1 });
   });
 });

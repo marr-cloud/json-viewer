@@ -28,6 +28,7 @@ const routes: Record<string, { type: string; body: string }> = {
   '/plain-log': { type: 'text/plain', body: '[INFO] server started' },
   '/page.html': { type: 'text/html', body: '<!doctype html><title>t</title><pre>{"a":1}</pre>' },
   '/invalid.json': { type: 'application/json', body: '{\n  "a": 1,\n}' },
+  '/invalid-crlf.json': { type: 'application/json', body: '{\r\n  "a": 1,\r\n  "b": 2,\r\n}' },
   '/bom.json': { type: 'application/json', body: '\uFEFF{"a":1}' },
   '/minified-invalid.json': { type: 'application/json', body: minifiedInvalid },
   '/big.json': { type: 'application/json', body: bigJson },

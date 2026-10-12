@@ -137,3 +137,10 @@ test('the always-on detector does not post messages to the page', async ({ conte
   );
   expect(JSON.stringify(messages)).not.toMatch(/wxt|content-script-started/);
 });
+
+test('marks the right character in an invalid CRLF document', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/invalid-crlf.json'));
+  await expect(page.locator(`${viewer} .jv-error`)).toContainText('line 4, column 1');
+  await expect(page.locator(`${viewer} .cm-jv-error-char`)).toHaveText('}');
+});

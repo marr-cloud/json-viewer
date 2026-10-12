@@ -22,7 +22,7 @@ describe('buildExtensions', () => {
 
   it('accepts every feature switched on', () => {
     const all = { ...defaultViewerOptions, showArraySize: true, wrapLinkWithAnchorTag: true };
-    expect(() => create(all, { line: 2, offset: 2 })).not.toThrow();
+    expect(() => create(all, { line: 2, column: 1 })).not.toThrow();
   });
 
   it('accepts every feature switched off', () => {
@@ -64,14 +64,14 @@ describe('buildExtensions in a mounted view', () => {
   });
 
   it('marks exactly the requested error line', () => {
-    const v = mount(defaultViewerOptions, { line: 2, offset: null });
+    const v = mount(defaultViewerOptions, { line: 2, column: null });
     const marked = v.dom.querySelectorAll('.cm-jv-error-line');
     expect(marked).toHaveLength(1);
     expect(v.dom.querySelectorAll('.cm-line')[1]).toBe(marked[0]);
   });
 
-  it('marks the character at the error offset', () => {
-    const v = mount(defaultViewerOptions, { line: 2, offset: 2 });
+  it('marks the character at the error column', () => {
+    const v = mount(defaultViewerOptions, { line: 2, column: 1 });
     const chars = v.dom.querySelectorAll('.cm-jv-error-char');
     expect(chars).toHaveLength(1);
     expect(chars[0]?.textContent).toBe(' ');
@@ -86,7 +86,7 @@ describe('buildExtensions in a mounted view', () => {
         extensions: buildExtensions({
           options: defaultViewerOptions,
           theme: defaultTheme,
-          error: { line: 1, offset: 100 },
+          error: { line: 1, column: 101 },
         }),
       }),
       parent: document.body,

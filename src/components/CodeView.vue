@@ -2,7 +2,7 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import type { ErrorLocation } from '@/editor/errorLine';
+import { errorPosition, type ErrorLocation } from '@/editor/errorLine';
 import { buildExtensions } from '@/editor/setup';
 import type { Theme } from '@/themes/types';
 import type { ViewerOptions } from '@/viewer/options';
@@ -25,19 +25,13 @@ function createState(): EditorState {
 }
 
 function revealError(): void {
-  const error = props.error;
-  if (!view || error === null) return;
-  const doc = view.state.doc;
-  if (error.offset !== null) {
-    const anchor = Math.min(Math.max(error.offset, 0), doc.length);
-    view.dispatch({
-      selection: { anchor },
-      effects: EditorView.scrollIntoView(anchor, { y: 'center', x: 'center' }),
-    });
-  } else if (error.line !== null) {
-    const line = doc.line(Math.min(Math.max(error.line, 1), doc.lines));
-    view.dispatch({ effects: EditorView.scrollIntoView(line.from, { y: 'center' }) });
-  }
+  if (!view || props.error === null) return;
+  const position = errorPosition(view.state.doc, props.error);
+  if (position === null) return;
+  view.dispatch({
+    selection: { anchor: position },
+    effects: EditorView.scrollIntoView(position, { y: 'center', x: 'center' }),
+  });
 }
 
 onMounted(() => {

@@ -68,7 +68,9 @@ export function offsetToLineColumn(text: string, offset: number): { line: number
   let line = 1;
   let lineStart = 0;
   for (let i = 0; i < offset && i < text.length; i++) {
-    if (text.charCodeAt(i) === 10) {
+    const code = text.charCodeAt(i);
+    // \n, \r\n and a lone \r all end a line, matching CodeMirror's line splitting.
+    if (code === 10 || (code === 13 && text.charCodeAt(i + 1) !== 10)) {
       line++;
       lineStart = i + 1;
     }
