@@ -1,4 +1,4 @@
-import { isRecord, nonEmptyString } from '@/shared/guards';
+import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
 import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
@@ -20,27 +20,29 @@ export const defaultSettings: Settings = {
 export const TAB_SIZE_MIN = 1;
 export const TAB_SIZE_MAX = 10;
 
-const THEME_MODES: readonly string[] = ['auto', 'light', 'dark'];
+const viewerValidators: ObjectValidators<ViewerOptions> = {
+  showHeader: bool,
+  sortKeys: bool,
+  clickableUrls: bool,
+  wrapLinkWithAnchorTag: bool,
+  openLinksInNewWindow: bool,
+  autoHighlight: bool,
+  lineNumbers: bool,
+  lineWrapping: bool,
+  foldGutter: bool,
+  tabSize: intInRange(TAB_SIZE_MIN, TAB_SIZE_MAX),
+  indentCStyle: bool,
+  showArraySize: bool,
+};
+
+const settingsValidators: ObjectValidators<Settings> = {
+  viewer: (value) => validateFields(value, defaultViewerOptions, viewerValidators),
+  themeMode: oneOf<ThemeMode>(['auto', 'light', 'dark']),
+  lightThemeId: nonEmptyId,
+  darkThemeId: nonEmptyId,
+};
 
 /** Returns complete settings; every missing or invalid field falls back to its default. */
 export function validateSettings(input: unknown): Settings {
-  const raw = isRecord(input) ? input : {};
-  const rawViewer = isRecord(raw.viewer) ? raw.viewer : {};
-  const viewer: ViewerOptions = { ...defaultViewerOptions };
-  for (const key of Object.keys(defaultViewerOptions) as (keyof ViewerOptions)[]) {
-    const value = rawViewer[key];
-    if (key === 'tabSize') {
-      if (typeof value === 'number' && Number.isFinite(value)) {
-        viewer.tabSize = Math.min(TAB_SIZE_MAX, Math.max(TAB_SIZE_MIN, Math.round(value)));
-      }
-    } else if (typeof value === 'boolean') {
-      (viewer as unknown as Record<string, boolean>)[key] = value;
-    }
-  }
-  return {
-    viewer,
-    themeMode: THEME_MODES.includes(raw.themeMode as string) ? (raw.themeMode as ThemeMode) : defaultSettings.themeMode,
-    lightThemeId: nonEmptyString(raw.lightThemeId) ?? defaultSettings.lightThemeId,
-    darkThemeId: nonEmptyString(raw.darkThemeId) ?? defaultSettings.darkThemeId,
-  };
+  return validateFields(input, defaultSettings, settingsValidators);
 }
