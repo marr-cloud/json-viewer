@@ -22,7 +22,7 @@ describe('epochDate', () => {
 
 describe('isoDate', () => {
   it('reads dates and date-times', () => {
-    expect(isoDate('2024-10-12')).toEqual({ ms: Date.UTC(2024, 9, 12), source: 'iso' });
+    expect(isoDate('2024-10-12')).toEqual({ ms: Date.UTC(2024, 9, 12), source: 'date' });
     expect(isoDate('2024-10-12T09:30:00Z')).toEqual({ ms: Date.UTC(2024, 9, 12, 9, 30), source: 'iso' });
     expect(isoDate('2024-10-12T09:30:00+02:00')).toEqual({ ms: Date.UTC(2024, 9, 12, 7, 30), source: 'iso' });
     expect(isoDate('2024-10-12T09:30:00.123456789Z')?.ms).toBe(Date.UTC(2024, 9, 12, 9, 30, 0, 123));
@@ -46,6 +46,13 @@ describe('describeDate', () => {
       '2024-10-11 18:30:00.005 (UTC-05:30)',
       '2024-10-12 00:00:00.005 UTC',
     ]);
+  });
+
+  it('shows a date without time as a calendar date in any zone', () => {
+    const date = { ms: Date.UTC(2024, 9, 12), source: 'date' } as const;
+    for (const offset of [-300, 600]) {
+      expect(describeDate(date, offset)).toEqual(['2024-10-12 (Saturday)', 'Calendar date, no time zone']);
+    }
   });
 });
 

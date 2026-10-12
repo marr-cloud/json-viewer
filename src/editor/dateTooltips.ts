@@ -8,7 +8,7 @@ const MAX_MS = Date.UTC(2100, 0, 1);
 export interface DetectedDate {
   ms: number;
   /** How the value was read; shown in the tooltip. */
-  source: 'seconds' | 'milliseconds' | 'iso';
+  source: 'seconds' | 'milliseconds' | 'iso' | 'date';
 }
 
 /** An integer read as Unix time in seconds or milliseconds, when it lands in 1990–2099. */
@@ -29,7 +29,9 @@ export function isoDate(value: string): DetectedDate | null {
   // Date.parse rolls "2024-02-30" over to March 1st; reject days the month doesn't have.
   if (month < 1 || month > 12 || day < 1 || day > new Date(Date.UTC(year, month, 0)).getUTCDate()) return null;
   const ms = Date.parse(value);
-  return Number.isNaN(ms) ? null : { ms, source: 'iso' };
+  if (Number.isNaN(ms)) return null;
+  // A bare calendar date has no time zone, so it must never be shifted to local time.
+  return { ms, source: match[0].length === 10 ? 'date' : 'iso' };
 }
 
 /** "2024-10-12 09:30:00" (milliseconds only when present) for a time already shifted to the wanted zone. */
@@ -49,13 +51,20 @@ const SOURCE_LABELS: Record<DetectedDate['source'], string | null> = {
   seconds: 'Unix time in seconds',
   milliseconds: 'Unix time in milliseconds',
   iso: null,
+  date: 'Calendar date, no time zone',
 };
+
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 /**
  * The tooltip lines for a date: local time (with its UTC offset), UTC, and how a number was read.
  * `offsetMinutes` is the local offset east of UTC (Europe/Madrid in summer: 120).
  */
 export function describeDate(date: DetectedDate, offsetMinutes: number): string[] {
+  if (date.source === 'date') {
+    const day = new Date(date.ms);
+    return [`${day.toISOString().slice(0, 10)} (${WEEKDAYS[day.getUTCDay()]})`, SOURCE_LABELS.date!];
+  }
   const lines = [
     `${formatClock(date.ms + offsetMinutes * 60_000)} (${formatOffset(offsetMinutes)})`,
     `${formatClock(date.ms)} UTC`,
