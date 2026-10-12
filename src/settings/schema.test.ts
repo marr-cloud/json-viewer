@@ -2,8 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { defaultViewerOptions } from '@/viewer/options';
 import { defaultFontSettings } from './font';
 import { defaultSettings, validateSettings } from './schema';
+import { defaultShortcuts } from './shortcuts';
 
 describe('validateSettings', () => {
+  it('validates shortcuts per action', () => {
+    const result = validateSettings({ shortcuts: { search: '', filter: 'nope' } });
+    expect(result.shortcuts).toEqual({ ...defaultShortcuts, search: '' });
+  });
+
+  it('accepts only the offered fold levels', () => {
+    for (const level of [0, 2, 3, 4, 5, 6]) {
+      expect(validateSettings({ viewer: { foldFromLevel: level } }).viewer.foldFromLevel).toBe(level);
+    }
+    for (const level of [1, 7, -1, 2.5, '2', null]) {
+      expect(validateSettings({ viewer: { foldFromLevel: level } }).viewer.foldFromLevel).toBe(0);
+    }
+  });
+
   it('returns the defaults for anything that is not an object', () => {
     for (const input of [undefined, null, 42, 'x', []]) {
       expect(validateSettings(input)).toEqual(defaultSettings);
@@ -17,6 +32,7 @@ describe('validateSettings', () => {
       lightThemeId: 'light-plus',
       darkThemeId: 'dark-plus',
       font: defaultFontSettings,
+      shortcuts: defaultShortcuts,
     });
   });
 
@@ -27,6 +43,7 @@ describe('validateSettings', () => {
       lightThemeId: 'github-light',
       darkThemeId: 'dracula',
       font: { ...defaultFontSettings, source: 'google', family: 'JetBrains Mono' },
+      shortcuts: { ...defaultShortcuts, toggleRaw: 'Ctrl+Alt+R' },
     };
     expect(validateSettings(input)).toEqual(input);
   });
@@ -45,6 +62,7 @@ describe('validateSettings', () => {
       lightThemeId: 'light-plus',
       darkThemeId: 'nord',
       font: defaultFontSettings,
+      shortcuts: defaultShortcuts,
     });
   });
 

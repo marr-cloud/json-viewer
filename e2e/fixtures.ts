@@ -22,7 +22,12 @@ export const test = base.extend<
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       colorScheme: 'dark',
-      args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+      args: [
+        `--disable-extensions-except=${extensionPath}`,
+        `--load-extension=${extensionPath}`,
+        // http://jv.test is a real non-secure origin, like a plain-http internal API.
+        '--host-resolver-rules=MAP jv.test 127.0.0.1',
+      ],
     });
     await use(context);
     await context.close();

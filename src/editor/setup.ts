@@ -34,7 +34,8 @@ export function buildExtensions({ options, theme, error }: EditorSetup): Extensi
     highlightActiveLine(),
     highlightSelectionMatches(),
     search({ top: true }),
-    keymap.of([...searchKeymap, ...foldKeymap, ...defaultKeymap]),
+    // Ctrl+F is a configurable viewer shortcut (JsonViewer), so CodeMirror must not claim it.
+    keymap.of([...searchKeymap.filter((binding) => binding.key !== 'Mod-f'), ...foldKeymap, ...defaultKeymap]),
     toCodeMirrorTheme(theme),
   ];
   if (options.lineNumbers) extensions.push(lineNumbers(), highlightActiveLineGutter());

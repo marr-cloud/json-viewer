@@ -17,6 +17,7 @@ describe('defaultViewerOptions', () => {
       tabSize: 2,
       indentCStyle: false,
       showArraySize: false,
+      foldFromLevel: 0,
     });
   });
 });
@@ -26,10 +27,12 @@ describe('prepareDocument', () => {
     expect(prepareDocument('{"a":[1]}', defaultViewerOptions)).toEqual({
       ok: true,
       text: '{\n  "a": [\n    1\n  ]\n}',
+      value: { a: [1] },
     });
     expect(prepareDocument('{"a":1}', { ...defaultViewerOptions, tabSize: 4 })).toEqual({
       ok: true,
       text: '{\n    "a": 1\n}',
+      value: { a: 1 },
     });
   });
 
@@ -45,6 +48,7 @@ describe('prepareDocument', () => {
     expect(prepareDocument('\uFEFF{"a":1}', defaultViewerOptions)).toEqual({
       ok: true,
       text: '{\n  "a": 1\n}',
+      value: { a: 1 },
     });
     const invalid = prepareDocument('\uFEFF{', defaultViewerOptions);
     expect(invalid.text).toBe('{');
@@ -74,7 +78,7 @@ describe('prepareDocument', () => {
     ['{}', '{}'],
     ['[]', '[]'],
   ])('handles root value %s', (raw, text) => {
-    expect(prepareDocument(raw, defaultViewerOptions)).toEqual({ ok: true, text });
+    expect(prepareDocument(raw, defaultViewerOptions)).toEqual({ ok: true, text, value: JSON.parse(raw) });
   });
 
   it('reports an empty body as an error', () => {

@@ -30,8 +30,18 @@ solos y se aplican en vivo a las pestañas abiertas.
 - **Fuentes:** una fuente instalada en el equipo o cualquier familia de Google Fonts (con sugerencias de fuentes
   monoespaciadas). Las de Google se descargan una vez desde las opciones y luego funcionan sin conexión, incluso en
   páginas con CSP estricta. Tamaño, interlineado, grosor y ligaduras.
-- **Comportamiento** y **Estructura:** las mismas opciones del json-viewer original, con interruptores.
+- **Comportamiento** y **Estructura:** las mismas opciones del json-viewer original, con interruptores, y plegado al abrir (como `alwaysFold`).
+- **Atajos:** cada acción del visor tiene un atajo que se cambia pulsando la nueva combinación (Retroceso lo quita).
 - **Avanzado:** CSS propio para el visor.
+
+## En el visor
+
+- **Barra inferior:** ruta JSON del cursor (`$.items[3]["e-mail"]`; clic = copiar), tamaño, líneas y formato.
+- **Barra superior:** filtro JSONPath (Enter aplica, Esc vuelve al documento; admite filtros como
+  `$..items[?(@.price > 10)]`), plegar todo / desplegar todo / plegar por nivel, copiar formateado o minificado,
+  descargar `.json` y ordenar claves (solo en esa pestaña).
+- **Atajos por defecto:** buscar `Ctrl+F`, filtro `Ctrl+Shift+F`, Raw `Alt+R`, plegar / desplegar todo `Alt+[` /
+  `Alt+]`, copiar ruta `Ctrl+Shift+C`. Se reconocen por la posición física de la tecla.
 
 ## Temas incluidos
 

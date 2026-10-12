@@ -3,6 +3,8 @@ import type { AddressInfo } from 'node:net';
 
 export interface FixtureServer {
   url(path: string): string;
+  /** Same server under a name the browser maps to 127.0.0.1; not a secure context. */
+  insecureUrl(path: string): string;
   close(): Promise<void>;
 }
 
@@ -48,6 +50,7 @@ export async function startFixtureServer(): Promise<FixtureServer> {
   const { port } = server.address() as AddressInfo;
   return {
     url: (path) => `http://127.0.0.1:${port}${path}`,
+    insecureUrl: (path) => `http://jv.test:${port}${path}`,
     close: () => new Promise((resolve) => server.close(() => resolve())),
   };
 }
