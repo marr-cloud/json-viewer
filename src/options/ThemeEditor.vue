@@ -20,6 +20,7 @@ const draft = ref<Theme>({
 const jsonText = ref('');
 const jsonErrors = ref<string[]>([]);
 const saveError = ref('');
+const colorError = ref('');
 let editingJson = false;
 
 const resolved = computed(() => resolveColors(draft.value));
@@ -28,7 +29,10 @@ const canSave = computed(() => jsonErrors.value.length === 0 && draft.value.name
 watch(
   draft,
   (theme) => {
-    if (!editingJson) jsonText.value = JSON.stringify(theme, null, 2);
+    if (!editingJson) {
+      jsonText.value = JSON.stringify(theme, null, 2);
+      jsonErrors.value = [];
+    }
     emit('change', clone(theme));
   },
   { deep: true, immediate: true },
@@ -42,15 +46,23 @@ function hexOrNull(value: string): string | null {
   }
 }
 
-function setColor(key: ThemeColorKey, value: string): void {
-  const trimmed = value.trim();
+function setColor(key: ThemeColorKey, input: HTMLInputElement): void {
+  const trimmed = input.value.trim();
   if (trimmed === '' && key !== 'background' && key !== 'foreground') {
     // Clearing an optional color makes it derived again.
+    colorError.value = '';
     delete (draft.value.colors as Partial<ThemeColors>)[key];
     return;
   }
   const hex = hexOrNull(trimmed);
-  if (hex !== null) draft.value.colors[key] = hex;
+  if (hex === null) {
+    // Vue won't repatch an unchanged :value, so restore the field by hand.
+    input.value = draft.value.colors[key] ?? '';
+    colorError.value = `Invalid color for ${key}: use #rgb, #rgba, #rrggbb or #rrggbbaa`;
+    return;
+  }
+  colorError.value = '';
+  draft.value.colors[key] = hex;
 }
 
 function onJsonInput(): void {
@@ -109,7 +121,7 @@ async function save(): Promise<void> {
           type="color"
           :aria-label="`${key} picker`"
           :value="resolved[key].slice(0, 7)"
-          @input="setColor(key, ($event.target as HTMLInputElement).value)"
+          @input="setColor(key, $event.target as HTMLInputElement)"
         />
         <input
           type="text"
@@ -117,7 +129,7 @@ async function save(): Promise<void> {
           :value="draft.colors[key] ?? ''"
           :placeholder="resolved[key]"
           spellcheck="false"
-          @change="setColor(key, ($event.target as HTMLInputElement).value)"
+          @change="setColor(key, $event.target as HTMLInputElement)"
         />
         <small v-if="!draft.colors[key]" class="opt-hint">derived</small>
       </div>
@@ -129,6 +141,7 @@ async function save(): Promise<void> {
     <ul v-if="jsonErrors.length" class="opt-errors" role="alert">
       <li v-for="error in jsonErrors" :key="error">{{ error }}</li>
     </ul>
+    <p v-if="colorError" class="opt-errors" role="alert">{{ colorError }}</p>
     <p v-if="saveError" class="opt-errors" role="alert">{{ saveError }}</p>
     <div class="opt-row">
       <button type="button" :disabled="!canSave" @click="save">Save theme</button>

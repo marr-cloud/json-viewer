@@ -93,3 +93,27 @@ test('blocks saving a theme with invalid JSON', async ({ context, extensionId })
   await expect(options.getByRole('alert')).toContainText('Invalid JSON');
   await expect(options.getByRole('button', { name: 'Save theme' })).toBeDisabled();
 });
+
+test('clears the JSON error once a color edit rewrites the JSON', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await options.getByRole('button', { name: 'Duplicate & edit dark theme' }).click();
+  await options.getByLabel('Theme JSON').fill('{"name": ');
+  await expect(options.getByRole('alert')).toContainText('Invalid JSON');
+  await options.getByLabel('key hex').fill('#00ff00');
+  await options.getByLabel('key hex').press('Tab');
+  await expect(options.getByRole('alert')).toHaveCount(0);
+  await expect(options.getByRole('button', { name: 'Save theme' })).toBeEnabled();
+});
+
+test('rejects an invalid hex and restores the field', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await options.getByRole('button', { name: 'Duplicate & edit dark theme' }).click();
+  const field = options.getByLabel('key hex');
+  const previous = await field.inputValue();
+  await field.fill('nope');
+  await field.press('Tab');
+  await expect(options.getByRole('alert')).toContainText('Invalid color for key');
+  await expect(field).toHaveValue(previous);
+});
