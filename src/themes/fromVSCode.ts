@@ -67,7 +67,7 @@ export function fromVSCode(source: string, id: string): ImportedTheme {
   } else if (typeof json.tokenColors === 'string') {
     warnings.push(`"tokenColors" points to another file (${json.tokenColors}); syntax colors use the defaults`);
   }
-  if (editorColors['editor.background'] === undefined && rules.length === 0) {
+  if (Object.keys(editorColors).length === 0 && rules.length === 0) {
     throw new ThemeImportError(['No "colors" or "tokenColors" found — is this a VS Code color theme?']);
   }
 
@@ -89,7 +89,11 @@ export function fromVSCode(source: string, id: string): ImportedTheme {
   if (background === undefined) {
     warnings.push(`"editor.background" is missing; using the default ${type} background`);
   }
-  const globalRule = rules.find((rule) => rule.scope === undefined);
+  const globalRule = rules.find(
+    (rule) =>
+      (rule.scope === undefined || rule.scope === null || rule.scope === '') &&
+      typeof rule.settings?.foreground === 'string',
+  );
   const foreground =
     color(editorColors['editor.foreground'], '"editor.foreground"') ??
     color(globalRule?.settings?.foreground, 'the global foreground');

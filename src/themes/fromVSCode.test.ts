@@ -109,6 +109,18 @@ describe('fromVSCode edge cases', () => {
     ]);
   });
 
+  it('imports color-only themes without a background', () => {
+    const { theme, warnings } = fromVSCode('{"type":"dark","colors":{"editor.foreground":"#cccccc"}}', 'x');
+    expect(theme.colors).toEqual({ background: '#1e1e1e', foreground: '#cccccc' });
+    expect(warnings).toEqual(['"editor.background" is missing; using the default dark background']);
+  });
+
+  it('finds the global foreground in a scope-less rule that has one', () => {
+    const source =
+      '{"colors":{"editor.background":"#000000"},"tokenColors":[{"settings":{"fontStyle":"italic"}},{"scope":"","settings":{"foreground":"#abcdef"}}]}';
+    expect(fromVSCode(source, 'x').theme.colors.foreground).toBe('#abcdef');
+  });
+
   it('falls back to a generic name', () => {
     expect(fromVSCode('{"colors":{"editor.background":"#000"}}', 'x').theme.name).toBe('Imported theme');
   });
