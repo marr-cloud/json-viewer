@@ -1,25 +1,32 @@
 // @vitest-environment happy-dom
-import { foldAll } from '@codemirror/language';
+import { foldAll, foldedRanges } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createApp, h, nextTick, reactive, type App } from 'vue';
+import { createApp, h, nextTick, reactive, ref, type App } from 'vue';
 import type { ErrorLocation } from '@/editor/errorLine';
 import { defaultTheme } from '@/themes/builtin';
-import { defaultViewerOptions } from '@/viewer/options';
+import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
 import CodeView from './CodeView.vue';
 
 let app: App | undefined;
 let host: HTMLElement | undefined;
 
-function mount(doc: string, error: ErrorLocation | null = null) {
+function mount(doc: string, error: ErrorLocation | null = null, options: Partial<ViewerOptions> = {}) {
   host = document.createElement('div');
   document.body.append(host);
-  const state = reactive({ doc, options: { ...defaultViewerOptions }, error });
-  app = createApp({ render: () => h(CodeView, { doc: state.doc, options: state.options, theme: defaultTheme, error: state.error }) });
+  const state = reactive({ doc, options: { ...defaultViewerOptions, ...options }, error });
+  const component = ref<InstanceType<typeof CodeView>>();
+  app = createApp({
+    render: () =>
+      h(CodeView, { ref: component, doc: state.doc, options: state.options, theme: defaultTheme, error: state.error }),
+  });
   app.mount(host);
   const editor = host.querySelector<HTMLElement>('.cm-editor')!;
-  return { state, editor, view: EditorView.findFromDOM(editor)! };
+  return { state, editor, view: EditorView.findFromDOM(editor)!, component };
 }
+
+const NESTED = '{\n  "a": {\n    "b": [\n      1\n    ]\n  }\n}';
+const foldCount = (view: EditorView) => foldedRanges(view.state).size;
 
 afterEach(() => {
   app?.unmount();
@@ -28,6 +35,42 @@ afterEach(() => {
 });
 
 describe('CodeView', () => {
+  it('folds from the configured level on open', () => {
+    const { view } = mount(NESTED, null, { foldFromLevel: 2 });
+    expect(foldCount(view)).toBe(2);
+  });
+
+  it('folds again when the document is replaced', async () => {
+    const { state, view } = mount(NESTED, null, { foldFromLevel: 3 });
+    state.doc = '{\n  "x": {\n    "y": [\n      2\n    ]\n  }\n}';
+    await nextTick();
+    expect(foldCount(view)).toBe(1);
+  });
+
+  it('applies a new level live and unfolds at 0', async () => {
+    const { state, view } = mount(NESTED);
+    expect(foldCount(view)).toBe(0);
+    state.options = { ...state.options, foldFromLevel: 2 };
+    await nextTick();
+    expect(foldCount(view)).toBe(2);
+    state.options = { ...state.options, foldFromLevel: 0 };
+    await nextTick();
+    expect(foldCount(view)).toBe(0);
+  });
+
+  it('does not fold an invalid document', () => {
+    const { view } = mount('{\n  "a": {\n    "b": 1,\n  }\n}', { line: 4, column: 3 }, { foldFromLevel: 1 });
+    expect(foldCount(view)).toBe(0);
+  });
+
+  it('exposes folding by level and unfolding', () => {
+    const { view, component } = mount(NESTED);
+    component.value!.foldFromLevel(3);
+    expect(foldCount(view)).toBe(1);
+    component.value!.unfoldAll();
+    expect(foldCount(view)).toBe(0);
+  });
+
   it('keeps the same editor and its folds when options change', async () => {
     const { state, editor, view } = mount('{\n  "a": [\n    1,\n    2\n  ]\n}');
     foldAll(view);

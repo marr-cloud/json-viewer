@@ -4,6 +4,15 @@ import { defaultFontSettings } from './font';
 import { defaultSettings, validateSettings } from './schema';
 
 describe('validateSettings', () => {
+  it('accepts only the offered fold levels', () => {
+    for (const level of [0, 2, 3, 4, 5, 6]) {
+      expect(validateSettings({ viewer: { foldFromLevel: level } }).viewer.foldFromLevel).toBe(level);
+    }
+    for (const level of [1, 7, -1, 2.5, '2', null]) {
+      expect(validateSettings({ viewer: { foldFromLevel: level } }).viewer.foldFromLevel).toBe(0);
+    }
+  });
+
   it('returns the defaults for anything that is not an object', () => {
     for (const input of [undefined, null, 42, 'x', []]) {
       expect(validateSettings(input)).toEqual(defaultSettings);

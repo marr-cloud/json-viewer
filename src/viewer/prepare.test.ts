@@ -17,6 +17,7 @@ describe('defaultViewerOptions', () => {
       tabSize: 2,
       indentCStyle: false,
       showArraySize: false,
+      foldFromLevel: 0,
     });
   });
 });

@@ -1,6 +1,6 @@
 import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
 import { defaultFontSettings, validateFontSettings, type FontSettings } from './font';
-import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
+import { defaultViewerOptions, FOLD_LEVELS, type ViewerOptions } from '@/viewer/options';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
 
@@ -36,6 +36,7 @@ const viewerValidators: ObjectValidators<ViewerOptions> = {
   tabSize: intInRange(TAB_SIZE_MIN, TAB_SIZE_MAX),
   indentCStyle: bool,
   showArraySize: bool,
+  foldFromLevel: oneOf<number>([0, ...FOLD_LEVELS]),
 };
 
 const settingsValidators: ObjectValidators<Settings> = {
