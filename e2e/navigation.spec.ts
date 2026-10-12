@@ -89,16 +89,40 @@ test('folds all and unfolds all', async ({ context, server }) => {
   await expect(content).toContainText('"list"');
 });
 
+/** The editor is virtualized, so scroll to the bottom and check the last items are folded too. */
+async function expectFoldedToTheEnd(page: Page): Promise<void> {
+  await expect
+    .poll(
+      async () => {
+        await page.locator(`${viewer} .cm-scroller`).evaluate((el) => {
+          el.scrollTop = el.scrollHeight;
+        });
+        const text = (await page.locator(`${viewer} .cm-content`).textContent()) ?? '';
+        return { hasName: text.includes('"name"'), hasEnd: text.includes('{…}') };
+      },
+      { timeout: 30_000 },
+    )
+    .toEqual({ hasName: false, hasEnd: true });
+}
+
+test('folds a 4 MB document completely on open', async ({ context, server }) => {
+  await setStorage(context, 'sync', { settings: { viewer: { foldFromLevel: 2 } } });
+  const page = await context.newPage();
+  await page.goto(server.url('/big.json'));
+  await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('450,002 lines', { timeout: 15_000 });
+  await expectFoldedToTheEnd(page);
+});
+
 test('folds and unfolds a 4 MB document', async ({ context, server }) => {
   const page = await context.newPage();
   await page.goto(server.url('/big.json'));
   await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('450,002 lines', { timeout: 15_000 });
-  // Fold all only folds what the parser has reached (1 s budget), so retry until the parse has finished.
-  await expect(async () => {
-    await page.getByRole('button', { name: 'Fold all', exact: true }).click();
-    await expect(page.locator(`${viewer} .cm-content`)).not.toContainText('"name"', { timeout: 2_000 });
-  }).toPass({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Fold all', exact: true }).click();
+  await expectFoldedToTheEnd(page);
   await page.getByRole('button', { name: 'Unfold all', exact: true }).click();
+  await page.locator(`${viewer} .cm-scroller`).evaluate((el) => {
+    el.scrollTop = 0;
+  });
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 0"');
 });
 

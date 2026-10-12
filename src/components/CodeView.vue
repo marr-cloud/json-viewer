@@ -5,7 +5,7 @@ import { EditorView } from '@codemirror/view';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { cursorPath } from '@/editor/cursorPath';
 import { errorPosition, type ErrorLocation } from '@/editor/errorLine';
-import { foldFromLevel } from '@/editor/foldLevel';
+import { cancelPendingFold, foldFromLevel } from '@/editor/foldLevel';
 import { buildExtensions } from '@/editor/setup';
 import type { Theme } from '@/themes/types';
 import type { ViewerOptions } from '@/viewer/options';
@@ -83,14 +83,19 @@ watch(
   { flush: 'post' },
 );
 
-onBeforeUnmount(() => view?.destroy());
+onBeforeUnmount(() => {
+  if (view) cancelPendingFold(view);
+  view?.destroy();
+});
 
 defineExpose({
   foldFromLevel(level: number): void {
     if (view) foldFromLevel(view, level);
   },
   unfoldAll(): void {
-    if (view) unfoldAll(view);
+    if (!view) return;
+    cancelPendingFold(view);
+    unfoldAll(view);
   },
 });
 </script>

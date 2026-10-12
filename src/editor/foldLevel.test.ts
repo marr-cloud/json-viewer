@@ -3,8 +3,8 @@ import { json } from '@codemirror/lang-json';
 import { foldedRanges, foldGutter } from '@codemirror/language';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
-import { afterEach, describe, expect, it } from 'vitest';
-import { foldFromLevel, foldRangesFromLevel } from './foldLevel';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cancelPendingFold, foldFromLevel, foldRangesFromLevel } from './foldLevel';
 
 // Levels: root 1; "a" 2; "b" 3; the object inside "b" 4; "g" 2. "e" is empty, "s" fits on one line.
 const DOC = [
@@ -96,5 +96,48 @@ describe('foldFromLevel', () => {
     const before = v.state;
     foldFromLevel(v, 0);
     expect(v.state).toBe(before);
+  });
+
+  describe('on a document the first parse cannot finish', () => {
+    // 20,000 items; a zero budget leaves most of them unparsed.
+    const big = '[' + Array.from({ length: 20_000 }, (_, i) => `{"id":${i},"tags":["a"]}`).join(',') + ']';
+    // Pretty-printed, so every item and its tags array span several lines.
+    const pretty = JSON.stringify(JSON.parse(big), null, 2);
+    const mountPretty = () => {
+      view = new EditorView({ state: EditorState.create({ doc: pretty, extensions: [json()] }), parent: document.body });
+      return view;
+    };
+    const folds = (v: EditorView) => foldedRanges(v.state).size;
+
+    it('folds the parsed part now and the rest once parsing has finished', async () => {
+      const v = mountPretty();
+      const fresh = EditorState.create({ doc: pretty, extensions: [json()] });
+      const expected = foldRangesFromLevel(fresh, 2, 60_000).length;
+      foldFromLevel(v, 2, 0);
+      const first = folds(v);
+      expect(first).toBeGreaterThan(0);
+      expect(first).toBeLessThan(expected);
+      await vi.waitFor(() => expect(folds(v)).toBe(expected), { timeout: 20_000 });
+    }, 30_000);
+
+    it('is cancelled by a newer call, by cancelPendingFold and by a document change', async () => {
+      const v = mountPretty();
+      foldFromLevel(v, 2, 0);
+      foldFromLevel(v, 0, 0);
+      await new Promise((r) => setTimeout(r, 300));
+      expect(folds(v)).toBe(0);
+
+      foldFromLevel(v, 2, 0);
+      cancelPendingFold(v);
+      const partial = folds(v);
+      await new Promise((r) => setTimeout(r, 300));
+      expect(folds(v)).toBe(partial);
+
+      foldFromLevel(v, 2, 0);
+      v.dispatch({ changes: { from: 0, insert: ' ' } });
+      const afterChange = folds(v);
+      await new Promise((r) => setTimeout(r, 300));
+      expect(folds(v)).toBe(afterChange);
+    });
   });
 });
