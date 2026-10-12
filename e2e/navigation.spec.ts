@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { setStorage } from './storage';
@@ -59,4 +60,81 @@ test('copies the path on a page without the async Clipboard API', async ({ conte
   const reader = await context.newPage();
   await reader.goto(server.url('/page.html'));
   expect(await readClipboard(reader)).toBe('$.nested.list');
+});
+
+const FORMATTED_DATA = [
+  '{',
+  '  "name": "x",',
+  '  "url": "https://example.com/a",',
+  '  "nested": {',
+  '    "list": [',
+  '      1,',
+  '      2,',
+  '      3',
+  '    ]',
+  '  },',
+  '  "big": 12345678901234567890',
+  '}',
+].join('\n');
+const MINIFIED_DATA = '{"name":"x","url":"https://example.com/a","nested":{"list":[1,2,3]},"big":12345678901234567890}';
+
+test('folds all and unfolds all', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const content = page.locator(`${viewer} .cm-content`);
+  await expect(content).toContainText('"list"');
+  await page.getByRole('button', { name: 'Fold all', exact: true }).click();
+  await expect(content).not.toContainText('"list"');
+  await page.getByRole('button', { name: 'Unfold all', exact: true }).click();
+  await expect(content).toContainText('"list"');
+});
+
+test('folds and unfolds a 4 MB document', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/big.json'));
+  await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('450,002 lines', { timeout: 15_000 });
+  // Fold all only folds what the parser has reached (1 s budget), so retry until the parse has finished.
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Fold all', exact: true }).click();
+    await expect(page.locator(`${viewer} .cm-content`)).not.toContainText('"name"', { timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Unfold all', exact: true }).click();
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 0"');
+});
+
+test('copies the formatted and the minified document', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await page.getByRole('button', { name: 'Copy formatted JSON' }).click();
+  await expect(page.locator(`${viewer} .jv-status-message`)).toHaveText('Copied formatted JSON');
+  // Windows converts line breaks to CRLF in the clipboard.
+  expect((await readClipboard(page)).replaceAll('\r\n', '\n')).toBe(FORMATTED_DATA);
+  await page.getByRole('button', { name: 'Copy minified JSON' }).click();
+  await expect(page.locator(`${viewer} .jv-status-message`)).toHaveText('Copied minified JSON');
+  expect(await readClipboard(page)).toBe(MINIFIED_DATA);
+});
+
+test('downloads the formatted document', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: 'Download JSON' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('data.json');
+  expect(await readFile((await download.path())!, 'utf8')).toBe(FORMATTED_DATA);
+});
+
+test('sorts keys for this tab only', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const secondLine = page.locator(`${viewer} .cm-line`).nth(1);
+  await expect.poll(() => secondLine.evaluate((el) => el.textContent)).toMatch(/^ {2}"name"/);
+  await page.getByRole('button', { name: 'Sort keys' }).click();
+  await expect.poll(() => secondLine.evaluate((el) => el.textContent)).toMatch(/^ {2}"big"/);
+  const other = await context.newPage();
+  await other.goto(server.url('/data.json'));
+  await expect
+    .poll(() => other.locator(`${viewer} .cm-line`).nth(1).evaluate((el) => el.textContent))
+    .toMatch(/^ {2}"name"/);
 });

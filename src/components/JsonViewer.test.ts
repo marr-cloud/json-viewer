@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { foldedRanges } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, type App } from 'vue';
@@ -107,5 +108,72 @@ describe('JsonViewer', () => {
     await nextTick();
     expect(host.querySelector('.jv-path')).toBeNull();
     expect(host.querySelector('.jv-status-info')?.textContent).toContain('1 line');
+  });
+
+  const button = (host: HTMLElement, label: string) => host.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)!;
+
+  it('sorts keys for this tab without touching the setting', async () => {
+    const host = mount({ raw: '{"b":1,"a":2}' });
+    const sort = button(host, 'Sort keys');
+    expect(sort.getAttribute('aria-pressed')).toBe('false');
+    // happy-dom fires selectionchange synchronously, which re-enters a focused editor's update.
+    editorOf(host).contentDOM.blur();
+    sort.click();
+    await nextTick();
+    expect(editorOf(host).state.doc.line(2).text).toBe('  "a": 2,');
+    expect(sort.getAttribute('aria-pressed')).toBe('true');
+    expect(defaultViewerOptions.sortKeys).toBe(false);
+  });
+
+  it('copies the formatted and the minified document', async () => {
+    const writeText = mockClipboard();
+    const host = mount({ raw: '{ "a" : [1, 2] }' });
+    button(host, 'Copy formatted JSON').click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('{\n  "a": [\n    1,\n    2\n  ]\n}'));
+    button(host, 'Copy minified JSON').click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('{"a":[1,2]}'));
+    await vi.waitFor(() => expect(host.querySelector('.jv-status-message')?.textContent).toBe('Copied minified JSON'));
+  });
+
+  it('disables copy minified for invalid JSON but copies the raw text as formatted', async () => {
+    const writeText = mockClipboard();
+    const host = mount({ raw: '{"a":' });
+    expect(button(host, 'Copy minified JSON').disabled).toBe(true);
+    button(host, 'Copy formatted JSON').click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('{"a":'));
+  });
+
+  it('downloads the document named after the URL', () => {
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    let link: HTMLAnchorElement | undefined;
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      link = this;
+    });
+    const host = mount({ source: { url: 'https://api.test/v1/users?page=2', loadedAt: new Date() } });
+    button(host, 'Download JSON').click();
+    expect(link?.download).toBe('users.json');
+  });
+
+  it('folds all, unfolds all and folds to a level', async () => {
+    const host = mount({ raw: '{"a":{"b":{"c":[1]}}}' });
+    const folds = () => foldedRanges(editorOf(host).state).size;
+    button(host, 'Fold all').click();
+    expect(folds()).toBe(3);
+    button(host, 'Unfold all').click();
+    expect(folds()).toBe(0);
+    const select = host.querySelector<HTMLSelectElement>('[aria-label="Fold to level"]')!;
+    select.value = '4';
+    select.dispatchEvent(new Event('change'));
+    expect(folds()).toBe(1);
+    expect(select.value).toBe('');
+  });
+
+  it('disables folding on the Raw tab', async () => {
+    const host = mount();
+    host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
+    await nextTick();
+    expect(button(host, 'Fold all').disabled).toBe(true);
+    expect(host.querySelector<HTMLSelectElement>('[aria-label="Fold to level"]')!.disabled).toBe(true);
   });
 });

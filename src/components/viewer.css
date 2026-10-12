@@ -26,7 +26,9 @@
 .jv-toolbar {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
+  row-gap: 4px;
   padding: 4px 8px;
   background: var(--jv-toolbar-background);
   border-bottom: 1px solid var(--jv-border);
@@ -177,4 +179,38 @@
   gap: 12px;
   white-space: nowrap;
   opacity: 0.8;
+}
+
+.jv-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.jv-icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.jv-icon-button[aria-pressed='true'] {
+  background: var(--jv-selection);
+}
+
+.jv-wide {
+  width: auto;
+  padding: 0 4px;
+}
+
+.jv-wide small {
+  font-size: 10px;
+}
+
+.jv-fold-level {
+  height: 24px;
+  border: 1px solid var(--jv-border);
+  border-radius: 4px;
+  background: var(--jv-background);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
 }
