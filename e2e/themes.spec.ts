@@ -29,7 +29,7 @@ test('imports a pasted VS Code theme and uses it', async ({ context, server, ext
   await options.getByLabel('Theme mode').selectOption('dark');
   await options.getByLabel('VS Code theme JSON').fill(VSCODE_THEME);
   await options.getByRole('button', { name: 'Import' }).click();
-  await expect(options.getByRole('status')).toContainText('Imported “Test Night” as a dark theme.');
+  await expect(options.locator('p.opt-success')).toContainText('Imported “Test Night” as a dark theme.');
   await expect(options.getByLabel('Dark theme')).toHaveValue('test-night');
   await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ darkThemeId: 'test-night' });
   const page = await context.newPage();
