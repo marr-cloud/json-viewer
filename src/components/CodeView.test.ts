@@ -104,4 +104,27 @@ describe('CodeView', () => {
     const { view } = mount('{\n  "a": 1,\n}', { line: 3, column: 1 });
     expect(view.state.selection.main.head).toBe(12);
   });
+
+  it('emits the cursor path', async () => {
+    host = document.createElement('div');
+    document.body.append(host);
+    const paths: string[] = [];
+    app = createApp({
+      render: () =>
+        h(CodeView, {
+          doc: '{\n  "a": [\n    1\n  ]\n}',
+          options: defaultViewerOptions,
+          theme: defaultTheme,
+          error: null,
+          onPath: (path: string) => paths.push(path),
+        }),
+    });
+    app.mount(host);
+    const view = EditorView.findFromDOM(host.querySelector<HTMLElement>('.cm-editor')!)!;
+    expect(paths).toEqual(['$']);
+    // happy-dom fires selectionchange synchronously, which re-enters a focused editor's update.
+    view.contentDOM.blur();
+    view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf('1') } });
+    expect(paths.at(-1)).toBe('$.a[0]');
+  });
 });

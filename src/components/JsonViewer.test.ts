@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
+import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createApp, h, type App } from 'vue';
+import { createApp, h, nextTick, type App } from 'vue';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
@@ -9,7 +10,17 @@ import JsonViewer from './JsonViewer.vue';
 
 let app: App | undefined;
 
-function mount(props: { font?: FontSettings; theme?: Theme; customCss?: string; onToggleTheme?: () => void; onOpenSettings?: () => void }) {
+type Props = {
+  raw?: string;
+  font?: FontSettings;
+  theme?: Theme;
+  customCss?: string;
+  source?: { url: string; loadedAt: Date };
+  onToggleTheme?: () => void;
+  onOpenSettings?: () => void;
+};
+
+function mount(props: Props = {}) {
   const host = document.createElement('div');
   document.body.append(host);
   app = createApp({
@@ -19,9 +30,20 @@ function mount(props: { font?: FontSettings; theme?: Theme; customCss?: string; 
   return host;
 }
 
+function editorOf(host: HTMLElement): EditorView {
+  return EditorView.findFromDOM(host.querySelector<HTMLElement>('.cm-editor')!)!;
+}
+
+function mockClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+  return writeText;
+}
+
 afterEach(() => {
   app?.unmount();
   document.body.innerHTML = '';
+  vi.restoreAllMocks();
 });
 
 describe('JsonViewer', () => {
@@ -54,5 +76,36 @@ describe('JsonViewer', () => {
 
   it('marks the root with the theme type', () => {
     expect(mount({ theme: defaultLightTheme }).querySelector('.jv-root')?.classList.contains('jv-light')).toBe(true);
+  });
+
+  it('shows the size, line count and format', () => {
+    const info = mount().querySelector('.jv-status-info')!;
+    expect(info.textContent).toContain('7 B');
+    expect(info.textContent).toContain('3 lines');
+    expect(info.textContent).toContain('JSON');
+  });
+
+  it('shows the cursor path and copies it on click', async () => {
+    const writeText = mockClipboard();
+    const host = mount();
+    const path = host.querySelector<HTMLButtonElement>('.jv-path')!;
+    expect(path.textContent).toBe('$');
+    const view = editorOf(host);
+    // happy-dom fires selectionchange synchronously, which re-enters a focused editor's update.
+    view.contentDOM.blur();
+    view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf('"a"') + 1 } });
+    await nextTick();
+    expect(path.textContent).toBe('$.a');
+    path.click();
+    await vi.waitFor(() => expect(host.querySelector('.jv-status-message')?.textContent).toBe('Copied path'));
+    expect(writeText).toHaveBeenCalledWith('$.a');
+  });
+
+  it('hides the path and counts raw lines on the Raw tab', async () => {
+    const host = mount();
+    host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
+    await nextTick();
+    expect(host.querySelector('.jv-path')).toBeNull();
+    expect(host.querySelector('.jv-status-info')?.textContent).toContain('1 line');
   });
 });

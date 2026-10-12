@@ -3,6 +3,7 @@ import { unfoldAll } from '@codemirror/language';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { cursorPath } from '@/editor/cursorPath';
 import { errorPosition, type ErrorLocation } from '@/editor/errorLine';
 import { foldFromLevel } from '@/editor/foldLevel';
 import { buildExtensions } from '@/editor/setup';
@@ -15,6 +16,7 @@ const props = defineProps<{
   theme: Theme;
   error: ErrorLocation | null;
 }>();
+const emit = defineEmits<{ path: [path: string] }>();
 
 const host = ref<HTMLDivElement>();
 const config = new Compartment();
@@ -42,7 +44,11 @@ function applyFoldOnOpen(): void {
 
 onMounted(() => {
   view = new EditorView({
-    state: EditorState.create({ doc: props.doc, extensions: config.of(currentExtensions()) }),
+    state: EditorState.create({
+      doc: props.doc,
+      // Outside the compartment so reconfiguring never recreates the path listener.
+      extensions: [config.of(currentExtensions()), cursorPath((path) => emit('path', path))],
+    }),
     parent: host.value!,
   });
   applyFoldOnOpen();
