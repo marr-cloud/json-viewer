@@ -1,0 +1,25 @@
+{
+  "id": "light-plus",
+  "name": "Light+",
+  "type": "light",
+  "source": "builtin",
+  "colors": {
+    "background": "#ffffff",
+    "foreground": "#000000",
+    "gutterBackground": "#ffffff",
+    "gutterForeground": "#237893",
+    "activeLine": "#f3f3f3",
+    "selection": "#add6ff",
+    "cursor": "#000000",
+    "foldPlaceholder": "#808080",
+    "key": "#0451a5",
+    "string": "#a31515",
+    "number": "#098658",
+    "boolean": "#0000ff",
+    "null": "#0000ff",
+    "punctuation": "#000000",
+    "link": "#006ab1",
+    "toolbarBackground": "#f3f3f3",
+    "border": "#e5e5e5"
+  }
+}
