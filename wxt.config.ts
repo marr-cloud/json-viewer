@@ -21,6 +21,8 @@ export default defineConfig({
     name: 'JSON Viewer',
     description: 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.',
     permissions: ['storage', 'scripting'],
+    // No popup: clicking the icon opens the scratchpad (background.ts).
+    action: { default_title: 'Open the JSON scratchpad' },
     homepage_url: 'https://github.com/marr-cloud/json-viewer',
   },
 });

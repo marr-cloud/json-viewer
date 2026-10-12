@@ -55,3 +55,25 @@ test('the Sites section saves host patterns and flags the rest', async ({ contex
   await expect(options.getByRole('alert')).toContainText('not a host');
   await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ excludedHosts: ['api.example.com', '*.test'] });
 });
+
+test('the scratchpad formats pasted text', async ({ context, extensionId }) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/scratchpad.html`);
+  const input = page.getByLabel('JSON input');
+  await expect(input).toBeFocused();
+  await expect(page.locator('.sp-empty')).toBeVisible();
+  await input.fill('cb({"pasted": true})');
+  await expect(page.locator('.sp-output .cm-content')).toContainText('"pasted": true');
+  await expect(page.locator('.sp-output .jv-status-info')).toContainText('JSONP');
+  await page.getByRole('button', { name: 'Clear' }).click();
+  await expect(page.locator('.sp-empty')).toBeVisible();
+});
+
+test('the scratchpad opens with handed-over text', async ({ context, extensionId }) => {
+  await setStorage(context, 'session', { scratchpadInput: '[1, 2, 3]' });
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/scratchpad.html`);
+  await expect(page.getByLabel('JSON input')).toHaveValue('[1, 2, 3]');
+  await expect(page.locator('.sp-output .cm-content')).toContainText('3');
+  await expect.poll(() => getStorage(context, 'session', 'scratchpadInput')).toBeUndefined();
+});
