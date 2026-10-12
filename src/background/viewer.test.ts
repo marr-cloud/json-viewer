@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
+import { FORCE_VIEWER_FLAG } from '@/messages';
 import { injectViewer, onJsonDetected, VIEWER_SCRIPT } from './viewer';
 
 describe('background viewer injection', () => {
@@ -16,6 +17,19 @@ describe('background viewer injection', () => {
     await injectViewer(target);
     expect(executeScript).toHaveBeenCalledTimes(1);
     expect(executeScript).toHaveBeenCalledWith({ target: { tabId: 7, frameIds: [3] }, files: [VIEWER_SCRIPT] });
+  });
+
+  it('sets the force flag first when forced', async () => {
+    await injectViewer(target, true);
+    expect(executeScript).toHaveBeenCalledTimes(2);
+    const [flag, viewer] = executeScript.mock.calls.map(([details]) => details);
+    expect(flag).toMatchObject({ target: { tabId: 7, frameIds: [3] }, args: [FORCE_VIEWER_FLAG] });
+    // In the browser the function runs in the page's isolated world; run it here to see what it sets.
+    const scope = globalThis as unknown as Record<string, unknown>;
+    (flag.func as (name: string) => void)(FORCE_VIEWER_FLAG);
+    expect(scope[FORCE_VIEWER_FLAG]).toBe(true);
+    delete scope[FORCE_VIEWER_FLAG];
+    expect(viewer).toEqual({ target: { tabId: 7, frameIds: [3] }, files: [VIEWER_SCRIPT] });
   });
 
   it('skips excluded sites', async () => {

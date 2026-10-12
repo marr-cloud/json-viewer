@@ -46,6 +46,7 @@ const routes: Record<string, Route> = {
   '/ld': { type: 'application/ld+json; charset=utf-8', body: '{"@context":"https://schema.org"}' },
   '/plain-json': { type: 'text/plain', body: '[{"a":1}]' },
   '/plain-log': { type: 'text/plain', body: '[INFO] server started' },
+  '/json-in-html': { type: 'text/html', body: '<!doctype html><title>t</title><p>{"b": 2}</p>' },
   '/page.html': { type: 'text/html', body: '<!doctype html><title>t</title><pre>{"a":1}</pre>' },
   '/invalid.json': { type: 'application/json', body: '{\n  "a": 1,\n}' },
   '/invalid-crlf.json': { type: 'application/json', body: '{\r\n  "a": 1,\r\n  "b": 2,\r\n}' },

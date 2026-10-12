@@ -1,3 +1,4 @@
+import { FORCE_VIEWER_FLAG } from '@/messages';
 import { isExcludedHost } from '@/settings/hosts';
 import { loadSettings } from '@/settings/storage';
 
@@ -8,9 +9,22 @@ export interface FrameTarget {
   frameId: number;
 }
 
-/** Runs the viewer content script in one frame. */
-export async function injectViewer({ tabId, frameId }: FrameTarget): Promise<void> {
-  await browser.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: [VIEWER_SCRIPT] });
+/**
+ * Runs the viewer content script in one frame. `force` opens it even on a page that wasn't detected as JSON
+ * ("View as JSON"): the flag goes on the content scripts' shared isolated world, where the viewer reads it.
+ */
+export async function injectViewer({ tabId, frameId }: FrameTarget, force = false): Promise<void> {
+  const target = { tabId, frameIds: [frameId] };
+  if (force) {
+    await browser.scripting.executeScript({
+      target,
+      func: (flag: string) => {
+        (globalThis as unknown as Record<string, unknown>)[flag] = true;
+      },
+      args: [FORCE_VIEWER_FLAG],
+    });
+  }
+  await browser.scripting.executeScript({ target, files: [VIEWER_SCRIPT] });
 }
 
 function hostnameOf(url: string | undefined): string | null {

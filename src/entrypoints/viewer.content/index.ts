@@ -4,11 +4,16 @@ import { createApp, h } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { detect, sniffKind } from '@/detect/detect';
 import { readRawText } from '@/detect/readRawText';
-import { OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
+import { FORCE_VIEWER_FLAG, OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
 import { hideOriginal } from '@/viewer/hideOriginal';
 import { createViewerSession, type ViewerSession } from '@/viewer/session';
 
 const GUARD = 'data-json-viewer';
+
+/** "View as JSON" sets this on the content scripts' isolated world before injecting the viewer. */
+function isForced(): boolean {
+  return (globalThis as unknown as Record<string, unknown>)[FORCE_VIEWER_FLAG] === true;
+}
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -20,7 +25,8 @@ export default defineContentScript({
     const root = document.documentElement;
     const body = document.body;
     if (!body || root.hasAttribute(GUARD)) return;
-    const raw = readRawText(document);
+    // A forced viewer takes whatever text the page shows when it isn't a plain text response.
+    const raw = readRawText(document) ?? (isForced() ? body.innerText : null);
     if (raw === null) return;
     root.setAttribute(GUARD, '');
     const format = detect(document.contentType, raw)?.kind ?? sniffKind(raw);
@@ -84,7 +90,7 @@ export default defineContentScript({
           app?.unmount();
         },
       });
-      // Hide (don't remove) the browser's rendering so the original stays recoverable.
+      // Hide (don't remove) the page's own rendering so the original stays recoverable.
       restore = hideOriginal(body);
       ui.mount();
     } catch (error) {

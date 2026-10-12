@@ -1,3 +1,4 @@
+import type { BrowserContext } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { getStorage, setStorage } from './storage';
 
@@ -76,4 +77,40 @@ test('the scratchpad opens with handed-over text', async ({ context, extensionId
   await expect(page.getByLabel('JSON input')).toHaveValue('[1, 2, 3]');
   await expect(page.locator('.sp-output .cm-content')).toContainText('3');
   await expect.poll(() => getStorage(context, 'session', 'scratchpadInput')).toBeUndefined();
+});
+
+/** What "View as JSON" does (src/background/viewer.ts injectViewer with force), run from the service worker. */
+async function forceViewer(context: BrowserContext, url: string): Promise<void> {
+  let [worker] = context.serviceWorkers();
+  if (!worker) worker = await context.waitForEvent('serviceworker');
+  await worker.evaluate(async (pageUrl) => {
+    type Scripting = {
+      executeScript(details: { target: { tabId: number }; func?: (flag: string) => void; args?: string[]; files?: string[] }): Promise<unknown>;
+    };
+    const api = (globalThis as unknown as { chrome: { tabs: { query(q: { url: string }): Promise<{ id: number }[]> }; scripting: Scripting } }).chrome;
+    const [tab] = await api.tabs.query({ url: pageUrl });
+    const target = { tabId: tab!.id };
+    await api.scripting.executeScript({
+      target,
+      func: (flag) => {
+        (globalThis as unknown as Record<string, unknown>)[flag] = true;
+      },
+      args: ['__jsonViewerForced'],
+    });
+    await api.scripting.executeScript({ target, files: ['/content-scripts/viewer.js'] });
+  }, url);
+}
+
+test('"View as JSON" opens the viewer on pages that were not detected', async ({ context, server }) => {
+  const page = await context.newPage();
+  for (const [route, text] of [
+    ['/page.html', '"a": 1'],
+    ['/json-in-html', '"b": 2'],
+  ] as const) {
+    await page.goto(server.url(route));
+    await page.waitForTimeout(300);
+    await expect(page.locator(viewer)).toHaveCount(0);
+    await forceViewer(context, server.url(route));
+    await expect(page.locator(`${viewer} .cm-content`)).toContainText(text);
+  }
 });
