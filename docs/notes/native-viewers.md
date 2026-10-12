@@ -14,3 +14,7 @@ Respuestas servidas localmente con `application/json`, `application/ld+json` y `
 
 Regla implementada en `src/detect/readRawText.ts`: aceptar un `<body>` cuyos hijos sean exactamente
 un `<pre>` y, opcionalmente, `div.json-formatter-container`; leer `pre.textContent`.
+
+## Verificación manual Fase 1
+
+2026-10-11 — Edge: el usuario confirmó que la extensión funciona (visor en páginas JSON, páginas normales intactas).
