@@ -66,9 +66,11 @@ export default defineContentScript({
           state.customCss = value ?? '';
         }),
         watchCustomThemes(() => {
-          void listCustomThemes().then((list) => {
-            state.customThemes = list;
-          });
+          void listCustomThemes()
+            .then((list) => {
+              state.customThemes = list;
+            })
+            .catch((error: unknown) => console.warn('[json-viewer] custom theme reload failed', error));
         }),
         () => media.removeEventListener('change', onMediaChange),
       ];

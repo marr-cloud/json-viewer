@@ -17,11 +17,3 @@ describe('isOpenOptionsMessage', () => {
     expect(isOpenOptionsMessage(undefined)).toBe(false);
   });
 });
-
-describe('isOpenOptionsMessage', () => {
-  it('accepts the open-options message only', () => {
-    expect(isOpenOptionsMessage({ type: OPEN_OPTIONS })).toBe(true);
-    expect(isOpenOptionsMessage({ type: 'json-detected' })).toBe(false);
-    expect(isOpenOptionsMessage(undefined)).toBe(false);
-  });
-});
