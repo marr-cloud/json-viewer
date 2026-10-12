@@ -1,10 +1,13 @@
 import '@/components/viewer.css';
-import { createApp, h } from 'vue';
+import { browser } from 'wxt/browser';
+import { computed, createApp, h, reactive } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { readRawText } from '@/detect/readRawText';
-import { defaultTheme } from '@/themes/builtin';
+import { OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
+import { customCssItem, loadSettings, watchSettings } from '@/settings/storage';
+import { activeTheme, type ThemeKind } from '@/themes/active';
+import { listCustomThemes, watchCustomThemes } from '@/themes/store';
 import { hideOriginal } from '@/viewer/hideOriginal';
-import { defaultViewerOptions } from '@/viewer/options';
 
 const GUARD = 'data-json-viewer';
 
@@ -35,6 +38,47 @@ export default defineContentScript({
     };
 
     try {
+      const [settings, customCss, customThemes] = await Promise.all([
+        loadSettings(),
+        customCssItem.getValue(),
+        listCustomThemes(),
+      ]);
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const state = reactive({
+        settings,
+        customCss,
+        customThemes,
+        prefersDark: media.matches,
+        override: null as ThemeKind | null,
+      });
+      const theme = computed(() => activeTheme(state.settings, state.customThemes, state.prefersDark, state.override));
+      const source = { url: location.href, loadedAt: new Date() };
+
+      const onMediaChange = (event: MediaQueryListEvent) => {
+        state.prefersDark = event.matches;
+      };
+      media.addEventListener('change', onMediaChange);
+      const stops = [
+        watchSettings((value) => {
+          state.settings = value;
+        }),
+        customCssItem.watch((value) => {
+          state.customCss = value ?? '';
+        }),
+        watchCustomThemes(() => {
+          void listCustomThemes().then((list) => {
+            state.customThemes = list;
+          });
+        }),
+        () => media.removeEventListener('change', onMediaChange),
+      ];
+      ctx.onInvalidated(() => stops.forEach((stop) => stop()));
+
+      const openSettings = () => {
+        const message: OpenOptionsMessage = { type: OPEN_OPTIONS };
+        void browser.runtime.sendMessage(message).catch(() => {});
+      };
+
       ui = await createShadowRootUi(ctx, {
         name: 'json-viewer-app',
         position: 'inline',
@@ -45,9 +89,14 @@ export default defineContentScript({
               h('div', { class: 'jv-page' }, [
                 h(JsonViewer, {
                   raw,
-                  options: defaultViewerOptions,
-                  theme: defaultTheme,
-                  source: { url: location.href, loadedAt: new Date() },
+                  options: state.settings.viewer,
+                  theme: theme.value,
+                  customCss: state.customCss,
+                  source,
+                  onToggleTheme: () => {
+                    state.override = theme.value.type === 'dark' ? 'light' : 'dark';
+                  },
+                  onOpenSettings: openSettings,
                 }),
               ]),
           });
