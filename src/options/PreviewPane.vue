@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
 import { SAMPLE_JSON, SAMPLE_URL } from './sample';
 import JsonViewer from '@/components/JsonViewer.vue';
 import viewerCss from '@/components/viewer.css?inline';
+import { createFontLoader } from '@/fonts/loader';
+import { trackStoredFont } from '@/fonts/track';
 import type { Settings } from '@/settings/schema';
 import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
 import type { Theme } from '@/themes/types';
@@ -25,11 +27,19 @@ const host = ref<HTMLDivElement>();
 const shadowRoot = shallowRef<ShadowRoot>();
 const viewerOptions = computed(() => ({ ...props.settings.viewer }));
 const viewerFont = computed(() => ({ ...props.settings.font }));
+let stopFont: (() => void) | undefined;
 onMounted(() => {
   shadowRoot.value = host.value!.attachShadow({ mode: 'open' });
   media.addEventListener('change', onMediaChange);
+  stopFont = trackStoredFont(
+    () => (props.settings.font.source === 'google' ? props.settings.font.family : ''),
+    createFontLoader(document.fonts),
+  );
 });
-onBeforeUnmount(() => media.removeEventListener('change', onMediaChange));
+onBeforeUnmount(() => {
+  media.removeEventListener('change', onMediaChange);
+  stopFont?.();
+});
 
 const theme = computed(
   () => props.themeOverride ?? activeTheme(props.settings, props.customThemes, prefersDark.value, override.value),

@@ -3,6 +3,8 @@ import { browser } from 'wxt/browser';
 import { computed, createApp, h, reactive } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { readRawText } from '@/detect/readRawText';
+import { createFontLoader } from '@/fonts/loader';
+import { trackStoredFont } from '@/fonts/track';
 import { OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
 import { customCssItem, loadSettings, watchSettings } from '@/settings/storage';
 import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
@@ -73,6 +75,11 @@ export default defineContentScript({
             })
             .catch((error: unknown) => console.warn('[json-viewer] custom theme reload failed', error));
         }),
+        // Faces go on the page's document.fonts, which the viewer's shadow root uses too.
+        trackStoredFont(
+          () => (state.settings.font.source === 'google' ? state.settings.font.family : ''),
+          createFontLoader(document.fonts),
+        ),
         () => media.removeEventListener('change', onMediaChange),
       ];
       ctx.onInvalidated(() => stops.forEach((stop) => stop()));
