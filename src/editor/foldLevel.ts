@@ -16,6 +16,13 @@ import type { EditorView } from '@codemirror/view';
 /** Stop waiting for a full parse after this long and fold what has been parsed. */
 const PARSE_TIMEOUT_MS = 1000;
 
+/**
+ * Parse time before the first folds. CodeMirror keeps a timed-out parse to itself until it finishes,
+ * so a longer wait only helps when the whole document parses within it; bigger documents fold the
+ * parsed part at once and the rest from the background continuation below.
+ */
+const INITIAL_PARSE_MS = 100;
+
 export interface FoldRange {
   from: number;
   to: number;
@@ -76,7 +83,7 @@ function dispatchFolds(view: EditorView, effects: StateEffect<unknown>[]): void 
  * and the rest once a background parse (in short slices) has reached the end. The newest call
  * wins, and a document change or `cancelPendingFold` abandons the rest.
  */
-export function foldFromLevel(view: EditorView, level: number, budgetMs = PARSE_TIMEOUT_MS): void {
+export function foldFromLevel(view: EditorView, level: number, budgetMs = INITIAL_PARSE_MS): void {
   cancelPendingFold(view);
   const { state } = view;
   const effects: StateEffect<unknown>[] = [];
