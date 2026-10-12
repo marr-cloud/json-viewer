@@ -1,5 +1,6 @@
 import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
 import { defaultFontSettings, validateFontSettings, type FontSettings } from './font';
+import { validateExcludedHosts } from './hosts';
 import { defaultShortcuts, validateShortcuts, type Shortcuts } from './shortcuts';
 import {
   defaultFeatures,
@@ -21,6 +22,8 @@ export interface Settings {
   font: FontSettings;
   shortcuts: Shortcuts;
   features: Features;
+  /** Host patterns where detected JSON is left alone (see hosts.ts). */
+  excludedHosts: string[];
 }
 
 export const defaultSettings: Settings = {
@@ -31,6 +34,7 @@ export const defaultSettings: Settings = {
   font: defaultFontSettings,
   shortcuts: defaultShortcuts,
   features: defaultFeatures,
+  excludedHosts: [],
 };
 
 export const TAB_SIZE_MIN = 1;
@@ -68,6 +72,7 @@ const settingsValidators: ObjectValidators<Settings> = {
   font: (value) => validateFontSettings(value),
   shortcuts: (value) => validateShortcuts(value),
   features: (value) => validateFields(value, defaultFeatures, featureValidators),
+  excludedHosts: validateExcludedHosts,
 };
 
 /** Returns complete settings; every missing or invalid field falls back to its default. */

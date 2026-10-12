@@ -1,3 +1,4 @@
+import { onJsonDetected } from '@/background/viewer';
 import { isJsonDetectedMessage, isOpenOptionsMessage } from '@/messages';
 
 export default defineBackground(() => {
@@ -9,11 +10,8 @@ export default defineBackground(() => {
     if (!isJsonDetectedMessage(message)) return;
     const tabId = sender.tab?.id;
     if (tabId === undefined) return;
-    browser.scripting
-      .executeScript({
-        target: { tabId, frameIds: [sender.frameId ?? 0] },
-        files: ['/content-scripts/viewer.js'],
-      })
-      .catch((error: unknown) => console.warn('[json-viewer] viewer injection failed', error));
+    onJsonDetected({ tabId, frameId: sender.frameId ?? 0 }, sender.url).catch((error: unknown) =>
+      console.warn('[json-viewer] viewer injection failed', error),
+    );
   });
 });
