@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import iconUrl from '@/assets/icon.svg';
 import AppearanceSection from '@/options/sections/AppearanceSection.vue';
 import AboutSection from '@/options/sections/AboutSection.vue';
@@ -8,9 +9,31 @@ import StructureSection from '@/options/sections/StructureSection.vue';
 import PreviewPane from '@/options/PreviewPane.vue';
 import { useCustomThemes } from '@/options/useCustomThemes';
 import { useSettings } from '@/options/useSettings';
+import ThemeEditor from '@/options/ThemeEditor.vue';
+import { builtinThemes } from '@/themes/builtin';
+import type { Theme } from '@/themes/types';
 
 const { settings, customCss, loaded, reset } = useSettings();
 const { customThemes } = useCustomThemes();
+
+const editing = ref<{ theme: Theme; isNew: boolean } | null>(null);
+const previewTheme = ref<Theme | null>(null);
+const takenIds = computed(() => [...builtinThemes, ...customThemes.value].map((t) => t.id));
+
+function startEditing(theme: Theme, isNew: boolean): void {
+  editing.value = { theme, isNew };
+}
+
+function stopEditing(): void {
+  editing.value = null;
+  previewTheme.value = null;
+}
+
+function onSaved(theme: Theme): void {
+  if (theme.type === 'dark') settings.value.darkThemeId = theme.id;
+  else settings.value.lightThemeId = theme.id;
+  stopEditing();
+}
 
 function onReset(): void {
   if (window.confirm('Reset all settings to their defaults? Custom themes are kept.')) reset();
@@ -31,14 +54,24 @@ function onReset(): void {
       <button type="button" class="opt-reset" @click="onReset">Reset to defaults</button>
     </aside>
     <main v-if="loaded" class="opt-main">
-      <AppearanceSection :settings="settings" :custom-themes="customThemes" />
+      <AppearanceSection :settings="settings" :custom-themes="customThemes" :editing="editing !== null" @edit="startEditing" />
+      <ThemeEditor
+        v-if="editing"
+        :key="`${editing.theme.id}-${editing.isNew}`"
+        :initial="editing.theme"
+        :is-new="editing.isNew"
+        :taken-ids="takenIds"
+        @change="previewTheme = $event"
+        @saved="onSaved"
+        @cancel="stopEditing"
+      />
       <BehaviorSection :viewer="settings.viewer" />
       <StructureSection :viewer="settings.viewer" />
       <AdvancedSection v-model:custom-css="customCss" />
       <AboutSection />
     </main>
     <section class="opt-preview" aria-label="Live preview">
-      <PreviewPane :settings="settings" :custom-css="customCss" :custom-themes="customThemes" />
+      <PreviewPane :settings="settings" :custom-css="customCss" :custom-themes="customThemes" :theme-override="previewTheme" />
     </section>
   </div>
 </template>

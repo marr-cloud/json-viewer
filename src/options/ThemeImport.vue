@@ -11,12 +11,15 @@ const text = ref('');
 const errors = ref<string[]>([]);
 const warnings = ref<string[]>([]);
 const message = ref('');
+const importing = ref(false);
 
-async function importTheme(source: string): Promise<void> {
+async function importTheme(input: string | File): Promise<void> {
   errors.value = [];
   warnings.value = [];
   message.value = '';
+  importing.value = true;
   try {
+    const source = typeof input === 'string' ? input : await input.text();
     const result = fromVSCode(source, 'imported');
     const theme: Theme = { ...result.theme, id: uniqueThemeId(result.theme.name, props.takenIds) };
     await saveCustomTheme(theme);
@@ -26,6 +29,8 @@ async function importTheme(source: string): Promise<void> {
     emit('imported', theme);
   } catch (error) {
     errors.value = error instanceof ThemeImportError ? error.errors : [error instanceof Error ? error.message : String(error)];
+  } finally {
+    importing.value = false;
   }
 }
 
@@ -33,7 +38,7 @@ async function onFile(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   input.value = '';
-  if (file) await importTheme(await file.text());
+  if (file) await importTheme(file);
 }
 </script>
 
@@ -48,7 +53,7 @@ async function onFile(event: Event): Promise<void> {
       <textarea v-model="text" rows="6" spellcheck="false" />
     </label>
     <div class="opt-row">
-      <button type="button" :disabled="!text.trim()" @click="importTheme(text)">Import</button>
+      <button type="button" :disabled="!text.trim() || importing" @click="importTheme(text)">Import</button>
       <label class="opt-file">
         Choose file…
         <input type="file" accept=".json,.jsonc,application/json" @change="onFile" />

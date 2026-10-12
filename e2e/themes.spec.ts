@@ -66,3 +66,30 @@ test('deletes a custom theme and falls back to the default', async ({ context, e
   await expect(options.getByRole('button', { name: 'Delete Test Night' })).toHaveCount(0);
   await expect(options.getByLabel('Dark theme')).toHaveValue('dark-plus');
 });
+
+test('duplicates and edits a theme with a live preview', async ({ context, server, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await options.getByLabel('Theme mode').selectOption('dark');
+  await options.getByRole('button', { name: 'Duplicate & edit dark theme' }).click();
+  await expect(options.getByLabel('Theme name')).toHaveValue('Dark+ (copy)');
+  await options.getByLabel('key hex').fill('#00ff00');
+  await options.getByLabel('key hex').press('Tab');
+  const previewKey = options.locator('.opt-preview .cm-line', { hasText: '"title"' }).locator('span').first();
+  await expect(previewKey).toHaveCSS('color', 'rgb(0, 255, 0)');
+  await options.getByRole('button', { name: 'Save theme' }).click();
+  await expect(options.getByLabel('Dark theme')).toHaveValue('dark-copy');
+  await options.waitForTimeout(500);
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect.poll(() => keyColor(page)).toBe('rgb(0, 255, 0)');
+});
+
+test('blocks saving a theme with invalid JSON', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await options.getByRole('button', { name: 'Duplicate & edit dark theme' }).click();
+  await options.getByLabel('Theme JSON').fill('{"name": ');
+  await expect(options.getByRole('alert')).toContainText('Invalid JSON');
+  await expect(options.getByRole('button', { name: 'Save theme' })).toBeDisabled();
+});

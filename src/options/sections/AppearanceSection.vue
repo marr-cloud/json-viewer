@@ -10,7 +10,8 @@ import { builtinThemes } from '@/themes/builtin';
 import { deleteCustomTheme } from '@/themes/store';
 import type { Theme } from '@/themes/types';
 
-const props = defineProps<{ settings: Settings; customThemes: Theme[] }>();
+const props = defineProps<{ settings: Settings; customThemes: Theme[]; editing?: boolean }>();
+const emit = defineEmits<{ edit: [theme: Theme, isNew: boolean] }>();
 
 const modeOptions: SelectOption[] = [
   { value: 'auto', label: 'Follow the system' },
@@ -48,18 +49,21 @@ async function remove(theme: Theme): Promise<void> {
     <div class="opt-theme-row">
       <SelectField v-model="settings.lightThemeId" label="Light theme" :options="themeOptions" />
       <ThemeSwatch :theme="lightTheme" />
+      <button type="button" @click="emit('edit', lightTheme, true)">Duplicate &amp; edit<span class="opt-sr-only"> light theme</span></button>
     </div>
     <div class="opt-theme-row">
       <SelectField v-model="settings.darkThemeId" label="Dark theme" :options="themeOptions" />
       <ThemeSwatch :theme="darkTheme" />
+      <button type="button" @click="emit('edit', darkTheme, true)">Duplicate &amp; edit<span class="opt-sr-only"> dark theme</span></button>
     </div>
-    <ThemeImport :taken-ids="takenIds" @imported="onImported" />
+    <ThemeImport v-if="!editing" :taken-ids="takenIds" @imported="onImported" />
     <div v-if="customThemes.length" class="opt-custom-list">
       <h3>Custom themes</h3>
       <ul>
         <li v-for="theme in customThemes" :key="theme.id" class="opt-row">
           <ThemeSwatch :theme="theme" />
           <span>{{ theme.name }}</span>
+          <button type="button" :aria-label="`Edit ${theme.name}`" @click="emit('edit', theme, false)">Edit</button>
           <button type="button" :aria-label="`Delete ${theme.name}`" @click="remove(theme)">Delete</button>
         </li>
       </ul>
