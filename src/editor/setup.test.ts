@@ -3,7 +3,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defaultTheme } from '@/themes/builtin';
-import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
+import { defaultViewerOptions, NO_RICH_VALUES, type RichValues, type ViewerOptions } from '@/viewer/options';
 import type { ErrorLocation } from './errorLine';
 import { buildExtensions } from './setup';
 
@@ -93,5 +93,28 @@ describe('buildExtensions in a mounted view', () => {
     });
     expect(view.dom.querySelectorAll('.cm-jv-error-line')).toHaveLength(0);
     expect(view.dom.querySelectorAll('.cm-jv-error-char')).toHaveLength(1);
+  });
+
+  const mountRich = (rich: RichValues | undefined) => {
+    view = new EditorView({
+      state: EditorState.create({
+        doc: '["#ff0000"]',
+        extensions: buildExtensions({ options: defaultViewerOptions, theme: defaultTheme, error: null, rich }),
+      }),
+      parent: document.body,
+    });
+    return view;
+  };
+
+  it('adds color swatches only when asked to', () => {
+    expect(mountRich({ ...NO_RICH_VALUES, colorSwatches: true }).dom.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
+    view?.destroy();
+    expect(mountRich(NO_RICH_VALUES).dom.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+    view?.destroy();
+    expect(mountRich(undefined).dom.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+  });
+
+  it('accepts every value decoration switched on', () => {
+    expect(() => mountRich({ colorSwatches: true, dateTooltips: true, imagePreview: true })).not.toThrow();
   });
 });

@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, reactive, ref, type App } from 'vue';
 import type { ErrorLocation } from '@/editor/errorLine';
 import { defaultTheme } from '@/themes/builtin';
-import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
+import { defaultViewerOptions, NO_RICH_VALUES, type ViewerOptions } from '@/viewer/options';
 import CodeView from './CodeView.vue';
 
 let app: App | undefined;
@@ -140,5 +140,39 @@ describe('CodeView', () => {
     view.contentDOM.blur();
     view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf('1') } });
     expect(paths.at(-1)).toBe('$.a[0]');
+  });
+
+  it('adds and removes value decorations without recreating the editor', async () => {
+    host = document.createElement('div');
+    document.body.append(host);
+    const state = reactive({ rich: NO_RICH_VALUES });
+    app = createApp({
+      render: () =>
+        h(CodeView, { doc: '["#ff0000"]', options: defaultViewerOptions, theme: defaultTheme, error: null, rich: state.rich }),
+    });
+    app.mount(host);
+    const editor = host.querySelector<HTMLElement>('.cm-editor')!;
+    expect(editor.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+    state.rich = { ...NO_RICH_VALUES, colorSwatches: true };
+    await nextTick();
+    expect(editor.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
+    expect(host.querySelector('.cm-editor')).toBe(editor);
+  });
+
+  it('decorates an invalid document without throwing', () => {
+    host = document.createElement('div');
+    document.body.append(host);
+    app = createApp({
+      render: () =>
+        h(CodeView, {
+          doc: '{"c": "#ff0000",}',
+          options: defaultViewerOptions,
+          theme: defaultTheme,
+          error: { line: 1, column: 17 },
+          rich: { colorSwatches: true, dateTooltips: true, imagePreview: true },
+        }),
+    });
+    app.mount(host);
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
   });
 });
