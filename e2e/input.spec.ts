@@ -85,18 +85,25 @@ async function forceViewer(context: BrowserContext, url: string): Promise<void> 
   if (!worker) worker = await context.waitForEvent('serviceworker');
   await worker.evaluate(async (pageUrl) => {
     type Scripting = {
-      executeScript(details: { target: { tabId: number }; func?: (flag: string) => void; args?: string[]; files?: string[] }): Promise<unknown>;
+      executeScript(details: {
+        target: { tabId: number };
+        func?: (flag: string, guard: string) => boolean;
+        args?: string[];
+        files?: string[];
+      }): Promise<{ result?: unknown }[]>;
     };
     const api = (globalThis as unknown as { chrome: { tabs: { query(q: { url: string }): Promise<{ id: number }[]> }; scripting: Scripting } }).chrome;
     const [tab] = await api.tabs.query({ url: pageUrl });
     const target = { tabId: tab!.id };
-    await api.scripting.executeScript({
+    const [flagged] = await api.scripting.executeScript({
       target,
-      func: (flag) => {
+      func: (flag, guard) => {
         (globalThis as unknown as Record<string, unknown>)[flag] = true;
+        return document.documentElement.hasAttribute(guard);
       },
-      args: ['__jsonViewerForced'],
+      args: ['__jsonViewerForced', 'data-json-viewer'],
     });
+    if (flagged?.result === true) return;
     await api.scripting.executeScript({ target, files: ['/content-scripts/viewer.js'] });
   }, url);
 }
@@ -113,4 +120,13 @@ test('"View as JSON" opens the viewer on pages that were not detected', async ({
     await forceViewer(context, server.url(route));
     await expect(page.locator(`${viewer} .cm-content`)).toContainText(text);
   }
+});
+
+test('"View as JSON" on a page that already shows the viewer leaves it as it is', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
+  await forceViewer(context, server.url('/data.json'));
+  await page.waitForTimeout(500);
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
 });

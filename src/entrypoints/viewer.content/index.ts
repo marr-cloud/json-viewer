@@ -4,11 +4,9 @@ import { createApp, h } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
 import { detect, sniffKind } from '@/detect/detect';
 import { readRawText } from '@/detect/readRawText';
-import { FORCE_VIEWER_FLAG, OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
+import { FORCE_VIEWER_FLAG, OPEN_OPTIONS, VIEWER_GUARD as GUARD, type OpenOptionsMessage } from '@/messages';
 import { hideOriginal } from '@/viewer/hideOriginal';
 import { createViewerSession, type ViewerSession } from '@/viewer/session';
-
-const GUARD = 'data-json-viewer';
 
 /** "View as JSON" sets this on the content scripts' isolated world before injecting the viewer. */
 function isForced(): boolean {
