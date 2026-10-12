@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { setStorage } from './storage';
+import { getStorage, setStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 
@@ -58,4 +58,33 @@ test('uses light mode above the threshold', async ({ context, server }) => {
   await page.goto(server.url('/rich.json'));
   await expect(page.locator(`${viewer} .cm-jv-swatch`)).toHaveCount(1);
   await expect(page.locator(`${viewer} .jv-light-mode`)).toHaveCount(0);
+});
+
+test('the Features section switches features and saves them', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  const preview = options.locator('.opt-preview');
+  await expect(preview.locator('.cm-jv-swatch').first()).toBeAttached();
+  await expect(preview.getByLabel('JSONPath filter')).toBeVisible();
+
+  await options.getByRole('switch', { name: 'Color swatches' }).uncheck();
+  await options.getByRole('switch', { name: 'JSONPath filter' }).uncheck();
+  await expect(preview.locator('.cm-jv-swatch')).toHaveCount(0);
+  await expect(preview.getByLabel('JSONPath filter')).toHaveCount(0);
+
+  await options.getByLabel('Light mode above (MB)').fill('5');
+  await options.getByLabel('Light mode above (MB)').press('Tab');
+  await expect
+    .poll(() => getStorage(context, 'sync', 'settings'))
+    .toMatchObject({
+      features: { jsonPath: false, colorSwatches: false, dateTooltips: true, imagePreview: true },
+      viewer: { lightModeThresholdMB: 5 },
+    });
+});
+
+test('the options preview shows a date tooltip', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  await options.locator('.opt-preview .cm-line span', { hasText: '1728691200' }).hover();
+  await expect(options.locator('.opt-preview .cm-jv-date')).toContainText('2024-10-12 00:00:00 UTC');
 });
