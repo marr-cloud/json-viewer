@@ -12,7 +12,8 @@
 - Mac: un atajo guardado como `Meta+…` antes de esta fase ya no coincide nunca (Cmd ahora cuenta como Ctrl) y
   opciones lo sigue mostrando como "Meta+…"; hay que volver a grabarlo o restablecer. Posible arreglo: normalizar
   `Meta`→`Ctrl` al leer en Mac.
-- Mac: comprobar a mano si Cmd+Shift+C (copiar ruta) llega a la página o se lo queda el selector de DevTools.
+- Mac: comprobar a mano Cmd+Shift+C (copiar ruta; puede quedárselo el selector de DevTools), Cmd+Shift+F (filtro) y que Ctrl+Cmd+F siga poniendo la pantalla completa.
+- `rgb()` con comas acepta mezclar números y porcentajes (`rgb(10%, 20, 30)`), que CSS rechaza: la muestra sale vacía.
 - `richValues` devuelve el objeto compartido `NO_RICH_VALUES` en modo ligero (el test fija esa identidad); nadie debe
   mutarlo.
 - `COLOR_STRING` es una regex global exportada (estado en `lastIndex`); copiarla antes de usarla fuera de

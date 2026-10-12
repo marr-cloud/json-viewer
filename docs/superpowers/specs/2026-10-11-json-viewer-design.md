@@ -196,7 +196,7 @@ Se guardan como `"Ctrl+Shift+F"` y se comparan por tecla física (`KeyboardEvent
 Decoraciones de CodeMirror calculadas solo sobre el rango visible:
 
 - **Color**: muestra junto a strings `#rgb`, `#rrggbb`, `#rrggbbaa`, `rgb()/rgba()`, `hsl()/hsla()`.
-- **Fechas**: tooltip con hora local y UTC para números epoch en segundos o milisegundos que caen entre 1990-01-01 y 2100-01-01, y para strings ISO 8601.
+- **Fechas**: tooltip con hora local y UTC para números epoch en segundos o milisegundos que caen entre 1990-01-01 y 2100-01-01, y para strings ISO 8601. Las fechas sin hora (`YYYY-MM-DD`) se muestran como fecha de calendario, sin convertir de zona.
 - **Imágenes**: tooltip con miniatura (carga diferida) para URLs que terminan en `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.svg`, `.avif`. Desactivable.
 - **URLs clicables**: respetan `wrapLinkWithAnchorTag` y `openLinksInNewWindow`.
 - **Tamaño de arrays**: texto `// N items` en el placeholder de plegado si `showArraySize`.
