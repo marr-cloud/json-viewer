@@ -43,7 +43,28 @@ describe('downloadFont', () => {
 
   it('reports an unknown family', async () => {
     const fetchImpl = fakeFetch({ [css2Url('Nope')]: () => new Response('bad', { status: 400 }) });
-    await expect(downloadFont('Nope', ['latin'], fetchImpl)).rejects.toThrow('"Nope" is not a Google Fonts family.');
+    await expect(downloadFont('Nope', ['latin'], fetchImpl)).rejects.toThrow(
+      '"Nope" is not a Google Fonts family. Names are case-sensitive, e.g. "JetBrains Mono".',
+    );
+  });
+
+  it('reports a connection that drops while reading the css', async () => {
+    const broken = { ok: true, status: 200, text: () => Promise.reject(new TypeError('network error')) } as unknown as Response;
+    const fetchImpl = fakeFetch({ [css2Url('Demo Mono')]: () => broken });
+    const result = downloadFont('Demo Mono', ['latin'], fetchImpl);
+    await expect(result).rejects.toBeInstanceOf(FontDownloadError);
+    await expect(result).rejects.toThrow('Could not reach Google Fonts. Check your connection.');
+  });
+
+  it('reports a connection that drops while reading a font file', async () => {
+    const broken = { ok: true, status: 200, arrayBuffer: () => Promise.reject(new TypeError('network error')) } as unknown as Response;
+    const fetchImpl = fakeFetch({
+      [css2Url('Demo Mono')]: () => new Response(CSS),
+      [LATIN_FILE]: () => broken,
+    });
+    const result = downloadFont('Demo Mono', ['latin'], fetchImpl);
+    await expect(result).rejects.toBeInstanceOf(FontDownloadError);
+    await expect(result).rejects.toThrow('Could not reach Google Fonts. Check your connection.');
   });
 
   it('reports when no file matches the selected character sets', async () => {

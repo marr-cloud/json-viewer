@@ -22,9 +22,10 @@ export function css2Url(family: string): string {
   return `${GOOGLE_FONTS_CSS_URL}?family=${name}:wght@${DOWNLOAD_WEIGHTS.join(';')}&display=swap`;
 }
 
-async function request(fetchImpl: FetchLike, url: string): Promise<Response> {
+/** Runs a network step (a request or reading its body); any failure means the connection broke. */
+async function network<T>(step: () => Promise<T>): Promise<T> {
   try {
-    return await fetchImpl(url);
+    return await step();
   } catch {
     throw new FontDownloadError('Could not reach Google Fonts. Check your connection.');
   }
@@ -36,10 +37,12 @@ export async function downloadFont(
   subsets: readonly string[],
   fetchImpl: FetchLike = (url) => fetch(url),
 ): Promise<StoredFont> {
-  const response = await request(fetchImpl, css2Url(family));
-  if (response.status === 400) throw new FontDownloadError(`"${family}" is not a Google Fonts family.`);
+  const response = await network(() => fetchImpl(css2Url(family)));
+  if (response.status === 400) {
+    throw new FontDownloadError(`"${family}" is not a Google Fonts family. Names are case-sensitive, e.g. "JetBrains Mono".`);
+  }
   if (!response.ok) throw new FontDownloadError(`Google Fonts answered ${response.status}.`);
-  const parsed = parseCss2(await response.text());
+  const parsed = parseCss2(await network(() => response.text()));
   const files = selectFaces(parsed, subsets);
   if (files.length === 0) throw new FontDownloadError(`"${family}" has no files for the selected character sets.`);
 
@@ -49,9 +52,9 @@ export async function downloadFont(
   for (const file of files) {
     let base64 = data.get(file.url);
     if (base64 === undefined) {
-      const fileResponse = await request(fetchImpl, file.url);
+      const fileResponse = await network(() => fetchImpl(file.url));
       if (!fileResponse.ok) throw new FontDownloadError(`Font file download failed (${fileResponse.status}).`);
-      const buffer = new Uint8Array(await fileResponse.arrayBuffer());
+      const buffer = new Uint8Array(await network(() => fileResponse.arrayBuffer()));
       bytes += buffer.byteLength;
       if (bytes > MAX_FONT_BYTES) {
         throw new FontDownloadError(`"${family}" is larger than 2 MB; choose fewer character sets.`);

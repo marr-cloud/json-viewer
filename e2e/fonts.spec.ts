@@ -5,6 +5,9 @@ import { getStorage, setStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 const googleFont = { settings: { font: { source: 'google', family: TEST_FONT } } };
+/** A distinctive size: once the viewer shows it, it has processed the stored settings. */
+const MARKER_SIZE = 17;
+const scroller = `${viewer} .cm-scroller`;
 
 test('renders with a downloaded Google font under a strict CSP', async ({ context }) => {
   await seedTestFont(context);
@@ -25,10 +28,11 @@ test('renders with a downloaded Google font under a strict CSP', async ({ contex
 });
 
 test('picks up a font downloaded while the tab is open', async ({ context, server }) => {
-  await setStorage(context, 'sync', googleFont);
+  await setStorage(context, 'sync', { settings: { font: { ...googleFont.settings.font, sizePx: MARKER_SIZE } } });
   const page = await context.newPage();
   await page.goto(server.url('/data.json'));
   await expect(page.locator(`${viewer} .cm-line`).first()).toBeVisible();
+  await expect(page.locator(scroller)).toHaveCSS('font-size', `${MARKER_SIZE}px`);
   expect(await hasLoadedFace(page, TEST_FONT)).toBe(false);
   await seedTestFont(context);
   await expect.poll(() => hasLoadedFace(page, TEST_FONT)).toBe(true);
@@ -36,10 +40,11 @@ test('picks up a font downloaded while the tab is open', async ({ context, serve
 
 test('switching to the Google source loads the stored font live', async ({ context, server }) => {
   await seedTestFont(context);
-  await setStorage(context, 'sync', { settings: { font: { source: 'system', family: TEST_FONT } } });
+  await setStorage(context, 'sync', { settings: { font: { source: 'system', family: TEST_FONT, sizePx: MARKER_SIZE } } });
   const page = await context.newPage();
   await page.goto(server.url('/data.json'));
   await expect(page.locator(`${viewer} .cm-line`).first()).toBeVisible();
+  await expect(page.locator(scroller)).toHaveCSS('font-size', `${MARKER_SIZE}px`);
   expect(await hasLoadedFace(page, TEST_FONT)).toBe(false);
   await setStorage(context, 'sync', googleFont);
   await expect.poll(() => hasLoadedFace(page, TEST_FONT)).toBe(true);
@@ -84,8 +89,28 @@ test('shows an error for an unknown Google font and saves nothing', async ({ con
   await fonts.getByLabel('Font source').selectOption('google');
   await fonts.getByLabel('Font family').fill('Nope Font');
   await fonts.getByRole('button', { name: 'Download' }).click();
-  await expect(fonts.getByRole('alert')).toHaveText('"Nope Font" is not a Google Fonts family.');
+  await expect(fonts.getByRole('alert')).toHaveText(
+    '"Nope Font" is not a Google Fonts family. Names are case-sensitive, e.g. "JetBrains Mono".',
+  );
   expect(await getStorage(context, 'local', 'fontFamilies')).toBeUndefined();
+});
+
+test('fixes the case of a typed family name, then downloads it', async ({ context, extensionId }) => {
+  await mockGoogleFonts(context);
+  await seedTestFont(context);
+  const { fonts } = await openFonts(context, extensionId);
+  await fonts.getByLabel('Font source').selectOption('google');
+  const family = fonts.getByLabel('Font family');
+  await family.fill('share tech mono');
+  await expect(fonts.getByRole('status')).toHaveText('Not downloaded yet');
+  await family.press('Tab');
+  await expect(family).toHaveValue(TEST_FONT);
+  await expect(fonts.getByRole('status')).toHaveText(/^Downloaded \(\d+ KB\)$/);
+  await fonts.getByRole('button', { name: 'Download again' }).click();
+  await expect
+    .poll(async () => ((await getStorage(context, 'local', `fonts/${TEST_FONT}`)) as { downloadedAt: string }).downloadedAt)
+    .not.toBe('2026-10-12T00:00:00.000Z');
+  await expect(fonts.getByRole('alert')).toHaveCount(0);
 });
 
 test('says when the chosen Google font is not downloaded on this device', async ({ context, extensionId }) => {

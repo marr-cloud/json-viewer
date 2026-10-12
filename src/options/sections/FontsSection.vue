@@ -4,7 +4,7 @@ import NumberField from '../fields/NumberField.vue';
 import SelectField from '../fields/SelectField.vue';
 import ToggleField from '../fields/ToggleField.vue';
 import { useFonts } from '../useFonts';
-import { FONT_CATALOG } from '@/fonts/catalog';
+import { canonicalFamily, FONT_CATALOG } from '@/fonts/catalog';
 import {
   FONT_FAMILY_PATTERN,
   FONT_SIZE_MAX,
@@ -40,10 +40,14 @@ const canDownload = computed(
 );
 const kb = (bytes: number) => `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
+/** Google Fonts names are case-sensitive: snap what was typed onto a catalog or downloaded spelling. */
+function canonicalize(): void {
+  props.font.family = canonicalFamily(props.font.family, [...FONT_CATALOG, ...fonts.value.map((item) => item.family)]);
+}
+
 async function onDownload(): Promise<void> {
-  const font = await download(props.font.family, props.font.subsets);
-  // Google's spelling of the name is the key the viewer looks up.
-  if (font) props.font.family = font.family;
+  canonicalize();
+  await download(props.font.family, props.font.subsets);
 }
 
 async function onDelete(family: string): Promise<void> {
@@ -61,6 +65,7 @@ async function onDelete(family: string): Promise<void> {
         v-model.trim="font.family"
         type="text"
         spellcheck="false"
+        @change="canonicalize"
         :list="isGoogle ? 'font-catalog' : undefined"
         :placeholder="isGoogle ? 'e.g. JetBrains Mono' : 'Default monospace font'"
       />

@@ -21,3 +21,10 @@ export const FONT_CATALOG: readonly string[] = [
   'Spline Sans Mono',
   'Reddit Mono',
 ];
+
+/** Google Fonts family names are case-sensitive; maps a typed name onto a known spelling when one matches. */
+export function canonicalFamily(input: string, known: readonly string[]): string {
+  const trimmed = input.trim();
+  const lower = trimmed.toLowerCase();
+  return known.find((name) => name.toLowerCase() === lower) ?? trimmed;
+}
