@@ -2,21 +2,37 @@ export interface ParseError {
   message: string;
   line: number | null;
   column: number | null;
+  /** Character offset of the error in the BOM-stripped text, or null when unknown. */
+  offset: number | null;
 }
 
 export type ParseResult = { ok: true; value: unknown } | { ok: false; error: ParseError };
 
-// Cheap prefilter: a number needs more than 15 significant digits to lose precision.
-const LONG_NUMBER = /\d[\d.]{15,}/;
+// Cheap prefilter: a number needs more than 15 significant digits (or a three-digit
+// exponent, which can overflow or underflow a double) to change value when parsed.
+const LONG_NUMBER = /\d[\d.]{15,}|[eE][+-]?\d{3}/;
 
 export function parseJson(text: string): ParseResult {
   const source = stripBom(text);
   try {
-    const value = LONG_NUMBER.test(source) ? JSON.parse(source, preserveNumber) : JSON.parse(source);
-    return { ok: true, value };
+    return { ok: true, value: parseValue(source) };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: { message, ...locateError(source) } };
+    const offset = findErrorOffset(source);
+    if (offset === -1) return { ok: false, error: { message, line: null, column: null, offset: null } };
+    return { ok: false, error: { message, ...offsetToLineColumn(source, offset), offset } };
+  }
+}
+
+function parseValue(source: string): unknown {
+  if (!LONG_NUMBER.test(source)) return JSON.parse(source);
+  try {
+    return JSON.parse(source, preserveNumber);
+  } catch (e) {
+    if (!(e instanceof RangeError)) throw e;
+    // V8 internalizes reviver results recursively, so extremely deep documents overflow
+    // the stack. Fall back to a plain parse; big numbers may lose precision in that case.
+    return JSON.parse(source);
   }
 }
 
@@ -25,15 +41,16 @@ export function stripBom(text: string): string {
 }
 
 function preserveNumber(_key: string, value: unknown, context?: { source?: string }): unknown {
-  if (
-    typeof value === 'number' &&
-    context?.source !== undefined &&
-    String(value) !== context.source &&
-    significantDigits(context.source) > 15
-  ) {
-    return JSON.rawJSON(context.source);
-  }
+  if (typeof value !== 'number' || context?.source === undefined) return value;
+  const source = context.source;
+  if (!Number.isFinite(value)) return JSON.rawJSON(source);
+  if (value === 0 && hasNonZeroMantissa(source)) return JSON.rawJSON(source);
+  if (String(value) !== source && significantDigits(source) > 15) return JSON.rawJSON(source);
   return value;
+}
+
+function hasNonZeroMantissa(literal: string): boolean {
+  return /[1-9]/.test(literal.split(/[eE]/)[0] ?? '');
 }
 
 function significantDigits(literal: string): number {

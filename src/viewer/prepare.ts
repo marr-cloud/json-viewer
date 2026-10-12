@@ -25,6 +25,6 @@ export function prepareDocument(
     return { ok: true, text };
   } catch (e) {
     const message = e instanceof RangeError ? TOO_DEEP : String(e);
-    return { ok: false, text: stripBom(raw), error: { message, line: null, column: null } };
+    return { ok: false, text: stripBom(raw), error: { message, line: null, column: null, offset: null } };
   }
 }

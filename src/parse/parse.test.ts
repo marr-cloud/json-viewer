@@ -7,7 +7,7 @@ describe('parseJson', () => {
   });
 
   it('ignores a leading UTF-8 BOM', () => {
-    expect(parseJson('﻿{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
+    expect(parseJson('\uFEFF{"a":1}')).toEqual({ ok: true, value: { a: 1 } });
   });
 
   it('preserves integers beyond Number.MAX_SAFE_INTEGER verbatim', () => {
@@ -33,6 +33,26 @@ describe('parseJson', () => {
     expect(value.f).toBe(1);
     expect(value.e).toBe(100);
     expect(JSON.isRawJSON(value.big)).toBe(true);
+  });
+
+  it('keeps out-of-range numbers verbatim instead of Infinity/0', () => {
+    const result = parseJson('{"a":1e400,"b":1e-400,"c":0e5,"d":1.5}');
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(JSON.stringify(result.value)).toBe('{"a":1e400,"b":1e-400,"c":0,"d":1.5}');
+  });
+
+  it('parses very deep documents containing long numbers', () => {
+    const depth = 20000;
+    const result = parseJson('['.repeat(depth) + '12345678901234567890' + ']'.repeat(depth));
+    expect(result.ok).toBe(true);
+  });
+
+  it('reports the error offset', () => {
+    const result = parseJson('{"a":1,}');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toMatchObject({ line: 1, column: 8, offset: 7 });
   });
 
   it('round-trips a decimal with more than 15 significant digits', () => {
@@ -81,7 +101,7 @@ describe('parseJson', () => {
 
 describe('stripBom', () => {
   it('removes only a leading BOM', () => {
-    expect(stripBom('﻿a﻿')).toBe('a﻿');
+    expect(stripBom('\uFEFFa\uFEFF')).toBe('a\uFEFF');
     expect(stripBom('abc')).toBe('abc');
   });
 });

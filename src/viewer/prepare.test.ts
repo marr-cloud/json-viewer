@@ -42,11 +42,11 @@ describe('prepareDocument', () => {
   });
 
   it('strips the BOM from valid and invalid input', () => {
-    expect(prepareDocument('﻿{"a":1}', defaultViewerOptions)).toEqual({
+    expect(prepareDocument('\uFEFF{"a":1}', defaultViewerOptions)).toEqual({
       ok: true,
       text: '{\n  "a": 1\n}',
     });
-    const invalid = prepareDocument('﻿{', defaultViewerOptions);
+    const invalid = prepareDocument('\uFEFF{', defaultViewerOptions);
     expect(invalid.text).toBe('{');
   });
 
@@ -62,6 +62,7 @@ describe('prepareDocument', () => {
         message: 'Document is nested too deeply to format',
         line: null,
         column: null,
+        offset: null,
       });
     }
   });
