@@ -181,6 +181,11 @@
   opacity: 0.8;
 }
 
+/* Scoped: the root also gets a `jv-light` class when the theme is light. */
+.jv-status-info .jv-light {
+  font-weight: 600;
+}
+
 .jv-group {
   display: flex;
   align-items: center;

@@ -7,7 +7,7 @@ import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
 import { defaultShortcuts, type Shortcuts } from '@/settings/shortcuts';
-import { defaultViewerOptions } from '@/viewer/options';
+import { defaultFeatures, defaultViewerOptions, type Features, type ViewerOptions } from '@/viewer/options';
 import JsonViewer from './JsonViewer.vue';
 
 let app: App | undefined;
@@ -21,6 +21,8 @@ type Props = {
   onToggleTheme?: () => void;
   onOpenSettings?: () => void;
   shortcuts?: Shortcuts;
+  options?: ViewerOptions;
+  features?: Features;
 };
 
 function mount(props: Props = {}) {
@@ -333,5 +335,33 @@ describe('JsonViewer', () => {
     host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
     await nextTick();
     expect(key(host.querySelector('.jv-raw')!, 'KeyF', { key: 'f', ctrlKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('hides the JSONPath filter when the feature is off and lets its shortcut through', () => {
+    const host = mount({ features: { ...defaultFeatures, jsonPath: false } });
+    expect(host.querySelector('[aria-label="JSONPath filter"]')).toBeNull();
+    const event = key(editorOf(host).contentDOM, 'KeyF', { key: 'F', ctrlKey: true, shiftKey: true });
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('draws the value decorations below the size threshold', () => {
+    const host = mount({ raw: '["#ff0000"]' });
+    expect(host.querySelector('.jv-light')).toBeNull();
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
+  });
+
+  it('leaves out the value decorations that are switched off', () => {
+    const host = mount({ raw: '["#ff0000"]', features: { ...defaultFeatures, colorSwatches: false } });
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+  });
+
+  it('switches to light mode above the size threshold', () => {
+    // Just over 1 MB, starting with a color value that would get a swatch.
+    const raw = `["#ff0000","${'x'.repeat(1_100_000)}"]`;
+    const host = mount({ raw, options: { ...defaultViewerOptions, lightModeThresholdMB: 1 } });
+    const light = host.querySelector<HTMLElement>('.jv-light')!;
+    expect(light.textContent).toBe('Light mode');
+    expect(light.title).toContain('1 MB');
+    expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
   });
 });

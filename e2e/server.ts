@@ -20,7 +20,25 @@ const bigJson = JSON.stringify(
 const minifiedInvalid =
   '[' + Array.from({ length: 20_000 }, (_, i) => `{"id":${i}}`).join(',') + ',]';
 
-const routes: Record<string, { type: string; body: string }> = {
+interface Route {
+  type: string;
+  /** A function gets the server's origin, for documents that link back to it. */
+  body: string | ((origin: string) => string);
+  headers?: Record<string, string>;
+}
+
+const richJson = (origin: string) =>
+  JSON.stringify({
+    accent: '#ff5500',
+    '#00ff00': 'a key, not a color',
+    createdAt: 1728691200,
+    updatedAt: '2024-10-12T09:30:00Z',
+    icon: `${origin}/pixel.svg`,
+  });
+
+const richBrokenJson = (origin: string) => JSON.stringify({ icon: `${origin}/missing.svg` });
+
+const routes: Record<string, Route> = {
   '/data.json': {
     type: 'application/json',
     body: '{"name":"x","url":"https://example.com/a","nested":{"list":[1,2,3]},"big":12345678901234567890}',
@@ -34,6 +52,10 @@ const routes: Record<string, { type: string; body: string }> = {
   '/bom.json': { type: 'application/json', body: '\uFEFF{"a":1}' },
   '/minified-invalid.json': { type: 'application/json', body: minifiedInvalid },
   '/big.json': { type: 'application/json', body: bigJson },
+  '/rich.json': { type: 'application/json', body: richJson },
+  '/rich-csp.json': { type: 'application/json', body: richJson, headers: { 'content-security-policy': "img-src 'none'" } },
+  '/rich-broken.json': { type: 'application/json', body: richBrokenJson },
+  '/pixel.svg': { type: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="3"/>' },
 };
 
 export async function startFixtureServer(): Promise<FixtureServer> {
@@ -43,8 +65,9 @@ export async function startFixtureServer(): Promise<FixtureServer> {
       res.writeHead(404).end();
       return;
     }
-    res.writeHead(200, { 'content-type': route.type });
-    res.end(route.body);
+    const origin = `http://${req.headers.host ?? '127.0.0.1'}`;
+    res.writeHead(200, { 'content-type': route.type, ...route.headers });
+    res.end(typeof route.body === 'function' ? route.body(origin) : route.body);
   });
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;

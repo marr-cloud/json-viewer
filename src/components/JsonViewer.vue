@@ -13,10 +13,10 @@ import type { Theme } from '@/themes/types';
 import { copyText } from '@/viewer/clipboard';
 import type { ParseError } from '@/parse/parse';
 import { downloadName, downloadText } from '@/viewer/download';
-import { FOLD_ALL_LEVEL, type ViewerOptions } from '@/viewer/options';
+import { defaultFeatures, FOLD_ALL_LEVEL, richValues, type Features, type ViewerOptions } from '@/viewer/options';
 import { filterDocument } from '@/viewer/jsonPath';
 import { prepareDocument } from '@/viewer/prepare';
-import { byteLength, countLines, formatBytes, formatCount } from '@/viewer/stats';
+import { byteLength, countLines, formatBytes, formatCount, isLightMode } from '@/viewer/stats';
 
 const props = withDefaults(
   defineProps<{
@@ -32,6 +32,8 @@ const props = withDefaults(
     /** Shown in the status bar. */
     format?: string;
     shortcuts?: Shortcuts;
+    /** Optional features: the JSONPath filter and the value decorations follow them. */
+    features?: Features;
   }>(),
   {
     customCss: '',
@@ -41,6 +43,7 @@ const props = withDefaults(
     font: undefined,
     format: 'JSON',
     shortcuts: () => defaultShortcuts,
+    features: () => defaultFeatures,
   },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
@@ -63,7 +66,7 @@ const appliedPath = ref<string | null>(null);
 const formatOptions = computed(() => ({ indent: tabSize.value, sortKeys: sortKeys.value, cStyle: indentCStyle.value }));
 const filtered = computed(() => {
   const doc = prepared.value;
-  if (appliedPath.value === null || !doc.ok) return null;
+  if (!props.features.jsonPath || appliedPath.value === null || !doc.ok) return null;
   return filterDocument(doc.value, appliedPath.value, formatOptions.value);
 });
 const filterError = computed(() => (filtered.value && !filtered.value.ok ? filtered.value.message : null));
@@ -88,7 +91,11 @@ const mode = ref<'code' | 'raw'>(props.options.autoHighlight ? 'code' : 'raw');
 
 const root = ref<HTMLElement>();
 const cursorPath = ref('$');
-const size = computed(() => formatBytes(byteLength(props.raw)));
+const bytes = computed(() => byteLength(props.raw));
+const size = computed(() => formatBytes(bytes.value));
+/** Huge documents skip the value decorations; the status bar says so. */
+const lightMode = computed(() => isLightMode(bytes.value, props.options.lightModeThresholdMB));
+const rich = computed(() => richValues(props.features, lightMode.value));
 const lines = computed(() => formatCount(countLines(mode.value === 'code' ? shown.value.text : props.raw), 'line'));
 
 const message = ref('');
@@ -184,6 +191,7 @@ function runShortcut(action: ShortcutAction, repeat: boolean): boolean {
       if (onCode && !repeat) codeView.value?.openSearch();
       return onCode;
     case 'filter':
+      if (!props.features.jsonPath) return false;
       if (!repeat) filter.value?.focus();
       return true;
     case 'toggleRaw':
@@ -234,6 +242,7 @@ function onShortcut(event: KeyboardEvent): void {
     >
       <template #filter>
         <JsonPathFilter
+          v-if="features.jsonPath"
           ref="filter"
           v-model="filterText"
           :active="appliedPath !== null"
@@ -258,6 +267,7 @@ function onShortcut(event: KeyboardEvent): void {
       :options="codeOptions"
       :theme="theme"
       :error="shown.error"
+      :rich="rich"
       @path="cursorPath = $event"
     />
     <pre v-else ref="rawPre" class="jv-body jv-raw" tabindex="0">{{ raw }}</pre>
@@ -268,6 +278,7 @@ function onShortcut(event: KeyboardEvent): void {
       :format="format"
       :message="message"
       :note="matches"
+      :light-mode="lightMode ? options.lightModeThresholdMB : null"
       @copy-path="copyPath"
     />
   </div>
