@@ -91,6 +91,14 @@ describe('findErrorOffset', () => {
     expect(findErrorOffset('{"a":[1,{"b":null}]}')).toBe(-1);
   });
 
+  it('accepts an escaped backslash', () => {
+    expect(findErrorOffset('["\\\\"]')).toBe(-1);
+  });
+
+  it('reports a trailing comma after an escaped backslash', () => {
+    expect(findErrorOffset('{"p":"C:\\\\x",}')).toBe(13);
+  });
+
   it('returns -1 for deeply nested valid JSON without recursion', () => {
     expect(findErrorOffset('['.repeat(100000) + ']'.repeat(100000))).toBe(-1);
   });

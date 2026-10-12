@@ -170,7 +170,7 @@ function scanString(text: string, start: number): Scan {
     if (c === 0x5c) {
       const e = text[i + 1];
       if (e === undefined) return { ok: false, at: n };
-      if ('"\/bfnrt'.includes(e)) {
+      if ('"\\/bfnrt'.includes(e)) {
         i += 2;
         continue;
       }
