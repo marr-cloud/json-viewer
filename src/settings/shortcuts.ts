@@ -77,18 +77,38 @@ function keyFromCode(code: string): string | null {
 
 type KeyPress = Pick<KeyboardEvent, 'code' | 'ctrlKey' | 'altKey' | 'shiftKey' | 'metaKey'>;
 
-/** "Ctrl+Alt+Shift+Meta+Key" for a key press; null for modifier keys on their own and unknown keys. */
-export function comboFromEvent(event: KeyPress): string | null {
+/** On a Mac, Cmd plays Ctrl's role: a stored "Ctrl+F" means Cmd+F there, so settings sync across platforms. */
+export const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
+
+/**
+ * "Ctrl+Alt+Shift+Meta+Key" for a key press; null for modifier keys on their own and unknown keys.
+ * On a Mac, Cmd and Ctrl both count as Ctrl, so Meta never appears.
+ */
+export function comboFromEvent(event: KeyPress, mac = IS_MAC): string | null {
   const key = keyFromCode(event.code);
   if (key === null) return null;
   const parts = [
-    event.ctrlKey ? 'Ctrl' : '',
+    event.ctrlKey || (mac && event.metaKey) ? 'Ctrl' : '',
     event.altKey ? 'Alt' : '',
     event.shiftKey ? 'Shift' : '',
-    event.metaKey ? 'Meta' : '',
+    event.metaKey && !mac ? 'Meta' : '',
     key,
   ];
   return parts.filter((part) => part !== '').join('+');
+}
+
+/** How a combination reads on this platform: "Cmd" and "Option" on a Mac. */
+export function shortcutLabel(combo: string, mac = IS_MAC): string {
+  if (!mac) return combo;
+  return combo
+    .split('+')
+    .map((part) => (part === 'Ctrl' ? 'Cmd' : part === 'Alt' ? 'Option' : part))
+    .join('+');
+}
+
+/** Why a key press can't be a shortcut, naming this platform's modifiers. */
+export function modifierHint(mac = IS_MAC): string {
+  return mac ? 'Use Cmd, Option or a function key (F1–F24).' : 'Use Ctrl, Alt or a function key (F1–F24).';
 }
 
 const COMBO = /^(Ctrl\+)?(Alt\+)?(Shift\+)?(Meta\+)?(.+)$/;
