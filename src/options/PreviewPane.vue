@@ -45,18 +45,16 @@ function toggleTheme(): void {
     <div ref="host" class="opt-preview-host" />
     <Teleport v-if="shadowRoot" :to="shadowRoot">
       <component :is="'style'">{{ viewerCss }}</component>
-      <div class="opt-preview-root">
-        <!-- autoHighlight only sets the initial tab, so remount when it changes. -->
-        <JsonViewer
-          :key="String(settings.viewer.autoHighlight)"
-          :raw="SAMPLE_JSON"
-          :options="viewerOptions"
-          :theme="theme"
-          :custom-css="customCss"
-          :source="source"
-          @toggle-theme="toggleTheme"
-        />
-      </div>
+      <!-- autoHighlight only sets the initial tab, so remount when it changes. -->
+      <JsonViewer
+        :key="String(settings.viewer.autoHighlight)"
+        :raw="SAMPLE_JSON"
+        :options="viewerOptions"
+        :theme="theme"
+        :custom-css="customCss"
+        :source="source"
+        @toggle-theme="toggleTheme"
+      />
     </Teleport>
   </div>
 </template>

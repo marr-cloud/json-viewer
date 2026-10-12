@@ -39,6 +39,7 @@ body {
 .opt-app {
   display: grid;
   grid-template-columns: 200px minmax(340px, 1fr) minmax(360px, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: 100vh;
 }
 
@@ -180,6 +181,7 @@ button:disabled {
 
 .opt-preview {
   display: flex;
+  min-height: 0;
   min-width: 0;
   padding: 16px;
   border-left: 1px solid var(--opt-border);
@@ -193,8 +195,7 @@ button:disabled {
   border-radius: 8px;
 }
 
-.opt-preview-host,
-.opt-preview-root {
+.opt-preview-host {
   display: block;
   height: 100%;
 }

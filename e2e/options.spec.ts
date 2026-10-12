@@ -82,3 +82,14 @@ test('the preview reacts to line number changes', async ({ context, extensionId 
   await toggle.check();
   await expect(options.locator('.opt-preview .cm-lineNumbers')).toBeVisible();
 });
+
+test('the preview scrolls inside its frame', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.setViewportSize({ width: 1400, height: 260 });
+  await openOptions(options, extensionId);
+  const frame = await options.locator('.opt-preview-frame').boundingBox();
+  const root = await options.locator('.opt-preview .jv-root').boundingBox();
+  expect(root!.height).toBeLessThanOrEqual(frame!.height);
+  const scroller = options.locator('.opt-preview .cm-scroller');
+  await expect.poll(() => scroller.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+});
