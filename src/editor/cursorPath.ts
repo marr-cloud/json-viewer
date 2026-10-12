@@ -1,4 +1,4 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import { syntaxTree } from '@codemirror/language';
 import type { EditorState, Extension } from '@codemirror/state';
 import { ViewPlugin, type ViewUpdate } from '@codemirror/view';
 
@@ -26,8 +26,7 @@ export function formatPath(keys: readonly PathKey[]): string {
 /** JSON path of the value at `pos`, e.g. `$.items[3].email`; `$` outside every property and item. */
 export function jsonPathAt(state: EditorState, pos: number): string {
   const probe = probePosition(state, pos);
-  // The state field's tree can lag behind the parser on big documents; ensureSyntaxTree returns the live one.
-  const tree = ensureSyntaxTree(state, state.doc.length) ?? syntaxTree(state);
+  const tree = syntaxTree(state);
   const before = keysAt(state, tree.resolveInner(probe, -1));
   const after = keysAt(state, tree.resolveInner(probe, 1));
   return formatPath(after.length > before.length ? after : before);

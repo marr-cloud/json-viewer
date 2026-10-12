@@ -11,7 +11,8 @@ const DOC = JSON.stringify({ name: 'x', 'a-b': { list: [1, { deep: true }, [null
 function stateOf(doc: string): EditorState {
   const state = EditorState.create({ doc, extensions: [json()] });
   ensureSyntaxTree(state, doc.length, 5000);
-  return state;
+  // The parse context now holds the full tree; a transaction makes the state field pick it up.
+  return state.update({}).state;
 }
 
 /** Path with the cursor `offset` characters into the first occurrence of `needle`. */
