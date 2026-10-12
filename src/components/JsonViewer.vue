@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import CodeView from './CodeView.vue';
 import JsonPathFilter from './JsonPathFilter.vue';
 import ViewerStatusBar from './ViewerStatusBar.vue';
@@ -161,6 +161,14 @@ function clearFilter(): void {
   filterText.value = '';
   appliedPath.value = null;
 }
+
+// Switching the feature off drops the filter, so switching it back on doesn't silently re-apply it.
+watch(
+  () => props.features.jsonPath,
+  (on) => {
+    if (!on) clearFilter();
+  },
+);
 
 /** Esc anywhere in the viewer clears the filter, unless something (the search panel) already used it. */
 function onEscape(event: KeyboardEvent): void {

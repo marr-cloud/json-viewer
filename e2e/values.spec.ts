@@ -32,8 +32,8 @@ test('previews images on hover', async ({ context, server }) => {
   await expect(page.locator(`${viewer} .cm-jv-image-info`)).toHaveText('2 × 3');
 });
 
-// The page's CSP (`/rich-csp.json`) does not reach the content script's image requests,
-// so the failure is simulated with an image that does not exist.
+// Chromium does not apply the page's CSP to the content script's images, so the
+// failure is simulated with an image that returns 404.
 test('says when the image cannot be loaded', async ({ context, server }) => {
   const page = await context.newPage();
   await page.goto(server.url('/rich-broken.json'));
@@ -54,8 +54,8 @@ test('uses light mode above the threshold', async ({ context, server }) => {
   await setStorage(context, 'sync', { settings: { viewer: { lightModeThresholdMB: 1 } } });
   const page = await context.newPage();
   await page.goto(server.url('/big.json'));
-  await expect(page.locator(`${viewer} .jv-light`)).toHaveText('Light mode', { timeout: 15_000 });
+  await expect(page.locator(`${viewer} .jv-light-mode`)).toHaveText('Light mode', { timeout: 15_000 });
   await page.goto(server.url('/rich.json'));
   await expect(page.locator(`${viewer} .cm-jv-swatch`)).toHaveCount(1);
-  await expect(page.locator(`${viewer} .jv-light`)).toHaveCount(0);
+  await expect(page.locator(`${viewer} .jv-light-mode`)).toHaveCount(0);
 });

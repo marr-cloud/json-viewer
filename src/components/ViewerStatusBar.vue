@@ -31,7 +31,7 @@ const emit = defineEmits<{ copyPath: [] }>();
     <span class="jv-status-info">
       <span
         v-if="lightMode !== null"
-        class="jv-light"
+        class="jv-light-mode"
         :title="`Over ${lightMode} MB: color swatches and date and image previews are off.`"
         >Light mode</span
       >

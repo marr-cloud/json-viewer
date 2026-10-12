@@ -53,7 +53,6 @@ const routes: Record<string, Route> = {
   '/minified-invalid.json': { type: 'application/json', body: minifiedInvalid },
   '/big.json': { type: 'application/json', body: bigJson },
   '/rich.json': { type: 'application/json', body: richJson },
-  '/rich-csp.json': { type: 'application/json', body: richJson, headers: { 'content-security-policy': "img-src 'none'" } },
   '/rich-broken.json': { type: 'application/json', body: richBrokenJson },
   '/pixel.svg': { type: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="3"/>' },
 };

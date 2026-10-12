@@ -2,7 +2,7 @@
 import { foldedRanges } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createApp, h, nextTick, type App } from 'vue';
+import { createApp, h, nextTick, reactive, type App } from 'vue';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
@@ -344,9 +344,27 @@ describe('JsonViewer', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
+  it('clears an applied filter when the JSONPath feature is switched off', async () => {
+    const state = reactive({ features: defaultFeatures });
+    const host = document.createElement('div');
+    document.body.append(host);
+    app = createApp({
+      render: () => h(JsonViewer, { raw: '{"items":[1]}', options: defaultViewerOptions, theme: defaultTheme, features: state.features }),
+    });
+    app.mount(host);
+    await runFilter(host, '$.items');
+    expect(editorOf(host).state.doc.toString()).toBe('[\n  [\n    1\n  ]\n]');
+    state.features = { ...defaultFeatures, jsonPath: false };
+    await nextTick();
+    state.features = defaultFeatures;
+    await nextTick();
+    expect(editorOf(host).state.doc.toString()).toBe('{\n  "items": [\n    1\n  ]\n}');
+    expect(filterInput(host).value).toBe('');
+  });
+
   it('draws the value decorations below the size threshold', () => {
     const host = mount({ raw: '["#ff0000"]' });
-    expect(host.querySelector('.jv-light')).toBeNull();
+    expect(host.querySelector('.jv-light-mode')).toBeNull();
     expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
   });
 
@@ -359,7 +377,7 @@ describe('JsonViewer', () => {
     // Just over 1 MB, starting with a color value that would get a swatch.
     const raw = `["#ff0000","${'x'.repeat(1_100_000)}"]`;
     const host = mount({ raw, options: { ...defaultViewerOptions, lightModeThresholdMB: 1 } });
-    const light = host.querySelector<HTMLElement>('.jv-light')!;
+    const light = host.querySelector<HTMLElement>('.jv-light-mode')!;
     expect(light.textContent).toBe('Light mode');
     expect(light.title).toContain('1 MB');
     expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
