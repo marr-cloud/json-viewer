@@ -8,6 +8,8 @@
   font: 13px/1.4 system-ui, sans-serif;
   --jv-font-family: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
   --jv-font-size: 13px;
+  --jv-font-weight: 400;
+  --jv-font-ligatures: normal;
   --jv-line-height: 1.5;
 }
 
@@ -87,6 +89,8 @@
   font-family: var(--jv-font-family);
   font-size: var(--jv-font-size);
   line-height: var(--jv-line-height);
+  font-weight: var(--jv-font-weight);
+  font-variant-ligatures: var(--jv-font-ligatures);
 }
 
 /* Full-page container used by the content script; the options preview embeds .jv-root directly. */

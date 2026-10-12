@@ -3,12 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, type App } from 'vue';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
+import { defaultFontSettings, type FontSettings } from '@/settings/font';
 import { defaultViewerOptions } from '@/viewer/options';
 import JsonViewer from './JsonViewer.vue';
 
 let app: App | undefined;
 
-function mount(props: { theme?: Theme; customCss?: string; onToggleTheme?: () => void; onOpenSettings?: () => void }) {
+function mount(props: { font?: FontSettings; theme?: Theme; customCss?: string; onToggleTheme?: () => void; onOpenSettings?: () => void }) {
   const host = document.createElement('div');
   document.body.append(host);
   app = createApp({
@@ -24,6 +25,13 @@ afterEach(() => {
 });
 
 describe('JsonViewer', () => {
+  it('applies the font settings as CSS variables on the root', () => {
+    const host = mount({ font: { ...defaultFontSettings, family: 'Fira Code', sizePx: 17 } });
+    const root = host.querySelector<HTMLElement>('.jv-root')!;
+    expect(root.style.getPropertyValue('--jv-font-family')).toMatch(/^"Fira Code", /);
+    expect(root.style.getPropertyValue('--jv-font-size')).toBe('17px');
+  });
+
   it('emits toggleTheme and openSettings from the toolbar', () => {
     const onToggleTheme = vi.fn();
     const onOpenSettings = vi.fn();

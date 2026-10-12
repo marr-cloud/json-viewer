@@ -76,3 +76,25 @@ test('renders with defaults when stored settings are garbage', async ({ context,
   await page.goto(server.url('/data.json'));
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
 });
+
+test('applies the configured font settings', async ({ context, server }) => {
+  await setStorage(context, 'sync', {
+    settings: { font: { family: 'Courier New', sizePx: 18, lineHeight: 2, ligatures: false } },
+  });
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const scroller = page.locator(`${viewer} .cm-scroller`);
+  await expect(scroller).toHaveCSS('font-size', '18px');
+  await expect(scroller).toHaveCSS('line-height', '36px');
+  await expect(scroller).toHaveCSS('font-variant-ligatures', 'none');
+  expect(await scroller.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"Courier New", ui-monospace/);
+});
+
+test('ignores a stored font family that could break the stylesheet', async ({ context, server }) => {
+  await setStorage(context, 'sync', { settings: { font: { family: '"; } .jv-root { display: none } x {' } } });
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .jv-root`)).toBeVisible();
+  const family = await page.locator(`${viewer} .cm-scroller`).evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(family).toMatch(/^ui-monospace/);
+});

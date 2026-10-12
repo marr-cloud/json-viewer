@@ -1,4 +1,5 @@
 import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
+import { defaultFontSettings, validateFontSettings, type FontSettings } from './font';
 import { defaultViewerOptions, type ViewerOptions } from '@/viewer/options';
 
 export type ThemeMode = 'auto' | 'light' | 'dark';
@@ -8,6 +9,7 @@ export interface Settings {
   themeMode: ThemeMode;
   lightThemeId: string;
   darkThemeId: string;
+  font: FontSettings;
 }
 
 export const defaultSettings: Settings = {
@@ -15,6 +17,7 @@ export const defaultSettings: Settings = {
   themeMode: 'auto',
   lightThemeId: 'light-plus',
   darkThemeId: 'dark-plus',
+  font: defaultFontSettings,
 };
 
 export const TAB_SIZE_MIN = 1;
@@ -40,6 +43,7 @@ const settingsValidators: ObjectValidators<Settings> = {
   themeMode: oneOf<ThemeMode>(['auto', 'light', 'dark']),
   lightThemeId: nonEmptyId,
   darkThemeId: nonEmptyId,
+  font: (value) => validateFontSettings(value),
 };
 
 /** Returns complete settings; every missing or invalid field falls back to its default. */

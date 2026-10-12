@@ -93,6 +93,7 @@ export default defineContentScript({
                 h(JsonViewer, {
                   raw,
                   options: state.settings.viewer,
+                  font: state.settings.font,
                   theme: theme.value,
                   kind: kind.value,
                   customCss: state.customCss,

@@ -1,11 +1,15 @@
 <script setup lang="ts">
-const props = defineProps<{ label: string; min: number; max: number; hint?: string }>();
+const props = withDefaults(defineProps<{ label: string; min: number; max: number; step?: number; hint?: string }>(), {
+  step: 1,
+  hint: undefined,
+});
 const model = defineModel<number>({ required: true });
 
 function onChange(event: Event): void {
   const input = event.target as HTMLInputElement;
   const value = Number(input.value);
-  model.value = Number.isFinite(value) ? Math.min(props.max, Math.max(props.min, Math.round(value))) : props.min;
+  const stepped = Number.isFinite(value) ? Number((Math.round(value / props.step) * props.step).toFixed(2)) : props.min;
+  model.value = Math.min(props.max, Math.max(props.min, stepped));
   input.value = String(model.value);
 }
 </script>
@@ -13,7 +17,7 @@ function onChange(event: Event): void {
 <template>
   <label class="opt-field">
     <span class="opt-label">{{ label }}</span>
-    <input type="number" :min="min" :max="max" :value="model" @change="onChange" />
+    <input type="number" :min="min" :max="max" :step="step" :value="model" @change="onChange" />
     <small v-if="hint" class="opt-hint">{{ hint }}</small>
   </label>
 </template>

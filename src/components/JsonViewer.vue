@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue';
 import CodeView from './CodeView.vue';
 import ViewerToolbar from './ViewerToolbar.vue';
+import { fontCssVars } from '@/fonts/css';
+import type { FontSettings } from '@/settings/font';
 import { toCssVars } from '@/themes/css';
 import { resolveColors } from '@/themes/resolve';
 import type { Theme } from '@/themes/types';
@@ -18,8 +20,9 @@ const props = withDefaults(
     customCss?: string;
     source?: { url: string; loadedAt: Date };
     toggleLabel?: string;
+    font?: FontSettings;
   }>(),
-  { customCss: '', kind: undefined, source: undefined, toggleLabel: undefined },
+  { customCss: '', kind: undefined, source: undefined, toggleLabel: undefined, font: undefined },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
 
@@ -31,7 +34,10 @@ const indentCStyle = computed(() => props.options.indentCStyle);
 const prepared = computed(() =>
   prepareDocument(props.raw, { tabSize: tabSize.value, sortKeys: sortKeys.value, indentCStyle: indentCStyle.value }),
 );
-const cssVars = computed(() => toCssVars(resolveColors(props.theme)));
+const cssVars = computed(() => ({
+  ...toCssVars(resolveColors(props.theme)),
+  ...(props.font ? fontCssVars(props.font) : {}),
+}));
 // autoHighlight=false starts on Raw; the Code tab still formats on demand.
 const mode = ref<'code' | 'raw'>(props.options.autoHighlight ? 'code' : 'raw');
 </script>

@@ -26,6 +26,8 @@ function editorTheme(dark: boolean): Extension {
         fontFamily: 'var(--jv-font-family)',
         fontSize: 'var(--jv-font-size)',
         lineHeight: 'var(--jv-line-height)',
+        fontWeight: 'var(--jv-font-weight)',
+        fontVariantLigatures: 'var(--jv-font-ligatures)',
       },
       '.cm-content': { caretColor: v('cursor') },
       '.cm-cursor, .cm-dropCursor': { borderLeftColor: v('cursor') },

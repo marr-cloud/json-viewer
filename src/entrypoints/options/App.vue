@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import iconUrl from '@/assets/icon.svg';
 import AppearanceSection from '@/options/sections/AppearanceSection.vue';
+import FontsSection from '@/options/sections/FontsSection.vue';
 import AboutSection from '@/options/sections/AboutSection.vue';
 import AdvancedSection from '@/options/sections/AdvancedSection.vue';
 import BehaviorSection from '@/options/sections/BehaviorSection.vue';
@@ -49,6 +50,7 @@ function onReset(): void {
       <h1 class="opt-title"><img :src="iconUrl" alt="" width="24" height="24" /> JSON Viewer</h1>
       <nav aria-label="Sections">
         <a href="#appearance">Appearance</a>
+        <a href="#fonts">Fonts</a>
         <a href="#behavior">Behavior</a>
         <a href="#structure">Structure</a>
         <a href="#advanced">Advanced</a>
@@ -68,6 +70,7 @@ function onReset(): void {
         @saved="onSaved"
         @cancel="stopEditing"
       />
+      <FontsSection :font="settings.font" />
       <BehaviorSection :viewer="settings.viewer" />
       <StructureSection :viewer="settings.viewer" />
       <AdvancedSection v-model:custom-css="customCss" />

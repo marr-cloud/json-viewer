@@ -104,3 +104,17 @@ test('the about section links to the project repository', async ({ context, exte
   await expect(link).toHaveAttribute('href', 'https://github.com/marr-cloud/json-viewer');
   await expect(link).toHaveAttribute('target', '_blank');
 });
+
+test('font settings update the preview and are saved', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  await options.getByLabel('Font family').fill('Courier New');
+  await options.getByLabel('Font size (px)').fill('20');
+  await options.getByLabel('Font size (px)').press('Tab');
+  const scroller = options.locator('.opt-preview .cm-scroller');
+  await expect(scroller).toHaveCSS('font-size', '20px');
+  await expect.poll(() => scroller.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/^"Courier New"/);
+  await expect
+    .poll(() => getStorage(context, 'sync', 'settings'))
+    .toMatchObject({ font: { family: 'Courier New', sizePx: 20 } });
+});

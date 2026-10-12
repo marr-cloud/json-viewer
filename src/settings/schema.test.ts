@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultViewerOptions } from '@/viewer/options';
+import { defaultFontSettings } from './font';
 import { defaultSettings, validateSettings } from './schema';
 
 describe('validateSettings', () => {
@@ -15,6 +16,7 @@ describe('validateSettings', () => {
       themeMode: 'auto',
       lightThemeId: 'light-plus',
       darkThemeId: 'dark-plus',
+      font: defaultFontSettings,
     });
   });
 
@@ -24,6 +26,7 @@ describe('validateSettings', () => {
       themeMode: 'dark',
       lightThemeId: 'github-light',
       darkThemeId: 'dracula',
+      font: { ...defaultFontSettings, source: 'google', family: 'JetBrains Mono' },
     };
     expect(validateSettings(input)).toEqual(input);
   });
@@ -41,6 +44,7 @@ describe('validateSettings', () => {
       themeMode: 'auto',
       lightThemeId: 'light-plus',
       darkThemeId: 'nord',
+      font: defaultFontSettings,
     });
   });
 

@@ -24,6 +24,7 @@ const onMediaChange = (event: MediaQueryListEvent) => {
 const host = ref<HTMLDivElement>();
 const shadowRoot = shallowRef<ShadowRoot>();
 const viewerOptions = computed(() => ({ ...props.settings.viewer }));
+const viewerFont = computed(() => ({ ...props.settings.font }));
 onMounted(() => {
   shadowRoot.value = host.value!.attachShadow({ mode: 'open' });
   media.addEventListener('change', onMediaChange);
@@ -51,6 +52,7 @@ function toggleTheme(): void {
         :key="String(settings.viewer.autoHighlight)"
         :raw="SAMPLE_JSON"
         :options="viewerOptions"
+        :font="viewerFont"
         :theme="theme"
         :kind="kind"
         :custom-css="customCss"
