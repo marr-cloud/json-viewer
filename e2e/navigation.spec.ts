@@ -267,3 +267,12 @@ test('warns about a shortcut used twice and clears it with Backspace', async ({ 
   await expect(filterField).toHaveText('None');
   await expect(options.getByText(/Also assigned to/)).toHaveCount(0);
 });
+
+test('keeps the shortcuts after a click on a non-focusable part of the viewer', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await page.locator(`${viewer} .jv-status-info`).click();
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  await page.keyboard.press('Alt+R');
+  await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
+});

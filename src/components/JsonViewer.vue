@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CodeView from './CodeView.vue';
 import JsonPathFilter from './JsonPathFilter.vue';
 import ViewerStatusBar from './ViewerStatusBar.vue';
@@ -34,6 +34,11 @@ const props = withDefaults(
     shortcuts?: Shortcuts;
     /** Optional features: the JSONPath filter and the value decorations follow them. */
     features?: Features;
+    /**
+     * Also catch shortcuts while focus is on the page itself (after a click on a non-focusable part
+     * of the viewer). Only for the content script, whose viewer is the whole page.
+     */
+    documentShortcuts?: boolean;
   }>(),
   {
     customCss: '',
@@ -44,6 +49,7 @@ const props = withDefaults(
     format: 'JSON',
     shortcuts: () => defaultShortcuts,
     features: () => defaultFeatures,
+    documentShortcuts: false,
   },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
@@ -226,6 +232,18 @@ function onShortcut(event: KeyboardEvent): void {
   event.preventDefault();
   event.stopPropagation();
 }
+
+/** Focus on <body> means key events never reach the root; catch those on the document instead. */
+function onDocumentKeydown(event: KeyboardEvent): void {
+  if (event.target !== document.body && event.target !== document.documentElement) return;
+  onShortcut(event);
+  onEscape(event);
+}
+
+onMounted(() => {
+  if (props.documentShortcuts) document.addEventListener('keydown', onDocumentKeydown, true);
+});
+onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKeydown, true));
 </script>
 
 <template>

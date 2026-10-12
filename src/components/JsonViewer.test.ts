@@ -23,6 +23,7 @@ type Props = {
   shortcuts?: Shortcuts;
   options?: ViewerOptions;
   features?: Features;
+  documentShortcuts?: boolean;
 };
 
 function mount(props: Props = {}) {
@@ -381,5 +382,32 @@ describe('JsonViewer', () => {
     expect(light.textContent).toBe('Light mode');
     expect(light.title).toContain('1 MB');
     expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(0);
+  });
+
+  it('catches shortcuts on the page itself when asked to', async () => {
+    const host = mount({ documentShortcuts: true });
+    const event = key(document.body, 'KeyR', { key: 'r', altKey: true });
+    expect(event.defaultPrevented).toBe(true);
+    await nextTick();
+    expect(host.querySelector('.jv-raw')).not.toBeNull();
+  });
+
+  it('leaves other page keys alone', () => {
+    mount({ documentShortcuts: true });
+    const input = document.createElement('input');
+    document.body.append(input);
+    expect(key(input, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
+  });
+
+  it('only listens on the page when asked to, and stops when unmounted', () => {
+    mount();
+    expect(key(document.body, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
+    app?.unmount();
+    app = undefined;
+    mount({ documentShortcuts: true });
+    // mount() reassigns the module-level app; TypeScript still narrows it to undefined here.
+    (app as App | undefined)?.unmount();
+    app = undefined;
+    expect(key(document.body, 'KeyR', { key: 'r', altKey: true }).defaultPrevented).toBe(false);
   });
 });
