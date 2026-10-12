@@ -324,3 +324,42 @@ button:disabled {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+.opt-subsets {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.opt-subsets legend {
+  margin-bottom: 4px;
+}
+
+.opt-subset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.opt-subheading {
+  margin: 16px 0 8px;
+  font-size: 0.95em;
+}
+
+.opt-font-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.opt-font-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}

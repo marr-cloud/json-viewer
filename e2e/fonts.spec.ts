@@ -1,6 +1,7 @@
+import type { BrowserContext } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { hasLoadedFace, seedTestFont, TEST_FONT } from './fonts';
-import { setStorage } from './storage';
+import { hasLoadedFace, mockGoogleFonts, seedTestFont, TEST_FONT } from './fonts';
+import { getStorage, setStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 const googleFont = { settings: { font: { source: 'google', family: TEST_FONT } } };
@@ -51,4 +52,59 @@ test('the options preview uses a downloaded font', async ({ context, extensionId
   await options.goto(`chrome-extension://${extensionId}/options.html`);
   await expect(options.locator('.opt-preview .cm-line').first()).toBeVisible();
   await expect.poll(() => hasLoadedFace(options, TEST_FONT)).toBe(true);
+});
+
+async function openFonts(context: BrowserContext, extensionId: string) {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  await expect(options.getByRole('heading', { name: 'Fonts', exact: true })).toBeVisible();
+  return { options, fonts: options.locator('#fonts') };
+}
+
+test('downloads a Google font; the preview and open viewers use it', async ({ context, server, extensionId }) => {
+  await mockGoogleFonts(context);
+  const viewerPage = await context.newPage();
+  await viewerPage.goto(server.url('/data.json'));
+  const { options, fonts } = await openFonts(context, extensionId);
+  await fonts.getByLabel('Font source').selectOption('google');
+  await fonts.getByLabel('Font family').fill(TEST_FONT);
+  await fonts.getByRole('button', { name: 'Download' }).click();
+  await expect(fonts.getByRole('status')).toHaveText(/^Downloaded \(\d+ KB\)$/);
+  await expect(fonts.getByRole('button', { name: `Delete ${TEST_FONT}` })).toBeVisible();
+  await expect.poll(() => hasLoadedFace(options, TEST_FONT)).toBe(true);
+  await expect
+    .poll(() => getStorage(context, 'local', `fonts/${TEST_FONT}`))
+    .toMatchObject({ family: TEST_FONT, subsets: ['latin', 'latin-ext'] });
+  await expect.poll(() => hasLoadedFace(viewerPage, TEST_FONT)).toBe(true);
+});
+
+test('shows an error for an unknown Google font and saves nothing', async ({ context, extensionId }) => {
+  await mockGoogleFonts(context);
+  const { fonts } = await openFonts(context, extensionId);
+  await fonts.getByLabel('Font source').selectOption('google');
+  await fonts.getByLabel('Font family').fill('Nope Font');
+  await fonts.getByRole('button', { name: 'Download' }).click();
+  await expect(fonts.getByRole('alert')).toHaveText('"Nope Font" is not a Google Fonts family.');
+  expect(await getStorage(context, 'local', 'fontFamilies')).toBeUndefined();
+});
+
+test('says when the chosen Google font is not downloaded on this device', async ({ context, extensionId }) => {
+  await setStorage(context, 'sync', googleFont);
+  const { fonts } = await openFonts(context, extensionId);
+  await expect(fonts.getByRole('status')).toHaveText('Not downloaded yet');
+  await expect(fonts.getByRole('button', { name: 'Download' })).toBeEnabled();
+});
+
+test('deletes a downloaded font', async ({ context, extensionId }) => {
+  await seedTestFont(context);
+  const { options, fonts } = await openFonts(context, extensionId);
+  options.on('dialog', (dialog) => void dialog.accept());
+  await fonts.getByRole('button', { name: `Delete ${TEST_FONT}` }).click();
+  await expect(fonts.getByRole('button', { name: `Delete ${TEST_FONT}` })).toHaveCount(0);
+  await expect.poll(() => getStorage(context, 'local', `fonts/${TEST_FONT}`)).toBeUndefined();
+});
+
+test('suggests the catalog families for Google Fonts', async ({ context, extensionId }) => {
+  const { options } = await openFonts(context, extensionId);
+  await expect(options.locator('#font-catalog option')).toHaveCount(20);
 });
