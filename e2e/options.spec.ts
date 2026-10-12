@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { getStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 
@@ -33,7 +34,9 @@ test('turning off automatic formatting opens pages on Raw', async ({ context, se
   await openOptions(options, extensionId);
   await options.getByRole('switch', { name: 'Format JSON automatically' }).uncheck();
   await expect(options.locator('.opt-preview .jv-raw')).toBeVisible();
-  await options.waitForTimeout(500);
+  await expect
+    .poll(() => getStorage(context, 'sync', 'settings'))
+    .toMatchObject({ viewer: { autoHighlight: false } });
   const page = await context.newPage();
   await page.goto(server.url('/data.json'));
   await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
@@ -46,7 +49,7 @@ test('custom CSS from the editor applies to the viewer', async ({ context, serve
   await options.keyboard.type('.cm-content { letter-spacing: 3px; }');
   await expect(options.locator('.opt-preview .cm-content')).toHaveCSS('letter-spacing', '3px');
   await expect(options.locator('.opt-css .cm-content')).not.toHaveCSS('letter-spacing', '3px');
-  await options.waitForTimeout(500);
+  await expect.poll(() => getStorage(context, 'local', 'customCss')).toBe('.cm-content { letter-spacing: 3px; }');
   const page = await context.newPage();
   await page.goto(server.url('/data.json'));
   await expect(page.locator(`${viewer} .cm-content`)).toHaveCSS('letter-spacing', '3px');

@@ -11,17 +11,18 @@ import { useCustomThemes } from '@/options/useCustomThemes';
 import { useSettings } from '@/options/useSettings';
 import ThemeEditor from '@/options/ThemeEditor.vue';
 import { builtinThemes } from '@/themes/builtin';
+import type { ThemeSlot } from '@/options/types';
 import type { Theme } from '@/themes/types';
 
 const { settings, customCss, loaded, reset } = useSettings();
 const { customThemes } = useCustomThemes();
 
-const editing = ref<{ theme: Theme; isNew: boolean } | null>(null);
+const editing = ref<{ theme: Theme; isNew: boolean; slot: ThemeSlot } | null>(null);
 const previewTheme = ref<Theme | null>(null);
 const takenIds = computed(() => [...builtinThemes, ...customThemes.value].map((t) => t.id));
 
-function startEditing(theme: Theme, isNew: boolean): void {
-  editing.value = { theme, isNew };
+function startEditing(theme: Theme, isNew: boolean, slot: ThemeSlot | null): void {
+  editing.value = { theme, isNew, slot: slot ?? theme.type };
 }
 
 function stopEditing(): void {
@@ -30,7 +31,9 @@ function stopEditing(): void {
 }
 
 function onSaved(theme: Theme): void {
-  if (theme.type === 'dark') settings.value.darkThemeId = theme.id;
+  // The saved theme goes to the slot being edited, whatever its own type.
+  const slot = editing.value?.slot ?? theme.type;
+  if (slot === 'dark') settings.value.darkThemeId = theme.id;
   else settings.value.lightThemeId = theme.id;
   stopEditing();
 }

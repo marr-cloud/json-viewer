@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,5 +41,9 @@ const licenses = [
   ...sections.map((section) => ['```text', section.trim(), '```', ''].join('\n')),
 ].join('\n');
 writeFileSync(join(outDir, 'LICENSES.md'), `${licenses}\n`);
+// Shipped inside the extension (WXT copies public/ to the build root), as the licenses require.
+const publicDir = fileURLToPath(new URL('../public/', import.meta.url));
+mkdirSync(publicDir, { recursive: true });
+writeFileSync(join(publicDir, 'THEME-LICENSES.md'), `${licenses}\n`);
 
 console.log(`Wrote ${themes.length} themes and ${sections.length} license notices.`);

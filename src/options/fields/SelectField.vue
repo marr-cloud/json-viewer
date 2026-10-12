@@ -21,10 +21,10 @@ const groups = computed(() => {
     <select v-model="model">
       <template v-for="[group, items] in groups" :key="group">
         <optgroup v-if="group" :label="group">
-          <option v-for="option in items" :key="option.value" :value="option.value">{{ option.label }}</option>
+          <option v-for="option in items" :key="option.value" :value="option.value" :disabled="option.disabled">{{ option.label }}</option>
         </optgroup>
         <template v-else>
-          <option v-for="option in items" :key="option.value" :value="option.value">{{ option.label }}</option>
+          <option v-for="option in items" :key="option.value" :value="option.value" :disabled="option.disabled">{{ option.label }}</option>
         </template>
       </template>
     </select>

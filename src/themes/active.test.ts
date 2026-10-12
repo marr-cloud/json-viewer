@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultSettings } from '@/settings/schema';
-import { activeTheme, findTheme, pickThemeKind } from './active';
+import { activeTheme, findTheme, pickThemeKind, toggledKind } from './active';
 import { defaultLightTheme, defaultTheme, getBuiltinTheme } from './builtin';
 import type { Theme } from './types';
 
@@ -37,5 +37,18 @@ describe('activeTheme', () => {
     expect(activeTheme(settings, [mine], true, null)).toBe(mine);
     expect(activeTheme(settings, [mine], false, null)).toBe(getBuiltinTheme('github-light'));
     expect(activeTheme({ ...settings, themeMode: 'light' }, [mine], true, 'dark')).toBe(mine);
+  });
+});
+
+describe('toggledKind', () => {
+  it.each([
+    ['auto', false, null, 'dark'],
+    ['auto', true, null, 'light'],
+    ['light', true, null, 'dark'],
+    ['dark', false, null, 'light'],
+    ['auto', false, 'dark', 'light'],
+    ['auto', true, 'light', 'dark'],
+  ] as const)('%s, prefersDark=%s, override=%s → %s', (mode, prefersDark, override, expected) => {
+    expect(toggledKind(mode, prefersDark, override)).toBe(expected);
   });
 });

@@ -10,6 +10,11 @@ export function pickThemeKind(mode: ThemeMode, prefersDark: boolean, override: T
   return mode;
 }
 
+/** The kind the viewer toggle switches to: the opposite of the RESOLVED mode, whatever type the slot's theme has. */
+export function toggledKind(mode: ThemeMode, prefersDark: boolean, override: ThemeKind | null): ThemeKind {
+  return pickThemeKind(mode, prefersDark, override) === 'dark' ? 'light' : 'dark';
+}
+
 /** Built-in or custom theme by id; unknown ids (deleted, or synced without the theme) fall back to Dark+/Light+. */
 export function findTheme(id: string, customThemes: readonly Theme[], kind: ThemeKind): Theme {
   return (

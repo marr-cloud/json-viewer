@@ -4,7 +4,7 @@ import { SAMPLE_JSON, SAMPLE_URL } from './sample';
 import JsonViewer from '@/components/JsonViewer.vue';
 import viewerCss from '@/components/viewer.css?inline';
 import type { Settings } from '@/settings/schema';
-import { activeTheme, type ThemeKind } from '@/themes/active';
+import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
 import type { Theme } from '@/themes/types';
 
 const props = defineProps<{
@@ -33,10 +33,11 @@ onBeforeUnmount(() => media.removeEventListener('change', onMediaChange));
 const theme = computed(
   () => props.themeOverride ?? activeTheme(props.settings, props.customThemes, prefersDark.value, override.value),
 );
+const kind = computed(() => pickThemeKind(props.settings.themeMode, prefersDark.value, override.value));
 const source = { url: SAMPLE_URL, loadedAt: new Date() };
 
 function toggleTheme(): void {
-  override.value = theme.value.type === 'dark' ? 'light' : 'dark';
+  override.value = toggledKind(props.settings.themeMode, prefersDark.value, override.value);
 }
 </script>
 
@@ -51,6 +52,7 @@ function toggleTheme(): void {
         :raw="SAMPLE_JSON"
         :options="viewerOptions"
         :theme="theme"
+        :kind="kind"
         :custom-css="customCss"
         :source="source"
         toggle-label="Preview: switch between light and dark"

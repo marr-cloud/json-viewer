@@ -13,11 +13,13 @@ const props = withDefaults(
     raw: string;
     options: ViewerOptions;
     theme: Theme;
+    /** Resolved light/dark mode in effect; drives the toolbar toggle. Defaults to the theme's type. */
+    kind?: 'light' | 'dark';
     customCss?: string;
     source?: { url: string; loadedAt: Date };
     toggleLabel?: string;
   }>(),
-  { customCss: '', source: undefined, toggleLabel: undefined },
+  { customCss: '', kind: undefined, source: undefined, toggleLabel: undefined },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
 
@@ -40,7 +42,7 @@ const mode = ref<'code' | 'raw'>(props.options.autoHighlight ? 'code' : 'raw');
     <ViewerToolbar
       v-model:mode="mode"
       :source="options.showHeader ? source : undefined"
-      :theme-type="theme.type"
+      :kind="kind ?? theme.type"
       :toggle-label="toggleLabel"
       @toggle-theme="emit('toggleTheme')"
       @open-settings="emit('openSettings')"

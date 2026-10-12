@@ -5,7 +5,7 @@ import JsonViewer from '@/components/JsonViewer.vue';
 import { readRawText } from '@/detect/readRawText';
 import { OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
 import { customCssItem, loadSettings, watchSettings } from '@/settings/storage';
-import { activeTheme, type ThemeKind } from '@/themes/active';
+import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
 import { listCustomThemes, watchCustomThemes } from '@/themes/store';
 import { hideOriginal } from '@/viewer/hideOriginal';
 
@@ -52,6 +52,7 @@ export default defineContentScript({
         override: null as ThemeKind | null,
       });
       const theme = computed(() => activeTheme(state.settings, state.customThemes, state.prefersDark, state.override));
+      const kind = computed(() => pickThemeKind(state.settings.themeMode, state.prefersDark, state.override));
       const source = { url: location.href, loadedAt: new Date() };
 
       const onMediaChange = (event: MediaQueryListEvent) => {
@@ -93,10 +94,11 @@ export default defineContentScript({
                   raw,
                   options: state.settings.viewer,
                   theme: theme.value,
+                  kind: kind.value,
                   customCss: state.customCss,
                   source,
                   onToggleTheme: () => {
-                    state.override = theme.value.type === 'dark' ? 'light' : 'dark';
+                    state.override = toggledKind(state.settings.themeMode, state.prefersDark, state.override);
                   },
                   onOpenSettings: openSettings,
                 }),

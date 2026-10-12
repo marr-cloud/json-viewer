@@ -1,6 +1,6 @@
 <script setup lang="ts">
 withDefaults(
-  defineProps<{ source?: { url: string; loadedAt: Date }; themeType: 'dark' | 'light'; toggleLabel?: string }>(),
+  defineProps<{ source?: { url: string; loadedAt: Date }; kind: 'dark' | 'light'; toggleLabel?: string }>(),
   { source: undefined, toggleLabel: 'Toggle light/dark theme' },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
@@ -22,10 +22,10 @@ const mode = defineModel<'code' | 'raw'>('mode', { required: true });
         type="button"
         class="jv-icon-button"
         :aria-label="toggleLabel"
-        :title="themeType === 'dark' ? 'Switch to a light theme' : 'Switch to a dark theme'"
+        :title="kind === 'dark' ? 'Switch to a light theme' : 'Switch to a dark theme'"
         @click="emit('toggleTheme')"
       >
-        {{ themeType === 'dark' ? '☀' : '☾' }}
+        {{ kind === 'dark' ? '☀' : '☾' }}
       </button>
       <button type="button" class="jv-icon-button" aria-label="Open settings" title="Settings" @click="emit('openSettings')">
         ⚙
