@@ -9,6 +9,7 @@ import BehaviorSection from '@/options/sections/BehaviorSection.vue';
 import FeaturesSection from '@/options/sections/FeaturesSection.vue';
 import StructureSection from '@/options/sections/StructureSection.vue';
 import ShortcutsSection from '@/options/sections/ShortcutsSection.vue';
+import SitesSection from '@/options/sections/SitesSection.vue';
 import PreviewPane from '@/options/PreviewPane.vue';
 import { useCustomThemes } from '@/options/useCustomThemes';
 import { useSettings } from '@/options/useSettings';
@@ -57,6 +58,7 @@ function onReset(): void {
         <a href="#structure">Structure</a>
         <a href="#features">Features</a>
         <a href="#shortcuts">Shortcuts</a>
+        <a href="#sites">Sites</a>
         <a href="#advanced">Advanced</a>
         <a href="#about">About</a>
       </nav>
@@ -79,6 +81,7 @@ function onReset(): void {
       <StructureSection :viewer="settings.viewer" />
       <FeaturesSection :features="settings.features" :viewer="settings.viewer" />
       <ShortcutsSection :shortcuts="settings.shortcuts" />
+      <SitesSection v-model:hosts="settings.excludedHosts" />
       <AdvancedSection v-model:custom-css="customCss" />
       <AboutSection />
     </main>

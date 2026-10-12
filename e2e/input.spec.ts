@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { setStorage } from './storage';
+import { getStorage, setStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 
@@ -43,4 +43,15 @@ test('skips excluded sites but not others', async ({ context, server }) => {
   await expect(page.locator('body > pre')).toBeVisible();
   await page.goto(server.insecureUrl('/data.json'));
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
+});
+
+test('the Sites section saves host patterns and flags the rest', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  const field = options.getByLabel("Don't open the viewer on");
+  await field.fill('https://API.example.com/v1\nnot a host\n*.test');
+  await field.press('Tab');
+  await expect(field).toHaveValue('api.example.com\n*.test');
+  await expect(options.getByRole('alert')).toContainText('not a host');
+  await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ excludedHosts: ['api.example.com', '*.test'] });
 });
