@@ -1,0 +1,25 @@
+{
+  "id": "dark-plus",
+  "name": "Dark+",
+  "type": "dark",
+  "source": "builtin",
+  "colors": {
+    "background": "#1e1e1e",
+    "foreground": "#d4d4d4",
+    "gutterBackground": "#1e1e1e",
+    "gutterForeground": "#858585",
+    "activeLine": "#2a2d2e",
+    "selection": "#264f78",
+    "cursor": "#aeafad",
+    "foldPlaceholder": "#808080",
+    "key": "#9cdcfe",
+    "string": "#ce9178",
+    "number": "#b5cea8",
+    "boolean": "#569cd6",
+    "null": "#569cd6",
+    "punctuation": "#d4d4d4",
+    "link": "#3794ff",
+    "toolbarBackground": "#252526",
+    "border": "#3c3c3c"
+  }
+}
