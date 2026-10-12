@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { setStorage } from './storage';
+import { getStorage, setStorage } from './storage';
 
 const viewer = 'json-viewer-app';
 
@@ -232,4 +232,38 @@ test('uses the shortcuts from the settings', async ({ context, server }) => {
   await page.keyboard.press('Alt+KeyR');
   await page.keyboard.press('Control+Alt+KeyY');
   await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
+});
+
+test('records a shortcut in the options page and uses it in the viewer', async ({ context, server, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  const field = options.getByRole('button', { name: 'Toggle Raw shortcut', exact: true });
+  await expect(field).toHaveText('Alt+R');
+  await field.click();
+  await expect(field).toHaveText('Press keys…');
+  await options.keyboard.press('Control+Alt+KeyY');
+  await expect(field).toHaveText('Ctrl+Alt+Y');
+  await expect
+    .poll(() => getStorage(context, 'sync', 'settings'))
+    .toMatchObject({ shortcuts: { toggleRaw: 'Ctrl+Alt+Y' } });
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name"');
+  await page.keyboard.press('Control+Alt+KeyY');
+  await expect(page.locator(`${viewer} .jv-raw`)).toBeVisible();
+});
+
+test('warns about a shortcut used twice and clears it with Backspace', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  const filterField = options.getByRole('button', { name: 'JSONPath filter shortcut', exact: true });
+  await filterField.click();
+  await options.keyboard.press('Alt+KeyR');
+  await expect(filterField).toHaveText('Alt+R');
+  await expect(options.getByText('Also assigned to Toggle Raw.')).toBeVisible();
+  await expect(options.getByText('Also assigned to JSONPath filter.')).toBeVisible();
+  await filterField.click();
+  await options.keyboard.press('Backspace');
+  await expect(filterField).toHaveText('None');
+  await expect(options.getByText(/Also assigned to/)).toHaveCount(0);
 });

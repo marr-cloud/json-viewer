@@ -363,3 +363,21 @@ button:disabled {
   justify-content: space-between;
   gap: 12px;
 }
+
+.opt-shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opt-shortcut-key {
+  min-width: 160px;
+  text-align: left;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+.opt-shortcut-key.opt-recording {
+  border-color: var(--opt-accent);
+  outline: 2px solid var(--opt-accent);
+  outline-offset: 1px;
+}

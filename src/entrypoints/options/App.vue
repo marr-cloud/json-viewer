@@ -7,6 +7,7 @@ import AboutSection from '@/options/sections/AboutSection.vue';
 import AdvancedSection from '@/options/sections/AdvancedSection.vue';
 import BehaviorSection from '@/options/sections/BehaviorSection.vue';
 import StructureSection from '@/options/sections/StructureSection.vue';
+import ShortcutsSection from '@/options/sections/ShortcutsSection.vue';
 import PreviewPane from '@/options/PreviewPane.vue';
 import { useCustomThemes } from '@/options/useCustomThemes';
 import { useSettings } from '@/options/useSettings';
@@ -53,6 +54,7 @@ function onReset(): void {
         <a href="#fonts">Fonts</a>
         <a href="#behavior">Behavior</a>
         <a href="#structure">Structure</a>
+        <a href="#shortcuts">Shortcuts</a>
         <a href="#advanced">Advanced</a>
         <a href="#about">About</a>
       </nav>
@@ -73,6 +75,7 @@ function onReset(): void {
       <FontsSection :font="settings.font" />
       <BehaviorSection :viewer="settings.viewer" />
       <StructureSection :viewer="settings.viewer" />
+      <ShortcutsSection :shortcuts="settings.shortcuts" />
       <AdvancedSection v-model:custom-css="customCss" />
       <AboutSection />
     </main>
