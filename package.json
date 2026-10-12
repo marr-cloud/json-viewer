@@ -25,6 +25,7 @@
     "@codemirror/view": "6.43.14",
     "@lezer/highlight": "^1.2.5",
     "codemirror": "6.0.2",
+    "jsonc-parser": "3.3.1",
     "vue": "3.5.43"
   },
   "devDependencies": {
@@ -33,6 +34,7 @@
     "@wxt-dev/auto-icons": "1.1.2",
     "@wxt-dev/module-vue": "1.0.3",
     "happy-dom": "21.0.0",
+    "tm-themes": "1.12.12",
     "typescript": "^5.9.3",
     "vitest": "5.0.3",
     "vue-tsc": "^3.3.13",
