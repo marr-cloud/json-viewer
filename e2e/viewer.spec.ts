@@ -40,3 +40,50 @@ test('renders a ~4 MB document', async ({ context, server }) => {
   await page.goto(server.url('/big.json'));
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 0"', { timeout: 15_000 });
 });
+
+test('colors keys with the Dark+ theme', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const keyLine = page.locator(`${viewer} .cm-line`, { hasText: '"name"' });
+  await expect(keyLine.locator('span').first()).toHaveCSS('color', 'rgb(156, 220, 254)');
+});
+
+test('shows the URL header and toggles Raw', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  await expect(page.locator(`${viewer} .jv-url`)).toHaveText(server.url('/data.json'));
+
+  await page.getByRole('tab', { name: 'Raw' }).click();
+  await expect(page.locator(`${viewer} .jv-raw`)).toContainText('{"name":"x"');
+  await expect(page.locator(`${viewer} .cm-editor`)).toHaveCount(0);
+
+  await page.getByRole('tab', { name: 'Code' }).click();
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
+});
+
+test('shows a located error for invalid JSON', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/invalid.json'));
+  await expect(page.locator(`${viewer} .jv-error`)).toContainText('line 3, column 1');
+  await expect(page.locator(`${viewer} .cm-jv-error-line`)).toHaveCount(1);
+});
+
+test('treats a BOM-prefixed body as valid JSON', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/bom.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"a": 1');
+  await expect(page.locator(`${viewer} .jv-error`)).toHaveCount(0);
+});
+
+test('opens clicked URLs in a new tab', async ({ context, server }) => {
+  await context.route('https://example.com/**', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<p>ok</p>' }),
+  );
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator(`${viewer} .cm-url`).first().click(),
+  ]);
+  await popup.waitForURL('https://example.com/a');
+});
