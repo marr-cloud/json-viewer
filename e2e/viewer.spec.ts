@@ -30,6 +30,7 @@ test('leaves HTML pages and plain-text logs alone', async ({ context, server }) 
     await page.goto(server.url(route));
     await page.waitForTimeout(500);
     await expect(page.locator(viewer)).toHaveCount(0);
+    await expect(page.locator('html')).not.toHaveAttribute('data-json-viewer', /.*/);
     await expect(page.locator('body > pre')).toBeVisible();
   }
 });
