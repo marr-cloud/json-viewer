@@ -53,6 +53,7 @@ function toggleTheme(): void {
         :theme="theme"
         :custom-css="customCss"
         :source="source"
+        toggle-label="Preview: switch between light and dark"
         @toggle-theme="toggleTheme"
       />
     </Teleport>

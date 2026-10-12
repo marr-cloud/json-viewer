@@ -15,8 +15,9 @@ const props = withDefaults(
     theme: Theme;
     customCss?: string;
     source?: { url: string; loadedAt: Date };
+    toggleLabel?: string;
   }>(),
-  { customCss: '', source: undefined },
+  { customCss: '', source: undefined, toggleLabel: undefined },
 );
 const emit = defineEmits<{ toggleTheme: []; openSettings: [] }>();
 
@@ -40,6 +41,7 @@ const mode = ref<'code' | 'raw'>(props.options.autoHighlight ? 'code' : 'raw');
       v-model:mode="mode"
       :source="options.showHeader ? source : undefined"
       :theme-type="theme.type"
+      :toggle-label="toggleLabel"
       @toggle-theme="emit('toggleTheme')"
       @open-settings="emit('openSettings')"
     />

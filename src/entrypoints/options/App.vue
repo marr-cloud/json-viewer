@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import iconUrl from '@/assets/icon.svg';
+import AppearanceSection from '@/options/sections/AppearanceSection.vue';
 import AboutSection from '@/options/sections/AboutSection.vue';
 import AdvancedSection from '@/options/sections/AdvancedSection.vue';
 import BehaviorSection from '@/options/sections/BehaviorSection.vue';
@@ -21,6 +22,7 @@ function onReset(): void {
     <aside class="opt-nav">
       <h1 class="opt-title"><img :src="iconUrl" alt="" width="24" height="24" /> JSON Viewer</h1>
       <nav aria-label="Sections">
+        <a href="#appearance">Appearance</a>
         <a href="#behavior">Behavior</a>
         <a href="#structure">Structure</a>
         <a href="#advanced">Advanced</a>
@@ -29,6 +31,7 @@ function onReset(): void {
       <button type="button" class="opt-reset" @click="onReset">Reset to defaults</button>
     </aside>
     <main v-if="loaded" class="opt-main">
+      <AppearanceSection :settings="settings" :custom-themes="customThemes" />
       <BehaviorSection :viewer="settings.viewer" />
       <StructureSection :viewer="settings.viewer" />
       <AdvancedSection v-model:custom-css="customCss" />
