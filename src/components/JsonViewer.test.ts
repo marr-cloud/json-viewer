@@ -176,4 +176,65 @@ describe('JsonViewer', () => {
     expect(button(host, 'Fold all').disabled).toBe(true);
     expect(host.querySelector<HTMLSelectElement>('[aria-label="Fold to level"]')!.disabled).toBe(true);
   });
+
+  const filterInput = (host: HTMLElement) => host.querySelector<HTMLInputElement>('[aria-label="JSONPath filter"]')!;
+
+  async function runFilter(host: HTMLElement, path: string): Promise<void> {
+    const input = filterInput(host);
+    input.value = path;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await nextTick();
+  }
+
+  it('shows the matches of a JSONPath filter and counts them', async () => {
+    const host = mount({ raw: '{"items":[{"id":1},{"id":2}]}' });
+    await runFilter(host, '$.items[*].id');
+    expect(editorOf(host).state.doc.toString()).toBe('[\n  1,\n  2\n]');
+    expect(host.querySelector('.jv-status-info')?.textContent).toContain('2 matches');
+  });
+
+  it('goes back to the whole document on Esc', async () => {
+    const host = mount({ raw: '{"items":[1]}' });
+    await runFilter(host, '$.items');
+    filterInput(host).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await nextTick();
+    expect(editorOf(host).state.doc.toString()).toBe('{\n  "items": [\n    1\n  ]\n}');
+    expect(filterInput(host).value).toBe('');
+  });
+
+  it('goes back to the whole document on Esc in the editor', async () => {
+    const host = mount({ raw: '{"items":[1]}' });
+    await runFilter(host, '$.items');
+    editorOf(host).contentDOM.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
+    await nextTick();
+    expect(editorOf(host).state.doc.toString()).toBe('{\n  "items": [\n    1\n  ]\n}');
+  });
+
+  it('shows syntax errors under the field and keeps the document', async () => {
+    const host = mount({ raw: '{"a":[1]}' });
+    await runFilter(host, '$.a[?(@ >');
+    expect(host.querySelector('.jv-filter-error')?.textContent).not.toBe('');
+    expect(editorOf(host).state.doc.toString()).toBe('{\n  "a": [\n    1\n  ]\n}');
+  });
+
+  it('copies the filtered result', async () => {
+    const writeText = mockClipboard();
+    const host = mount({ raw: '{"a":[1,2]}' });
+    await runFilter(host, '$.a[0]');
+    host.querySelector<HTMLButtonElement>('[aria-label="Copy minified JSON"]')!.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith('[1]'));
+  });
+
+  it('switches to the Code tab when a filter is applied', async () => {
+    const host = mount();
+    host.querySelector<HTMLButtonElement>('[role="tab"]:nth-child(2)')!.click();
+    await nextTick();
+    await runFilter(host, '$.a');
+    expect(host.querySelector('.cm-editor')).not.toBeNull();
+  });
+
+  it('disables the filter for invalid JSON', () => {
+    expect(filterInput(mount({ raw: '{' })).disabled).toBe(true);
+  });
 });

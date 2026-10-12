@@ -162,3 +162,37 @@ test('sorts keys for this tab only', async ({ context, server }) => {
     .poll(() => other.locator(`${viewer} .cm-line`).nth(1).evaluate((el) => el.textContent))
     .toMatch(/^ {2}"name"/);
 });
+
+test('filters with JSONPath and goes back with Esc', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const content = page.locator(`${viewer} .cm-content`);
+  const filter = page.getByRole('textbox', { name: 'JSONPath filter' });
+  await filter.fill('$.nested.list[?(@ > 1)]');
+  await filter.press('Enter');
+  await expect(content).toHaveText(/^\[\s*2,\s*3\s*\]$/);
+  await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('2 matches');
+  await filter.press('Escape');
+  await expect(content).toContainText('"name": "x"');
+});
+
+test('shows JSONPath syntax errors under the field', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/data.json'));
+  const filter = page.getByRole('textbox', { name: 'JSONPath filter' });
+  await filter.fill('$.nested[?(@.x >');
+  await filter.press('Enter');
+  await expect(page.locator(`${viewer} .jv-filter-error`)).toBeVisible();
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
+});
+
+test('filters a 4 MB document', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/big.json'));
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 0"', { timeout: 15_000 });
+  const filter = page.getByRole('textbox', { name: 'JSONPath filter' });
+  await filter.fill('$[?(@.id == 49999)].name');
+  await filter.press('Enter');
+  await expect(page.locator(`${viewer} .cm-content`)).toContainText('"item 49999"', { timeout: 15_000 });
+  await expect(page.locator(`${viewer} .jv-status-info`)).toContainText('1 match');
+});

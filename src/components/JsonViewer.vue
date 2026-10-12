@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue';
 import CodeView from './CodeView.vue';
+import JsonPathFilter from './JsonPathFilter.vue';
 import ViewerStatusBar from './ViewerStatusBar.vue';
 import ViewerToolbar from './ViewerToolbar.vue';
 import { fontCssVars } from '@/fonts/css';
@@ -12,6 +13,7 @@ import { copyText } from '@/viewer/clipboard';
 import type { ParseError } from '@/parse/parse';
 import { downloadName, downloadText } from '@/viewer/download';
 import { FOLD_ALL_LEVEL, type ViewerOptions } from '@/viewer/options';
+import { filterDocument } from '@/viewer/jsonPath';
 import { prepareDocument } from '@/viewer/prepare';
 import { byteLength, countLines, formatBytes, formatCount } from '@/viewer/stats';
 
@@ -45,13 +47,28 @@ const indentCStyle = computed(() => props.options.indentCStyle);
 const prepared = computed(() =>
   prepareDocument(props.raw, { tabSize: tabSize.value, sortKeys: sortKeys.value, indentCStyle: indentCStyle.value }),
 );
-/** What the Code tab shows and what copy/download act on. */
+const filterText = ref('');
+/** The filter in effect; applied on Enter so big documents aren't re-queried on every keystroke. */
+const appliedPath = ref<string | null>(null);
+const formatOptions = computed(() => ({ indent: tabSize.value, sortKeys: sortKeys.value, cStyle: indentCStyle.value }));
+const filtered = computed(() => {
+  const doc = prepared.value;
+  if (appliedPath.value === null || !doc.ok) return null;
+  return filterDocument(doc.value, appliedPath.value, formatOptions.value);
+});
+const filterError = computed(() => (filtered.value && !filtered.value.ok ? filtered.value.message : null));
+/** What the Code tab shows and what copy/download act on: the filter result, or the whole document. */
 const shown = computed<{ text: string; value: unknown; valid: boolean; error: ParseError | null }>(() => {
+  const result = filtered.value;
+  if (result?.ok) return { text: result.text, value: result.value, valid: true, error: null };
   const doc = prepared.value;
   return doc.ok
     ? { text: doc.text, value: doc.value, valid: true, error: null }
     : { text: doc.text, value: undefined, valid: false, error: doc.error };
 });
+// Filter results open unfolded, whatever "Fold on open" says.
+const codeOptions = computed(() => (filtered.value?.ok ? { ...props.options, foldFromLevel: 0 } : props.options));
+const matches = computed(() => (filtered.value?.ok ? formatCount(filtered.value.count, 'match', 'matches') : undefined));
 const cssVars = computed(() => ({
   ...toCssVars(resolveColors(props.theme)),
   ...(props.font ? fontCssVars(props.font) : {}),
@@ -114,10 +131,30 @@ function onDownload(): void {
 function toggleSort(): void {
   sortOverride.value = !sortKeys.value;
 }
+
+const filter = ref<InstanceType<typeof JsonPathFilter>>();
+
+function applyFilter(path: string): void {
+  const trimmed = path.trim();
+  appliedPath.value = trimmed === '' ? null : trimmed;
+  if (appliedPath.value !== null) mode.value = 'code';
+}
+
+function clearFilter(): void {
+  filterText.value = '';
+  appliedPath.value = null;
+}
+
+/** Esc anywhere in the viewer clears the filter, unless something (the search panel) already used it. */
+function onEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || event.defaultPrevented || appliedPath.value === null) return;
+  event.preventDefault();
+  clearFilter();
+}
 </script>
 
 <template>
-  <div ref="root" class="jv-root" :class="`jv-${theme.type}`" :style="cssVars">
+  <div ref="root" class="jv-root" :class="`jv-${theme.type}`" :style="cssVars" @keydown="onEscape">
     <component :is="'style'" v-if="customCss">{{ customCss }}</component>
     <ViewerToolbar
       v-model:mode="mode"
@@ -135,7 +172,19 @@ function toggleSort(): void {
       @copy="onCopy"
       @download="onDownload"
       @toggle-sort="toggleSort"
-    />
+    >
+      <template #filter>
+        <JsonPathFilter
+          ref="filter"
+          v-model="filterText"
+          :active="appliedPath !== null"
+          :error="filterError"
+          :disabled="!prepared.ok"
+          @apply="applyFilter"
+          @clear="clearFilter"
+        />
+      </template>
+    </ViewerToolbar>
     <div v-if="!prepared.ok" class="jv-error" role="alert">
       {{ prepared.error.message
       }}<template v-if="prepared.error.line !== null">
@@ -147,7 +196,7 @@ function toggleSort(): void {
       ref="codeView"
       class="jv-body"
       :doc="shown.text"
-      :options="options"
+      :options="codeOptions"
       :theme="theme"
       :error="shown.error"
       @path="cursorPath = $event"
@@ -159,6 +208,7 @@ function toggleSort(): void {
       :lines="lines"
       :format="format"
       :message="message"
+      :note="matches"
       @copy-path="copyPath"
     />
   </div>
