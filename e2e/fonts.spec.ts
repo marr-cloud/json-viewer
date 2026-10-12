@@ -108,3 +108,16 @@ test('suggests the catalog families for Google Fonts', async ({ context, extensi
   const { options } = await openFonts(context, extensionId);
   await expect(options.locator('#font-catalog option')).toHaveCount(20);
 });
+
+test('shows an error when deleting a font fails, whatever the font source', async ({ context, extensionId }) => {
+  await seedTestFont(context);
+  await setStorage(context, 'sync', { settings: { font: { source: 'system' } } });
+  const { options, fonts } = await openFonts(context, extensionId);
+  options.on('dialog', (dialog) => void dialog.accept());
+  await options.evaluate(() => {
+    const { chrome } = globalThis as unknown as { chrome: { storage: { local: { remove: () => Promise<never> } } } };
+    chrome.storage.local.remove = () => Promise.reject(new Error('boom'));
+  });
+  await fonts.getByRole('button', { name: `Delete ${TEST_FONT}` }).click();
+  await expect(fonts.getByRole('alert')).toContainText('Could not delete the font');
+});

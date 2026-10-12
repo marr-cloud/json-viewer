@@ -90,7 +90,6 @@ async function onDelete(family: string): Promise<void> {
           downloaded ? `Downloaded (${kb(downloaded.bytes)})` : font.family ? 'Not downloaded yet' : ''
         }}</span>
       </div>
-      <p v-if="error" class="opt-errors" role="alert">{{ error }}</p>
     </template>
     <NumberField v-model="font.sizePx" label="Font size (px)" :min="FONT_SIZE_MIN" :max="FONT_SIZE_MAX" />
     <NumberField v-model="font.lineHeight" label="Line height" :min="LINE_HEIGHT_MIN" :max="LINE_HEIGHT_MAX" :step="0.1" />
@@ -104,5 +103,6 @@ async function onDelete(family: string): Promise<void> {
         <button type="button" :aria-label="`Delete ${item.family}`" @click="onDelete(item.family)">Delete</button>
       </li>
     </ul>
+    <p v-if="error" class="opt-errors" role="alert">{{ error }}</p>
   </section>
 </template>
