@@ -1,9 +1,10 @@
-import type { Plugin } from 'vite';
-import { defineConfig } from 'wxt';
+import { defineConfig, type WxtViteConfig } from 'wxt';
+
+type VitePlugin = Extract<NonNullable<WxtViteConfig['plugins']>[number], { name: string }>;
 
 // Chrome refuses to inject scripts containing non-characters (U+FFFF in CodeMirror),
 // so escape every non-ASCII character in the emitted JS.
-function asciiOnly(): Plugin {
+function asciiOnly(): VitePlugin {
   return {
     name: 'ascii-only-output',
     generateBundle(_options, bundle) {
