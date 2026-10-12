@@ -173,27 +173,30 @@ async function setMode(next: 'code' | 'raw'): Promise<void> {
   }
 }
 
-/** Runs a shortcut's action; false when it doesn't apply here, so the key keeps its usual meaning. */
-function runShortcut(action: ShortcutAction): boolean {
+/**
+ * Runs a shortcut's action; false when it doesn't apply here, so the key keeps its usual meaning.
+ * A held key (`repeat`) is consumed without running the action again.
+ */
+function runShortcut(action: ShortcutAction, repeat: boolean): boolean {
   const onCode = mode.value === 'code';
   switch (action) {
     case 'search':
-      if (onCode) codeView.value?.openSearch();
+      if (onCode && !repeat) codeView.value?.openSearch();
       return onCode;
     case 'filter':
-      filter.value?.focus();
+      if (!repeat) filter.value?.focus();
       return true;
     case 'toggleRaw':
-      void setMode(onCode ? 'raw' : 'code');
+      if (!repeat) void setMode(onCode ? 'raw' : 'code');
       return true;
     case 'foldAll':
-      if (onCode) foldTo(FOLD_ALL_LEVEL);
+      if (onCode && !repeat) foldTo(FOLD_ALL_LEVEL);
       return onCode;
     case 'unfoldAll':
-      if (onCode) unfoldEverything();
+      if (onCode && !repeat) unfoldEverything();
       return onCode;
     case 'copyPath':
-      if (onCode) copyPath();
+      if (onCode && !repeat) copyPath();
       return onCode;
   }
 }
@@ -203,7 +206,7 @@ function onShortcut(event: KeyboardEvent): void {
   if (event.isComposing) return;
   const combo = comboFromEvent(event);
   const action = combo === null ? null : actionFor(props.shortcuts, combo);
-  if (action === null || !runShortcut(action)) return;
+  if (action === null || !runShortcut(action, event.repeat)) return;
   event.preventDefault();
   event.stopPropagation();
 }

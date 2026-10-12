@@ -272,6 +272,19 @@ describe('JsonViewer', () => {
     expect(foldedRanges(view.state).size).toBe(0);
   });
 
+  it('swallows a held shortcut key without repeating the action', async () => {
+    const writeText = mockClipboard();
+    const host = mount({ raw: '{"a":{"b":[1]}}' });
+    const view = editorOf(host);
+    const fold = key(view.contentDOM, 'BracketLeft', { key: '[', altKey: true, repeat: true });
+    expect(fold.defaultPrevented).toBe(true);
+    expect(foldedRanges(view.state).size).toBe(0);
+    const copy = key(view.contentDOM, 'KeyC', { key: 'C', ctrlKey: true, shiftKey: true, repeat: true });
+    expect(copy.defaultPrevented).toBe(true);
+    await nextTick();
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
   it('copies the cursor path with the shortcut', async () => {
     const writeText = mockClipboard();
     const host = mount();
