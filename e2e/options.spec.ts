@@ -96,3 +96,11 @@ test('the preview scrolls inside its frame', async ({ context, extensionId }) =>
   const scroller = options.locator('.opt-preview .cm-scroller');
   await expect.poll(() => scroller.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
 });
+
+test('the about section links to the project repository', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await openOptions(options, extensionId);
+  const link = options.locator('#about').getByRole('link', { name: 'marr-cloud/json-viewer' });
+  await expect(link).toHaveAttribute('href', 'https://github.com/marr-cloud/json-viewer');
+  await expect(link).toHaveAttribute('target', '_blank');
+});

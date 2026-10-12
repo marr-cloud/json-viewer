@@ -16,5 +16,6 @@ export default defineConfig({
     name: 'JSON Viewer',
     description: 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.',
     permissions: ['storage', 'scripting'],
+    homepage_url: 'https://github.com/marr-cloud/json-viewer',
   },
 });

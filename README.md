@@ -1,7 +1,7 @@
 # JSON Viewer
 
 Visor de JSON para Edge y Chrome hecho con [WXT](https://wxt.dev), Vue 3 y CodeMirror 6.
-Inspirado en [tulios/json-viewer](https://github.com/tulios/json-viewer).
+Repositorio: [marr-cloud/json-viewer](https://github.com/marr-cloud/json-viewer). Inspirado en [tulios/json-viewer](https://github.com/tulios/json-viewer).
 
 ## Desarrollo
 
