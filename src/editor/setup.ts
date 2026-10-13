@@ -18,6 +18,7 @@ import { colorSwatches } from './colorSwatches';
 import { dateTooltips } from './dateTooltips';
 import { foldSummaries } from './foldSummary';
 import { imagePreview } from './imagePreview';
+import { editorPhrases } from './phrases';
 import { createSearchPanel } from './searchPanel';
 import { toCodeMirrorTheme } from './theme';
 import { clickableUrls } from './urls';
@@ -47,6 +48,7 @@ export function buildExtensions({ options, theme, error, rich = NO_RICH_VALUES, 
     // Ctrl+F is a configurable viewer shortcut (JsonViewer), so CodeMirror must not claim it.
     keymap.of([...searchKeymap.filter((binding) => binding.key !== 'Mod-f'), ...foldKeymap, ...defaultKeymap]),
     toCodeMirrorTheme(theme),
+    editorPhrases(),
   ];
   if (options.lineNumbers) extensions.push(lineNumbers(), highlightActiveLineGutter());
   if (options.foldGutter) extensions.push(foldGutter());
