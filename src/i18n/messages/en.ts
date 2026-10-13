@@ -36,6 +36,7 @@ export const en = {
   'options.backup.error.newerVersion':
     'That file comes from a newer version of JSON Viewer. Update the extension and try again.',
   'options.backup.error.unreadable': 'The file could not be read.',
+  'options.backup.error.saveFailed': 'The settings could not be saved: {reason}',
   'options.backup.hint': 'The file holds your settings, custom CSS and custom themes. Downloaded fonts are not included.',
 
   'options.about.version': 'JSON Viewer {version}',

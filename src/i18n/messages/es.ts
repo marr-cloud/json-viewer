@@ -37,6 +37,7 @@ export const es: Messages = {
   'options.backup.error.newerVersion':
     'Ese archivo viene de una versión más nueva de JSON Viewer. Actualiza la extensión y vuelve a intentarlo.',
   'options.backup.error.unreadable': 'No se pudo leer el archivo.',
+  'options.backup.error.saveFailed': 'No se pudo guardar la configuración: {reason}',
   'options.backup.hint':
     'El archivo guarda tus ajustes, el CSS propio y los temas personalizados. No incluye las fuentes descargadas.',
 

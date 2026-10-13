@@ -53,8 +53,15 @@ async function importSettings(): Promise<void> {
   if (!window.confirm(t('options.backup.confirm', { file: file.name }))) return;
 
   const { settings, customCss, customThemes, skippedThemes } = result.backup;
-  props.model.settings.value = settings;
-  props.model.customCss.value = customCss;
+  // Settings first, awaited: themes could fill storage.sync and leave the settings unsaved.
+  try {
+    await props.model.replace(settings, customCss);
+  } catch (cause) {
+    notes.value = [];
+    const reason = cause instanceof Error ? cause.message : String(cause);
+    error.value = () => t('options.backup.error.saveFailed', { reason });
+    return;
+  }
   let failed = 0;
   for (const theme of customThemes) {
     try {

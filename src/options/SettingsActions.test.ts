@@ -22,6 +22,7 @@ const theme = (id: string): Theme => ({
 });
 
 let app: App | undefined;
+let order: string[] = [];
 
 function mount(customThemes: Theme[] = []) {
   const model: SettingsModel = {
@@ -29,6 +30,11 @@ function mount(customThemes: Theme[] = []) {
     customCss: ref(''),
     loaded: ref(true),
     reset: vi.fn(),
+    replace: vi.fn(async (settings: Settings, css: string) => {
+      order.push('settings');
+      model.settings.value = settings;
+      model.customCss.value = css;
+    }),
   };
   const host = document.createElement('div');
   document.body.append(host);
@@ -55,7 +61,10 @@ const texts = (host: HTMLElement, role: string) =>
 
 beforeEach(() => {
   fakeBrowser.reset();
-  saveCustomTheme.mockReset().mockResolvedValue(undefined);
+  order = [];
+  saveCustomTheme.mockReset().mockImplementation(async (saved: Theme) => {
+    order.push(saved.id);
+  });
   confirm.mockReset().mockReturnValue(true);
   vi.stubGlobal('confirm', confirm);
 });
@@ -97,6 +106,7 @@ describe('SettingsActions', () => {
 
   it('imports after confirming and reports what happened to the themes', async () => {
     saveCustomTheme.mockImplementation(async (saved: Theme) => {
+      order.push(saved.id);
       if (saved.id === 'big') throw new Error('QUOTA_BYTES quota exceeded');
     });
     const { host, model } = mount();
@@ -115,13 +125,23 @@ describe('SettingsActions', () => {
     );
     expect(model.settings.value.viewer.tabSize).toBe(3);
     expect(model.customCss.value).toBe('b{}');
-    expect(saveCustomTheme.mock.calls.map(([saved]) => (saved as Theme).id)).toEqual(['mine', 'big']);
+    // The settings are saved (and awaited) before the themes take storage space.
+    expect(order).toEqual(['settings', 'mine', 'big']);
     expect(texts(host, 'status')).toEqual([
       'Settings imported from “backup.json”.',
       '1 custom theme added or updated.',
       '1 theme in the file was left out.',
     ]);
     expect(texts(host, 'alert')).toEqual(['1 theme could not be saved: storage is full.']);
+  });
+
+  it('stops and says so when the settings cannot be saved', async () => {
+    const { host, model } = mount();
+    vi.mocked(model.replace).mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'));
+    await pick(host, backupFile({ format: BACKUP_FORMAT, version: 1, settings: {}, customThemes: [theme('mine')] }));
+    expect(texts(host, 'alert')).toEqual(['The settings could not be saved: QUOTA_BYTES quota exceeded']);
+    expect(texts(host, 'status')).toEqual([]);
+    expect(saveCustomTheme).not.toHaveBeenCalled();
   });
 
   it('changes nothing when the confirmation is declined', async () => {
