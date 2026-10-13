@@ -43,6 +43,7 @@ const routes: Record<string, Route> = {
     type: 'application/json',
     body: '{"name":"x","url":"https://example.com/a","nested":{"list":[1,2,3]},"big":12345678901234567890}',
   },
+  '/api/': { type: 'application/json', body: '{"endpoints":{"data":"/data.json","byId":"/items/:id"}}' },
   '/ld': { type: 'application/ld+json; charset=utf-8', body: '{"@context":"https://schema.org"}' },
   '/plain-json': { type: 'text/plain', body: '[{"a":1}]' },
   '/plain-log': { type: 'text/plain', body: '[INFO] server started' },

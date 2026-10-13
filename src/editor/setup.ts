@@ -28,9 +28,11 @@ export interface EditorSetup {
   error: ErrorLocation | null;
   /** Color swatches and date/image tooltips; none when omitted. */
   rich?: RichValues;
+  /** The page the document came from: root-relative paths link against it. */
+  pageUrl?: string;
 }
 
-export function buildExtensions({ options, theme, error, rich = NO_RICH_VALUES }: EditorSetup): Extension[] {
+export function buildExtensions({ options, theme, error, rich = NO_RICH_VALUES, pageUrl }: EditorSetup): Extension[] {
   const extensions: Extension[] = [
     // Read-only but still focusable, so the cursor, search and keyboard navigation work.
     EditorState.readOnly.of(true),
@@ -50,7 +52,7 @@ export function buildExtensions({ options, theme, error, rich = NO_RICH_VALUES }
   if (options.foldGutter) extensions.push(foldGutter());
   if (options.showArraySize) extensions.push(foldSummaries());
   if (options.lineWrapping) extensions.push(EditorView.lineWrapping);
-  if (options.clickableUrls) extensions.push(clickableUrls(options));
+  if (options.clickableUrls) extensions.push(clickableUrls(options, pageUrl));
   if (rich.colorSwatches) extensions.push(colorSwatches());
   if (rich.dateTooltips) extensions.push(dateTooltips());
   if (rich.imagePreview) extensions.push(imagePreview());

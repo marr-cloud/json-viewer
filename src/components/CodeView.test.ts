@@ -175,4 +175,26 @@ describe('CodeView', () => {
     app.mount(host);
     expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
   });
+
+  it('relinks root-relative paths when the page URL changes', async () => {
+    host = document.createElement('div');
+    document.body.append(host);
+    const state = reactive({ pageUrl: 'https://a.test/x' });
+    app = createApp({
+      render: () =>
+        h(CodeView, {
+          doc: '{"all": "/breads"}',
+          options: defaultViewerOptions,
+          theme: defaultTheme,
+          error: null,
+          pageUrl: state.pageUrl,
+        }),
+    });
+    app.mount(host);
+    const link = () => host!.querySelector<HTMLElement>('.cm-url')?.dataset.url;
+    expect(link()).toBe('https://a.test/breads');
+    state.pageUrl = 'https://b.test/y';
+    await nextTick();
+    expect(link()).toBe('https://b.test/breads');
+  });
 });

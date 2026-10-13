@@ -15,6 +15,20 @@ const DOUBLE_CLICK_GRACE_MS = 400;
 
 export const URL_PATTERN = /\bhttps?:\/\/[^\s"\\<>]+/g;
 
+/** A whole string value that is a root-relative path ("/breads/:id"); not a key, "//host" or a lone "/". */
+export const RELATIVE_URL_PATTERN = /(?<=(?:^|[^\\])")\/[^\s"\\<>/][^\s"\\<>]*(?="(?!\s*:))/g;
+
+/** The base root-relative paths resolve against: only an http(s) page has one. */
+function linkBase(pageUrl: string | undefined): string | null {
+  if (pageUrl === undefined) return null;
+  try {
+    const url = new URL(pageUrl);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export function linkTarget(opts: Pick<ViewerOptions, 'openLinksInNewWindow'>): '_blank' | '_self' {
   return opts.openLinksInNewWindow ? '_blank' : '_self';
 }
@@ -33,10 +47,13 @@ export function linkMarkSpec(
   return { tagName: 'span', class: 'cm-url', attributes: { 'data-url': url } };
 }
 
-export function clickableUrls(opts: LinkOptions): Extension {
+/** Links http(s) URLs, and root-relative paths against `pageUrl` when it is an http(s) page. */
+export function clickableUrls(opts: LinkOptions, pageUrl?: string): Extension {
+  const base = linkBase(pageUrl);
   const decorator = new MatchDecorator({
-    regexp: URL_PATTERN,
-    decoration: (match) => Decoration.mark(linkMarkSpec(match[0], opts)),
+    regexp: base === null ? URL_PATTERN : new RegExp(`${URL_PATTERN.source}|${RELATIVE_URL_PATTERN.source}`, 'g'),
+    decoration: (match) =>
+      Decoration.mark(linkMarkSpec(base === null ? match[0] : new URL(match[0], base).href, opts)),
   });
 
   return ViewPlugin.fromClass(

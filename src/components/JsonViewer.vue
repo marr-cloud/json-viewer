@@ -301,6 +301,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKeydown,
       :theme="theme"
       :error="shown.error"
       :rich="rich"
+      :page-url="source?.url"
       @path="cursorPath = $event"
     />
     <pre v-else ref="rawPre" class="jv-body jv-raw" tabindex="0">{{ raw }}</pre>
