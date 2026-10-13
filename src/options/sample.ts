@@ -13,8 +13,8 @@ export const SAMPLE_JSON = [
   '"logo":"https://upload.wikimedia.org/wikipedia/commons/c/c9/JSON_vector_logo.svg"',
   '"tags":["json","viewer","themes","fonts"]',
   '"maintainers":[{"name":"marr-cloud","profile":"https://github.com/marr-cloud","roles":["author","maintainer"]}]',
-  '"features":{"themes":{"builtIn":16,"importFromVSCode":true},"fonts":{"googleFonts":true,"worksOffline":true,"ligatures":"a => b, x != y, i >= 0"},"emptyList":[],"emptyObject":{}}',
+  '"features":{"themes":{"builtIn":17,"importFromVSCode":true},"fonts":{"googleFonts":true,"worksOffline":true,"ligatures":"a => b, x != y, i >= 0"},"emptyList":[],"emptyObject":{}}',
   '"escapes":"line 1\\nline 2\\t\\"quoted\\" \\\\ backslash"',
   '"unicode":"Olá, mundo · ¡Hola! · こんにちは"',
-  '"longText":"Long lines wrap when \\"Wrap long lines\\" is on and scroll sideways when it is off; try it in the Structure section."}',
+  '"longText":"A long line of text, to show line wrapping: with it on, this sentence continues on the next line; with it off, it runs off to the side and scrolls."}',
 ].join(',');

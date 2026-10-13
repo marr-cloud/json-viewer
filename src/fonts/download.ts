@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { t, type MessageKey } from '@/i18n';
 import { bytesToBase64 } from './base64';
 import { parseCss2, selectFaces } from './css2';
 import type { StoredFont, StoredFontFace } from './types';
@@ -11,10 +11,16 @@ export const DOWNLOAD_WEIGHTS = [300, 400, 500, 600, 700];
 /** Per family; storage.local holds about 10 MB in total. */
 export const MAX_FONT_BYTES = 2 * 1024 * 1024;
 
+/** Carries its message key, so the options page can show it in whatever language is current. */
 export class FontDownloadError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly key: MessageKey;
+  readonly params: Record<string, string>;
+
+  constructor(key: MessageKey, params: Record<string, string> = {}) {
+    super(t(key, params));
     this.name = 'FontDownloadError';
+    this.key = key;
+    this.params = params;
   }
 }
 
@@ -28,7 +34,7 @@ async function network<T>(step: () => Promise<T>): Promise<T> {
   try {
     return await step();
   } catch {
-    throw new FontDownloadError(t('options.fonts.error.offline'));
+    throw new FontDownloadError('options.fonts.error.offline');
   }
 }
 
@@ -40,12 +46,12 @@ export async function downloadFont(
 ): Promise<StoredFont> {
   const response = await network(() => fetchImpl(css2Url(family)));
   if (response.status === 400) {
-    throw new FontDownloadError(t('options.fonts.error.unknownFamily', { family }));
+    throw new FontDownloadError('options.fonts.error.unknownFamily', { family });
   }
-  if (!response.ok) throw new FontDownloadError(t('options.fonts.error.status', { status: String(response.status) }));
+  if (!response.ok) throw new FontDownloadError('options.fonts.error.status', { status: String(response.status) });
   const parsed = parseCss2(await network(() => response.text()));
   const files = selectFaces(parsed, subsets);
-  if (files.length === 0) throw new FontDownloadError(t('options.fonts.error.noFiles', { family }));
+  if (files.length === 0) throw new FontDownloadError('options.fonts.error.noFiles', { family });
 
   const data = new Map<string, string>();
   const faces: StoredFontFace[] = [];
@@ -55,12 +61,12 @@ export async function downloadFont(
     if (base64 === undefined) {
       const fileResponse = await network(() => fetchImpl(file.url));
       if (!fileResponse.ok) {
-        throw new FontDownloadError(t('options.fonts.error.fileStatus', { status: String(fileResponse.status) }));
+        throw new FontDownloadError('options.fonts.error.fileStatus', { status: String(fileResponse.status) });
       }
       const buffer = new Uint8Array(await network(() => fileResponse.arrayBuffer()));
       bytes += buffer.byteLength;
       if (bytes > MAX_FONT_BYTES) {
-        throw new FontDownloadError(t('options.fonts.error.tooLarge', { family }));
+        throw new FontDownloadError('options.fonts.error.tooLarge', { family });
       }
       base64 = bytesToBase64(buffer);
       data.set(file.url, base64);

@@ -43,8 +43,9 @@ describe('describeCount', () => {
     expect(describeCount({ current: 0, total: 1, more: false })).toBe('1 match');
     expect(describeCount({ current: 0, total: 3, more: false })).toBe('3 matches');
     expect(describeCount({ current: 2, total: 3, more: false })).toBe('2 of 3');
-    expect(describeCount({ current: 0, total: 1000, more: true })).toBe('1000+ matches');
-    expect(describeCount({ current: 7, total: 1000, more: true })).toBe('7 of 1000+');
+    expect(describeCount({ current: 0, total: 1000, more: true })).toBe('1,000+ matches');
+    expect(describeCount({ current: 7, total: 1000, more: true })).toBe('7 of 1,000+');
+    expect(describeCount({ current: 999, total: 1000, more: false })).toBe('999 of 1,000');
   });
 
   it('speaks the page language', () => {

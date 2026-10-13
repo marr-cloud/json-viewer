@@ -23,14 +23,16 @@ export const es: Messages = {
   'options.backup.export': 'Exportar configuración',
   'options.backup.import': 'Importar configuración',
   'options.backup.confirm':
-    '¿Reemplazar tu configuración por la de «{file}»? Los temas personalizados del archivo se añaden a los tuyos.',
+    '¿Reemplazar tus ajustes y tu CSS propio por los de «{file}»? Sus temas personalizados se añaden y sustituyen a los tuyos que tengan el mismo id.',
   'options.backup.imported': 'Configuración importada de «{file}».',
   'options.backup.themesSaved.one': 'Se añadió o actualizó {count} tema personalizado.',
   'options.backup.themesSaved.other': 'Se añadieron o actualizaron {count} temas personalizados.',
   'options.backup.themesSkipped.one': 'Se omitió {count} tema del archivo.',
   'options.backup.themesSkipped.other': 'Se omitieron {count} temas del archivo.',
-  'options.backup.themesFailed.one': 'No se pudo guardar {count} tema: el almacenamiento está lleno.',
-  'options.backup.themesFailed.other': 'No se pudieron guardar {count} temas: el almacenamiento está lleno.',
+  'options.backup.themesFailed.one':
+    'No se pudo guardar {count} tema: el almacenamiento sincronizado está lleno u ocupado. Vuelve a intentarlo en un minuto o elimina otros temas personalizados.',
+  'options.backup.themesFailed.other':
+    'No se pudieron guardar {count} temas: el almacenamiento sincronizado está lleno u ocupado. Vuelve a intentarlo en un minuto o elimina otros temas personalizados.',
   'options.backup.error.tooLarge': 'Ese archivo es demasiado grande para ser una configuración de JSON Viewer.',
   'options.backup.error.notJson': 'Ese archivo no es JSON válido.',
   'options.backup.error.notABackup': 'Ese archivo no es una configuración de JSON Viewer.',
@@ -164,9 +166,9 @@ export const es: Messages = {
   'options.features.colorSwatches': 'Muestras de color',
   'options.features.colorSwatchesHint': 'Un cuadrito junto a valores como #ff5500 o rgb(0, 128, 255).',
   'options.features.dateTooltips': 'Información de fechas',
-  'options.features.dateTooltipsHint': 'Pasa el ratón por un tiempo Unix o una fecha ISO 8601 para verla en hora local y UTC.',
+  'options.features.dateTooltipsHint': 'Pasa el cursor sobre un tiempo Unix o una fecha ISO 8601 para verla en hora local y UTC.',
   'options.features.imagePreview': 'Vista previa de imágenes',
-  'options.features.imagePreviewHint': 'Pasa el ratón por la URL de una imagen para verla. La imagen se carga desde su sitio.',
+  'options.features.imagePreviewHint': 'Pasa el cursor sobre la URL de una imagen para verla. La imagen se carga desde su sitio.',
   'options.features.lightMode': 'Modo ligero a partir de (MB)',
   'options.features.lightModeHint': 'Los documentos más grandes no muestran muestras de color ni vistas previas de fechas e imágenes.',
 
