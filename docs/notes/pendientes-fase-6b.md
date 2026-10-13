@@ -21,3 +21,16 @@
 
 ## Ideas
 - Importar también desde un archivo de opciones de tulios/json-viewer (sus claves ya tienen equivalente, §6.7).
+
+## Menores diferidos de la revisión
+- Mensajes que se guardan ya traducidos y no cambian si se cambia el idioma con el mensaje a la vista: importar tema
+  (`ThemeImport.vue`), editor de temas (`ThemeEditor.vue`), errores de fuentes (`useFonts.ts`, `FontDownloadError`).
+  Arreglo: guardar una función o la clave con sus parámetros, como `SettingsActions.vue`.
+- La alerta "storage is full" sale también cuando se supera el límite de escrituras por minuto de `storage.sync`.
+- La confirmación de importar no dice que también se reemplaza el CSS propio ni que los temas con el mismo id se
+  sobrescriben.
+- El contador de la búsqueda no agrupa cifras (`1000+`), a diferencia de la barra de estado (`1,000 matches`).
+- El JSON de ejemplo de la vista previa de opciones nombra opciones en inglés.
+- "Pasa el ratón" suena a España; para es-MX quedaría mejor "Pasa el cursor".
+- El background re-etiqueta menú y tooltip con cualquier cambio de ajustes, no solo de idioma (3 llamadas, inocuo).
+- Los e2e no fijan `locale` en el contexto de Playwright; funcionan porque las páginas usan `en-US` por defecto.
