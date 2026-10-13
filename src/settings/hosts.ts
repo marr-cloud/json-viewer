@@ -14,8 +14,24 @@ export function normalizeHostPattern(input: string): string | null {
   host = host.replace(/^[a-z][a-z0-9+.-]*:\/\//, '');
   host = host.split(/[/?#]/, 1)[0] ?? '';
   host = host.replace(/:\d*$/, '');
-  if (host === '' || host.length > MAX_HOST_PATTERN_LENGTH || !HOST_PATTERN.test(host)) return null;
-  return host;
+  const ascii = toAsciiHost(host);
+  if (ascii === null || ascii === '' || ascii.length > MAX_HOST_PATTERN_LENGTH || !HOST_PATTERN.test(ascii)) return null;
+  return ascii;
+}
+
+/** International labels in punycode ("münchen" → "xn--mnchen-3ya"), as URLs report hosts; null if one can't be. */
+function toAsciiHost(host: string): string | null {
+  const labels = host.split('.').map((label) => {
+    if (/^[\x00-\x7f]*$/.test(label)) return label;
+    // A wildcard can't be part of a punycode label.
+    if (label.includes('*')) return null;
+    try {
+      return new URL(`http://${label}`).hostname;
+    } catch {
+      return null;
+    }
+  });
+  return labels.includes(null) ? null : labels.join('.');
 }
 
 export interface HostList {
@@ -48,12 +64,38 @@ export function validateExcludedHosts(value: unknown, fallback: string[]): strin
   return parseHostList(value.filter((item): item is string => typeof item === 'string').join('\n')).hosts;
 }
 
+/**
+ * Whether `text` matches `glob`, where `*` is any run of characters. Greedy with one backtrack point, so it takes at
+ * most length × length steps; the equivalent regular expression can take exponential time with many `*`.
+ */
+function globMatches(text: string, glob: string): boolean {
+  let t = 0;
+  let g = 0;
+  let star = -1;
+  let resume = 0;
+  while (t < text.length) {
+    if (g < glob.length && glob[g] === '*') {
+      star = g++;
+      resume = t;
+    } else if (g < glob.length && glob[g] === text[t]) {
+      t++;
+      g++;
+    } else if (star !== -1) {
+      g = star + 1;
+      t = ++resume;
+    } else {
+      return false;
+    }
+  }
+  while (g < glob.length && glob[g] === '*') g++;
+  return g === glob.length;
+}
+
 /** `*` matches any characters; a leading "*." also matches the bare domain ("*.example.com" matches example.com). */
 export function hostMatches(hostname: string, pattern: string): boolean {
   const host = hostname.toLowerCase().replace(/\.$/, '');
-  const body = (glob: string) => glob.split('*').map((part) => part.replace(/\./g, '\\.')).join('.*');
-  const source = pattern.startsWith('*.') ? `^(?:.*\\.)?${body(pattern.slice(2))}$` : `^${body(pattern)}$`;
-  return new RegExp(source).test(host);
+  if (pattern.startsWith('*.') && globMatches(host, pattern.slice(2))) return true;
+  return globMatches(host, pattern);
 }
 
 export function isExcludedHost(hostname: string, patterns: readonly string[]): boolean {
