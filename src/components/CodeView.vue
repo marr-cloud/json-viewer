@@ -8,6 +8,7 @@ import { cursorPath } from '@/editor/cursorPath';
 import { errorPosition, type ErrorLocation } from '@/editor/errorLine';
 import { cancelPendingFold, foldFromLevel } from '@/editor/foldLevel';
 import { buildExtensions } from '@/editor/setup';
+import { getLocale } from '@/i18n';
 import type { Theme } from '@/themes/types';
 import type { RichValues, ViewerOptions } from '@/viewer/options';
 
@@ -81,8 +82,9 @@ watch(
 );
 
 // Reconfigure in place so scroll position, folds and selection survive option and theme changes.
+// The language is listed because CodeMirror's own texts (fold arrows, go to line) come from it.
 watch(
-  () => [props.options, props.theme, props.error, props.rich, props.pageUrl] as const,
+  () => [props.options, props.theme, props.error, props.rich, props.pageUrl, getLocale()] as const,
   () => view?.dispatch({ effects: config.reconfigure(currentExtensions()) }),
 );
 

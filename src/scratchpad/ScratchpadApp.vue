@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { browser } from 'wxt/browser';
 import { takeScratchpadInput } from './input';
 import JsonViewer from '@/components/JsonViewer.vue';
 import ViewerShadowRoot from '@/components/ViewerShadowRoot.vue';
 import { sniffKind } from '@/detect/detect';
+import { getLocale, t } from '@/i18n';
 import type { ViewerSession } from '@/viewer/session';
 
 const props = defineProps<{ session: ViewerSession }>();
@@ -42,6 +43,12 @@ function openSettings(): void {
 const format = computed(() => sniffKind(raw.value));
 const state = props.session.state;
 
+// The session sets the language from the settings; the page's own title and lang follow it.
+watchEffect(() => {
+  document.documentElement.lang = getLocale();
+  document.title = t('scratchpad.title');
+});
+
 onMounted(async () => {
   const handed = await takeScratchpadInput();
   if (handed !== '') {
@@ -56,15 +63,15 @@ onBeforeUnmount(() => clearTimeout(timer));
 <template>
   <div class="sp-app">
     <header class="sp-header">
-      <h1 class="sp-title">JSON Scratchpad</h1>
-      <span class="sp-hint">Paste JSON, JSONP or NDJSON on the left.</span>
-      <button type="button" class="sp-button" :disabled="input === ''" @click="clear">Clear</button>
+      <h1 class="sp-title">{{ t('scratchpad.title') }}</h1>
+      <span class="sp-hint">{{ t('scratchpad.hint') }}</span>
+      <button type="button" class="sp-button" :disabled="input === ''" @click="clear">{{ t('scratchpad.clear') }}</button>
     </header>
     <textarea
       ref="textarea"
       v-model="input"
       class="sp-input"
-      aria-label="JSON input"
+      :aria-label="t('scratchpad.input')"
       spellcheck="false"
       placeholder='{"paste": "JSON here"}'
       @input="onInput"
@@ -85,7 +92,7 @@ onBeforeUnmount(() => clearTimeout(timer));
           @open-settings="openSettings"
         />
       </ViewerShadowRoot>
-      <p v-else class="sp-empty">The formatted result appears here.</p>
+      <p v-else class="sp-empty">{{ t('scratchpad.empty') }}</p>
     </div>
   </div>
 </template>

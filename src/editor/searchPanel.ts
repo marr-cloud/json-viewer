@@ -9,6 +9,7 @@ import {
 } from '@codemirror/search';
 import type { EditorState } from '@codemirror/state';
 import { runScopeHandlers, type EditorView, type Panel, type ViewUpdate } from '@codemirror/view';
+import { onLocaleChange, t, tc, type MessageKey } from '@/i18n';
 
 /** Counting stops here; the panel then shows "1000+". */
 export const MAX_COUNTED_MATCHES = 1000;
@@ -41,21 +42,27 @@ export function countMatches(state: EditorState, query: SearchQuery): MatchCount
 /** "2 of 12", "12 matches", "No results"; empty when there is no count. */
 export function describeCount(count: MatchCount | null): string {
   if (count === null) return '';
-  if (count.total === 0) return 'No results';
+  if (count.total === 0) return t('search.none');
   const total = count.more ? `${count.total}+` : String(count.total);
-  if (count.current > 0) return `${count.current} of ${total}`;
-  return count.total === 1 && !count.more ? '1 match' : `${total} matches`;
+  if (count.current > 0) return t('search.position', { current: String(count.current), total });
+  return count.more ? t('search.manyMatches', { total }) : tc('viewer.status.matches', count.total);
 }
 
 type ToggleKey = 'caseSensitive' | 'regexp' | 'wholeWord';
 
-function button(label: string, text: string, onClick: () => void, className = 'cm-jv-search-button'): HTMLButtonElement {
+/** Gives an element its label (title and aria-label) in the current language. */
+function label(element: HTMLElement, key: MessageKey): void {
+  element.title = t(key);
+  element.setAttribute('aria-label', t(key));
+}
+
+function button(key: MessageKey, text: string, onClick: () => void, className = 'cm-jv-search-button'): HTMLButtonElement {
   const element = document.createElement('button');
   element.type = 'button';
   element.className = className;
   element.textContent = text;
-  element.title = label;
-  element.setAttribute('aria-label', label);
+  element.dataset.label = key;
+  label(element, key);
   // Keep focus in the input, as VS Code does.
   element.addEventListener('mousedown', (event) => event.preventDefault());
   element.addEventListener('click', onClick);
@@ -73,16 +80,15 @@ export function createSearchPanel(view: EditorView): Panel {
   field.className = 'cm-jv-search-field';
   const input = document.createElement('input');
   input.className = 'cm-jv-search-input';
-  input.placeholder = 'Find';
-  input.setAttribute('aria-label', 'Find');
+
   // openSearchPanel focuses and selects the element with this attribute.
   input.setAttribute('main-field', 'true');
   input.spellcheck = false;
 
   const toggles: Record<ToggleKey, HTMLButtonElement> = {
-    caseSensitive: button('Match case', 'Aa', () => toggle('caseSensitive'), 'cm-jv-search-toggle'),
-    wholeWord: button('Match whole word', 'ab', () => toggle('wholeWord'), 'cm-jv-search-toggle'),
-    regexp: button('Use regular expression', '.*', () => toggle('regexp'), 'cm-jv-search-toggle'),
+    caseSensitive: button('search.matchCase', 'Aa', () => toggle('caseSensitive'), 'cm-jv-search-toggle'),
+    wholeWord: button('search.wholeWord', 'ab', () => toggle('wholeWord'), 'cm-jv-search-toggle'),
+    regexp: button('search.regexp', '.*', () => toggle('regexp'), 'cm-jv-search-toggle'),
   };
   toggles.wholeWord.classList.add('cm-jv-search-word');
   field.append(input, toggles.caseSensitive, toggles.wholeWord, toggles.regexp);
@@ -94,11 +100,25 @@ export function createSearchPanel(view: EditorView): Panel {
   dom.append(
     field,
     count,
-    button('Previous match', '↑', () => findPrevious(view)),
-    button('Next match', '↓', () => findNext(view)),
-    button('Select all matches', '≡', () => selectMatches(view)),
-    button('Close', '×', () => close()),
+    button('search.previous', '↑', () => findPrevious(view)),
+    button('search.next', '↓', () => findNext(view)),
+    button('search.selectAll', '≡', () => selectMatches(view)),
+    button('search.close', '×', () => close()),
   );
+
+  /** Puts the labels in the current language; runs again when the language changes. */
+  function relabel(): void {
+    input.placeholder = t('search.find');
+    input.setAttribute('aria-label', t('search.find'));
+    for (const element of dom.querySelectorAll<HTMLElement>('[data-label]')) {
+      label(element, element.dataset.label as MessageKey);
+    }
+  }
+  relabel();
+  const stopRelabel = onLocaleChange(() => {
+    relabel();
+    refreshCount(view.state);
+  });
 
   function show(): void {
     if (input.value !== query.search) input.value = query.search;
@@ -171,6 +191,9 @@ export function createSearchPanel(view: EditorView): Panel {
       // openSearchPanel only focuses the field of a panel that is already open.
       input.focus();
       input.select();
+    },
+    destroy() {
+      stopRelabel();
     },
     update(update: ViewUpdate) {
       let changed = false;

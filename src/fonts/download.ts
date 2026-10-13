@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { bytesToBase64 } from './base64';
 import { parseCss2, selectFaces } from './css2';
 import type { StoredFont, StoredFontFace } from './types';
@@ -27,7 +28,7 @@ async function network<T>(step: () => Promise<T>): Promise<T> {
   try {
     return await step();
   } catch {
-    throw new FontDownloadError('Could not reach Google Fonts. Check your connection.');
+    throw new FontDownloadError(t('options.fonts.error.offline'));
   }
 }
 
@@ -39,12 +40,12 @@ export async function downloadFont(
 ): Promise<StoredFont> {
   const response = await network(() => fetchImpl(css2Url(family)));
   if (response.status === 400) {
-    throw new FontDownloadError(`"${family}" is not a Google Fonts family. Names are case-sensitive, e.g. "JetBrains Mono".`);
+    throw new FontDownloadError(t('options.fonts.error.unknownFamily', { family }));
   }
-  if (!response.ok) throw new FontDownloadError(`Google Fonts answered ${response.status}.`);
+  if (!response.ok) throw new FontDownloadError(t('options.fonts.error.status', { status: String(response.status) }));
   const parsed = parseCss2(await network(() => response.text()));
   const files = selectFaces(parsed, subsets);
-  if (files.length === 0) throw new FontDownloadError(`"${family}" has no files for the selected character sets.`);
+  if (files.length === 0) throw new FontDownloadError(t('options.fonts.error.noFiles', { family }));
 
   const data = new Map<string, string>();
   const faces: StoredFontFace[] = [];
@@ -53,11 +54,13 @@ export async function downloadFont(
     let base64 = data.get(file.url);
     if (base64 === undefined) {
       const fileResponse = await network(() => fetchImpl(file.url));
-      if (!fileResponse.ok) throw new FontDownloadError(`Font file download failed (${fileResponse.status}).`);
+      if (!fileResponse.ok) {
+        throw new FontDownloadError(t('options.fonts.error.fileStatus', { status: String(fileResponse.status) }));
+      }
       const buffer = new Uint8Array(await network(() => fileResponse.arrayBuffer()));
       bytes += buffer.byteLength;
       if (bytes > MAX_FONT_BYTES) {
-        throw new FontDownloadError(`"${family}" is larger than 2 MB; choose fewer character sets.`);
+        throw new FontDownloadError(t('options.fonts.error.tooLarge', { family }));
       }
       base64 = bytesToBase64(buffer);
       data.set(file.url, base64);

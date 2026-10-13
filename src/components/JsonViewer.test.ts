@@ -4,6 +4,7 @@ import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, reactive, type App } from 'vue';
 import type { JsonKind } from '@/detect/detect';
+import { setLocale } from '@/i18n';
 import { defaultLightTheme, defaultTheme } from '@/themes/builtin';
 import type { Theme } from '@/themes/types';
 import { defaultFontSettings, type FontSettings } from '@/settings/font';
@@ -52,6 +53,7 @@ afterEach(() => {
   app?.unmount();
   document.body.innerHTML = '';
   vi.restoreAllMocks();
+  setLocale('en');
 });
 
 describe('JsonViewer', () => {
@@ -187,6 +189,18 @@ describe('JsonViewer', () => {
       source: { url: 'https://api.test/v1/', loadedAt: new Date() },
     });
     expect(host.querySelector<HTMLElement>('.cm-url')?.dataset.url).toBe('https://api.test/breads');
+  });
+
+  it('speaks the page language and follows a change live', async () => {
+    setLocale('es');
+    const host = mount({ raw: '{"a":}' });
+    expect(host.querySelector('[aria-label="Plegar todo"]')).not.toBeNull();
+    expect(host.querySelector('.jv-status')?.textContent).toContain('1 línea');
+    expect(host.querySelector('.jv-error')?.textContent).toContain('línea 1, columna');
+    setLocale('en');
+    await nextTick();
+    expect(host.querySelector('[aria-label="Fold all"]')).not.toBeNull();
+    expect(host.querySelector('.jv-status')?.textContent).toContain('1 line');
   });
 
   it('folds all, unfolds all and folds to a level', async () => {

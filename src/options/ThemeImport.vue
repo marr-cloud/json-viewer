@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { t } from '@/i18n';
+import I18nText from '@/i18n/I18nText.vue';
 import { saveCustomTheme, uniqueThemeId } from '@/themes/store';
 import type { Theme } from '@/themes/types';
 
@@ -27,7 +29,10 @@ async function importTheme(input: string | File): Promise<void> {
     const theme: Theme = { ...result.theme, id: uniqueThemeId(result.theme.name, props.takenIds) };
     await saveCustomTheme(theme);
     warnings.value = result.warnings;
-    message.value = `Imported “${theme.name}” as a ${theme.type} theme.`;
+    message.value = t('options.import.done', {
+      name: theme.name,
+      type: t(theme.type === 'dark' ? 'options.theme.typeDark' : 'options.theme.typeLight'),
+    });
     text.value = '';
     emit('imported', theme);
   } catch (error) {
@@ -47,18 +52,22 @@ async function onFile(event: Event): Promise<void> {
 
 <template>
   <div class="opt-import">
-    <h3>Import a VS Code theme</h3>
+    <h3>{{ t('options.import.title') }}</h3>
     <p class="opt-hint">
-      Paste a color theme's JSON (the <code>themes/*.json</code> file of a VS Code theme extension) or choose the file.
+      <I18nText k="options.import.hint">
+        <template #file><code>themes/*.json</code></template>
+      </I18nText>
     </p>
     <label class="opt-field">
-      <span class="opt-label">VS Code theme JSON</span>
+      <span class="opt-label">{{ t('options.import.json') }}</span>
       <textarea v-model="text" rows="6" spellcheck="false" />
     </label>
     <div class="opt-row">
-      <button type="button" :disabled="!text.trim() || importing" @click="importTheme(text)">Import</button>
+      <button type="button" :disabled="!text.trim() || importing" @click="importTheme(text)">
+        {{ t('options.import.button') }}
+      </button>
       <label class="opt-file">
-        Choose file…
+        {{ t('options.import.chooseFile') }}
         <input type="file" accept=".json,.jsonc,application/json" @change="onFile" />
       </label>
     </div>

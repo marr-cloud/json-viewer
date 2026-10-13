@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Browser } from 'wxt/browser';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { scratchpadInputItem } from '@/scratchpad/input';
-import { createMenus, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
+import { createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
 import { SCRATCHPAD_PAGE } from './scratchpad';
 import { VIEWER_SCRIPT } from './viewer';
 
@@ -24,12 +24,35 @@ describe('context menus', () => {
   it('creates "View as JSON" for pages and "View selection as JSON" for selections', async () => {
     const removeAll = vi.spyOn(fakeBrowser.contextMenus, 'removeAll').mockResolvedValue(undefined);
     const create = vi.spyOn(fakeBrowser.contextMenus, 'create').mockReturnValue(1);
-    await createMenus();
+    await createMenus('en');
     expect(removeAll).toHaveBeenCalledOnce();
     expect(create.mock.calls.map(([props]) => props)).toEqual([
       { id: MENU_VIEW_PAGE, title: 'View as JSON', contexts: ['page'] },
       { id: MENU_VIEW_SELECTION, title: 'View selection as JSON', contexts: ['selection'] },
     ]);
+  });
+
+  it('names the menus in the given language', async () => {
+    vi.spyOn(fakeBrowser.contextMenus, 'removeAll').mockResolvedValue(undefined);
+    const create = vi.spyOn(fakeBrowser.contextMenus, 'create').mockReturnValue(1);
+    await createMenus('es');
+    expect(create.mock.calls.map(([props]) => props.title)).toEqual(['Ver como JSON', 'Ver la selección como JSON']);
+  });
+
+  it('relabels the menus and the toolbar icon when the language changes', async () => {
+    const update = vi.spyOn(fakeBrowser.contextMenus, 'update').mockResolvedValue(undefined);
+    await labelExtension('es');
+    expect(update.mock.calls).toEqual([
+      [MENU_VIEW_PAGE, { title: 'Ver como JSON' }],
+      [MENU_VIEW_SELECTION, { title: 'Ver la selección como JSON' }],
+    ]);
+    expect(await fakeBrowser.action.getTitle({})).toBe('Abrir el bloc de JSON');
+  });
+
+  it('still labels the toolbar icon when the menus do not exist yet', async () => {
+    vi.spyOn(fakeBrowser.contextMenus, 'update').mockRejectedValue(new Error('Cannot find menu item'));
+    await labelExtension('en');
+    expect(await fakeBrowser.action.getTitle({})).toBe('Open the JSON scratchpad');
   });
 
   it('forces the viewer into the clicked frame', async () => {
@@ -52,11 +75,23 @@ describe('context menus', () => {
   });
 
   it('marks the toolbar icon when the viewer cannot run on the page', async () => {
+    // Explicit: on auto, the language would come from the machine running the tests.
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
     executeScript.mockRejectedValue(new Error('Cannot access a chrome:// URL'));
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await onMenuClick(click(MENU_VIEW_PAGE), tab);
     expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('!');
-    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toContain('Cannot access a chrome:// URL');
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe("JSON Viewer can't open this page: Cannot access a chrome:// URL");
+  });
+
+  it('explains the failure in the chosen language', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'es' } });
+    executeScript.mockRejectedValue(new Error('Cannot access a chrome:// URL'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
+      'JSON Viewer no puede abrir esta página: Cannot access a chrome:// URL',
+    );
   });
 
   it('ignores clicks without a tab', async () => {

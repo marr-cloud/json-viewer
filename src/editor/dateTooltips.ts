@@ -1,5 +1,6 @@
 import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view';
+import { getLocale, t, type MessageKey } from '@/i18n';
 import { valueTokenAt } from './jsonToken';
 
 const MIN_MS = Date.UTC(1990, 0, 1);
@@ -47,14 +48,16 @@ function formatOffset(minutes: number): string {
   return `UTC${sign}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`;
 }
 
-const SOURCE_LABELS: Record<DetectedDate['source'], string | null> = {
-  seconds: 'Unix time in seconds',
-  milliseconds: 'Unix time in milliseconds',
+const SOURCE_LABELS: Record<DetectedDate['source'], MessageKey | null> = {
+  seconds: 'values.date.unixSeconds',
+  milliseconds: 'values.date.unixMilliseconds',
   iso: null,
-  date: 'Calendar date, no time zone',
+  date: 'values.date.calendar',
 };
 
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function weekday(ms: number): string {
+  return new Date(ms).toLocaleDateString(getLocale(), { weekday: 'long', timeZone: 'UTC' });
+}
 
 /**
  * The tooltip lines for a date: local time (with its UTC offset), UTC, and how a number was read.
@@ -63,14 +66,14 @@ const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frida
 export function describeDate(date: DetectedDate, offsetMinutes: number): string[] {
   if (date.source === 'date') {
     const day = new Date(date.ms);
-    return [`${day.toISOString().slice(0, 10)} (${WEEKDAYS[day.getUTCDay()]})`, SOURCE_LABELS.date!];
+    return [`${day.toISOString().slice(0, 10)} (${weekday(date.ms)})`, t('values.date.calendar')];
   }
   const lines = [
     `${formatClock(date.ms + offsetMinutes * 60_000)} (${formatOffset(offsetMinutes)})`,
     `${formatClock(date.ms)} UTC`,
   ];
   const label = SOURCE_LABELS[date.source];
-  return label === null ? lines : [...lines, label];
+  return label === null ? lines : [...lines, t(label)];
 }
 
 /** The date tooltip for the value at `pos`, if it is one. */

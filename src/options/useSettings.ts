@@ -20,6 +20,8 @@ export interface SettingsModel {
   customCss: Ref<string>;
   loaded: Ref<boolean>;
   reset(): void;
+  /** Replaces the settings and CSS and saves them now (an import), rejecting if storage refuses. */
+  replace(settings: Settings, customCss: string): Promise<void>;
 }
 
 export function useSettings(): SettingsModel {
@@ -59,6 +61,22 @@ export function useSettings(): SettingsModel {
     reset() {
       settings.value = clone(defaultSettings);
       customCss.value = '';
+    },
+    async replace(next, css) {
+      const json = JSON.stringify(next);
+      // Marked as saved first, so the debounced watchers don't write the same values again.
+      savedSettings = json;
+      savedCss = css;
+      settings.value = JSON.parse(json) as Settings;
+      customCss.value = css;
+      await customCssItem.setValue(css);
+      try {
+        await saveSettings(JSON.parse(json) as Settings);
+      } catch (error) {
+        // Not saved (storage.sync's quota): the next edit writes the settings again.
+        savedSettings = '';
+        throw error;
+      }
     },
   };
 }

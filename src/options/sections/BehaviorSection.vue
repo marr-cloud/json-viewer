@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ToggleField from '../fields/ToggleField.vue';
+import { t } from '@/i18n';
 import type { ViewerOptions } from '@/viewer/options';
 
 defineProps<{ viewer: ViewerOptions }>();
@@ -7,16 +8,20 @@ defineProps<{ viewer: ViewerOptions }>();
 
 <template>
   <section id="behavior" class="opt-section">
-    <h2>Behavior</h2>
-    <ToggleField v-model="viewer.showHeader" label="Show URL and load time in the toolbar" />
-    <ToggleField v-model="viewer.autoHighlight" label="Format JSON automatically" hint="When off, pages open on the Raw tab." />
-    <ToggleField v-model="viewer.sortKeys" label="Sort object keys" />
-    <ToggleField v-model="viewer.clickableUrls" label="Make URLs clickable" />
+    <h2>{{ t('options.section.behavior') }}</h2>
+    <ToggleField v-model="viewer.showHeader" :label="t('options.behavior.showHeader')" />
+    <ToggleField
+      v-model="viewer.autoHighlight"
+      :label="t('options.behavior.autoHighlight')"
+      :hint="t('options.behavior.autoHighlightHint')"
+    />
+    <ToggleField v-model="viewer.sortKeys" :label="t('options.behavior.sortKeys')" />
+    <ToggleField v-model="viewer.clickableUrls" :label="t('options.behavior.clickableUrls')" />
     <ToggleField
       v-model="viewer.wrapLinkWithAnchorTag"
-      label="Render URLs as real links"
-      hint="Enables right-click › Copy link address."
+      :label="t('options.behavior.anchors')"
+      :hint="t('options.behavior.anchorsHint')"
     />
-    <ToggleField v-model="viewer.openLinksInNewWindow" label="Open links in a new tab" />
+    <ToggleField v-model="viewer.openLinksInNewWindow" :label="t('options.behavior.newTab')" />
   </section>
 </template>

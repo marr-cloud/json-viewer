@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { t } from '@/i18n';
 import { MAX_EXCLUDED_HOSTS, parseHostList } from '@/settings/hosts';
 
 const hosts = defineModel<string[]>('hosts', { required: true });
@@ -31,9 +32,9 @@ function onChange(): void {
 
 <template>
   <section id="sites" class="opt-section">
-    <h2>Sites</h2>
+    <h2>{{ t('options.section.sites') }}</h2>
     <label class="opt-field">
-      <span class="opt-label">Don't open the viewer on</span>
+      <span class="opt-label">{{ t('options.sites.label') }}</span>
       <textarea
         v-model="text"
         rows="5"
@@ -42,14 +43,13 @@ function onChange(): void {
         @input="onInput"
         @change="onChange"
       />
-      <small class="opt-hint">
-        One host per line. *.example.com also matches example.com, and * matches anything. Right-click a page and
-        choose View as JSON to open it there anyway.
-      </small>
+      <small class="opt-hint">{{ t('options.sites.hint') }}</small>
     </label>
     <p v-if="invalid.length > 0" class="opt-hint opt-errors" role="alert">
-      Not a host, left out: {{ invalid.join(', ') }}
+      {{ t('options.sites.invalid', { hosts: invalid.join(', ') }) }}
     </p>
-    <p v-if="dropped > 0" class="opt-hint opt-errors" role="alert">Only the first {{ MAX_EXCLUDED_HOSTS }} hosts are kept.</p>
+    <p v-if="dropped > 0" class="opt-hint opt-errors" role="alert">
+      {{ t('options.sites.dropped', { max: MAX_EXCLUDED_HOSTS }) }}
+    </p>
   </section>
 </template>

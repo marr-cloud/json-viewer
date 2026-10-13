@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { byteLength, countLines, formatBytes, formatCount, isLightMode } from './stats';
+import { byteLength, countLines, formatBytes, isLightMode } from './stats';
 
 describe('byteLength', () => {
   it('counts UTF-8 bytes', () => {
@@ -56,12 +56,3 @@ describe('countLines', () => {
   });
 });
 
-describe('formatCount', () => {
-  it('pluralizes and groups digits', () => {
-    expect(formatCount(1, 'line')).toBe('1 line');
-    expect(formatCount(0, 'line')).toBe('0 lines');
-    expect(formatCount(450_002, 'line')).toBe('450,002 lines');
-    expect(formatCount(3, 'match', 'matches')).toBe('3 matches');
-    expect(formatCount(1, 'match', 'matches')).toBe('1 match');
-  });
-});

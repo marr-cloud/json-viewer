@@ -4,6 +4,7 @@ import { ensureSyntaxTree, foldAll, foldEffect } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
+import { setLocale } from '@/i18n';
 import { foldSummaries, formatFoldSummary, summarizeFold } from './foldSummary';
 
 // Offsets: "{" 0, "[" 9, inner "{" 16, outer "c" value "{" 37
@@ -32,6 +33,16 @@ describe('formatFoldSummary', () => {
     expect(formatFoldSummary({ type: 'array', count: 3 })).toBe('3 items');
     expect(formatFoldSummary({ type: 'object', count: 1 })).toBe('1 key');
     expect(formatFoldSummary({ type: 'object', count: 2 })).toBe('2 keys');
+  });
+
+  it('speaks the page language', () => {
+    setLocale('es');
+    try {
+      expect(formatFoldSummary({ type: 'array', count: 1 })).toBe('1 elemento');
+      expect(formatFoldSummary({ type: 'object', count: 2 })).toBe('2 claves');
+    } finally {
+      setLocale('en');
+    }
   });
 });
 

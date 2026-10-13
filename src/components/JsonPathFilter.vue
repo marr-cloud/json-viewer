@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { t } from '@/i18n';
 
 defineProps<{ active: boolean; error: string | null; disabled: boolean }>();
 const emit = defineEmits<{ apply: [path: string]; clear: [] }>();
@@ -39,14 +40,21 @@ defineExpose({
       type="text"
       spellcheck="false"
       autocomplete="off"
-      aria-label="JSONPath filter"
+      :aria-label="t('viewer.filter.label')"
       placeholder="$.items[*].id"
-      :title="disabled ? 'Fix the JSON error to filter' : 'JSONPath filter: Enter applies, Esc clears'"
+      :title="disabled ? t('viewer.filter.disabled') : t('viewer.filter.title')"
       :disabled="disabled"
       :aria-invalid="error !== null"
       @keydown="onKeydown"
     />
-    <button v-if="active" type="button" class="jv-icon-button" aria-label="Clear filter" title="Clear filter (Esc)" @click="clearAndFocus">
+    <button
+      v-if="active"
+      type="button"
+      class="jv-icon-button"
+      :aria-label="t('viewer.filter.clear')"
+      :title="t('viewer.filter.clearTitle')"
+      @click="clearAndFocus"
+    >
       ×
     </button>
     <p v-if="error" class="jv-filter-error" role="alert">{{ error }}</p>

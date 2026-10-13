@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { setLocale } from '@/i18n';
 import { parseDocument, parseJsonp, parseNdjson } from './formats';
 
 const BOM = String.fromCharCode(0xfeff);
@@ -44,6 +45,17 @@ describe('parseNdjson', () => {
 
   it('fails on an empty document', () => {
     expect(parseNdjson(' \n\n')).toMatchObject({ ok: false, error: { message: 'No JSON values found' } });
+  });
+
+  it('words its own errors in the page language', () => {
+    setLocale('es');
+    try {
+      expect(parseNdjson(' \n\n')).toMatchObject({ ok: false, error: { message: 'No se encontró ningún valor JSON' } });
+      const result = parseNdjson('{"a":1}\n{"b":}');
+      expect(!result.ok && result.error.message).toMatch(/^Línea 2: /);
+    } finally {
+      setLocale('en');
+    }
   });
 });
 

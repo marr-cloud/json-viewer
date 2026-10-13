@@ -3,6 +3,7 @@ import { getSearchQuery, openSearchPanel, search, SearchQuery, searchPanelOpen, 
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
+import { setLocale } from '@/i18n';
 import { COUNT_DOC_LIMIT, countMatches, createSearchPanel, describeCount, MAX_COUNTED_MATCHES } from './searchPanel';
 
 const DOC = '{"a": "x", "b": "X", "c": "xx"}';
@@ -45,6 +46,18 @@ describe('describeCount', () => {
     expect(describeCount({ current: 0, total: 1000, more: true })).toBe('1000+ matches');
     expect(describeCount({ current: 7, total: 1000, more: true })).toBe('7 of 1000+');
   });
+
+  it('speaks the page language', () => {
+    setLocale('es');
+    try {
+      expect(describeCount({ current: 0, total: 0, more: false })).toBe('Sin resultados');
+      expect(describeCount({ current: 0, total: 1, more: false })).toBe('1 resultado');
+      expect(describeCount({ current: 2, total: 3, more: false })).toBe('2 de 3');
+      expect(describeCount({ current: 0, total: 1000, more: true })).toBe('1000+ resultados');
+    } finally {
+      setLocale('en');
+    }
+  });
 });
 
 describe('createSearchPanel', () => {
@@ -78,6 +91,20 @@ describe('createSearchPanel', () => {
     };
     return { view, panel, input, count, button, type, press };
   };
+
+  it('relabels itself and its count when the page language changes', () => {
+    const { input, count, button, type } = mount();
+    type('zzz');
+    expect(count.textContent).toBe('No results');
+    setLocale('es');
+    try {
+      expect(input.placeholder).toBe('Buscar');
+      expect(button('Cerrar')).not.toBeNull();
+      expect(count.textContent).toBe('Sin resultados');
+    } finally {
+      setLocale('en');
+    }
+  });
 
   it('replaces the default panel, keeps its class and focuses the field', () => {
     const { panel, input } = mount();

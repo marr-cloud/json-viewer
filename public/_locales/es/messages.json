@@ -1,0 +1,5 @@
+{
+  "extName": { "message": "JSON Viewer" },
+  "extDescription": { "message": "Visor de JSON rápido y personalizable, con temas de VS Code y Google Fonts." },
+  "actionTitle": { "message": "Abrir el bloc de JSON" }
+}

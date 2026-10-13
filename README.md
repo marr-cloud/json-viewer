@@ -37,6 +37,11 @@ solos y se aplican en vivo a las pestañas abiertas.
   imágenes, y el umbral del modo ligero.
 - **Sitios:** hosts donde no abrir el visor (uno por línea; `*.example.com` incluye `example.com`, `*` comodín).
 - **Avanzado:** CSS propio para el visor.
+- **Idioma:** English o Español, o el del navegador (por defecto). Cambia en vivo el visor, las opciones, el scratchpad,
+  el menú contextual y el texto del ícono. El nombre y la descripción de la tienda siguen al idioma del navegador.
+- **Exportar / importar:** un archivo `json-viewer-settings-AAAA-MM-DD.json` con los ajustes, el CSS propio y los
+  temas personalizados (las fuentes descargadas no se incluyen). Al importar se reemplazan los ajustes y se añaden o
+  actualizan los temas del archivo. **Restablecer valores** vuelve a los ajustes por defecto y conserva los temas.
 
 ## En el visor
 

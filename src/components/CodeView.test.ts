@@ -5,6 +5,7 @@ import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp, h, nextTick, reactive, ref, type App } from 'vue';
 import type { ErrorLocation } from '@/editor/errorLine';
+import { setLocale } from '@/i18n';
 import { defaultTheme } from '@/themes/builtin';
 import { defaultViewerOptions, NO_RICH_VALUES, type ViewerOptions } from '@/viewer/options';
 import CodeView from './CodeView.vue';
@@ -174,6 +175,21 @@ describe('CodeView', () => {
     });
     app.mount(host);
     expect(host.querySelectorAll('.cm-jv-swatch')).toHaveLength(1);
+  });
+
+  it("relabels CodeMirror's own controls when the page language changes", async () => {
+    mount(NESTED);
+    const arrow = () => host!.querySelector<HTMLElement>('.cm-foldGutter [title]')?.title;
+    const spanish: Record<string, string> = { 'Fold line': 'Plegar línea', 'Unfold line': 'Desplegar línea' };
+    const before = arrow()!;
+    expect(Object.keys(spanish)).toContain(before);
+    setLocale('es');
+    try {
+      await nextTick();
+      expect(arrow()).toBe(spanish[before]);
+    } finally {
+      setLocale('en');
+    }
   });
 
   it('relinks root-relative paths when the page URL changes', async () => {

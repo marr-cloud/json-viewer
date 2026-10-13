@@ -67,6 +67,30 @@ describe('useSettings', () => {
     expect(settingsWrites(set)).toBe(0);
   });
 
+  it('replace() saves the settings and CSS right away, without a second write later', async () => {
+    const model = await mountModel();
+    const set = vi.spyOn(fakeBrowser.storage.sync, 'set');
+    await model.replace({ ...structuredClone(defaultSettings), themeMode: 'dark' }, 'b{}');
+    expect((await fakeBrowser.storage.sync.get('settings')).settings).toMatchObject({ themeMode: 'dark' });
+    expect((await fakeBrowser.storage.local.get('customCss')).customCss).toBe('b{}');
+    expect(model.settings.value.themeMode).toBe('dark');
+    await nextTick();
+    vi.advanceTimersByTime(SAVE_DELAY_MS);
+    await Promise.resolve();
+    expect(settingsWrites(set)).toBe(1);
+  });
+
+  it('replace() rejects when storage refuses, and a later edit tries again', async () => {
+    const model = await mountModel();
+    const set = vi.spyOn(fakeBrowser.storage.sync, 'set').mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'));
+    await expect(model.replace({ ...structuredClone(defaultSettings), themeMode: 'dark' }, '')).rejects.toThrow('QUOTA_BYTES');
+    model.settings.value.viewer.tabSize = 6;
+    await nextTick();
+    vi.advanceTimersByTime(SAVE_DELAY_MS);
+    await vi.waitFor(() => expect(settingsWrites(set)).toBe(2));
+    expect((await fakeBrowser.storage.sync.get('settings')).settings).toMatchObject({ themeMode: 'dark', viewer: { tabSize: 6 } });
+  });
+
   it('saves custom CSS to local storage and resets to defaults', async () => {
     const model = await mountModel();
     model.customCss.value = '.cm-content { color: red; }';

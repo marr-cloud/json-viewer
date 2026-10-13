@@ -2,6 +2,7 @@ import { isNdjson, type JsonKind } from '@/detect/detect';
 import { formatJson } from '@/parse/format';
 import { parseDocument } from '@/parse/formats';
 import { stripBom, type ParseError } from '@/parse/parse';
+import { t } from '@/i18n';
 import type { ViewerOptions } from './options';
 
 /** `kind` is the format actually shown, which can differ from the one asked for (see prepareDocument). */
@@ -9,8 +10,6 @@ export type PreparedDocument = (
   | { ok: true; text: string; value: unknown }
   | { ok: false; text: string; error: ParseError }
 ) & { kind: JsonKind };
-
-const TOO_DEEP = 'Document is nested too deeply to format';
 
 /**
  * Parses and formats the raw response. Never throws: failures carry the raw text.
@@ -37,7 +36,7 @@ export function prepareDocument(
     });
     return { ok: true, text, value: parsed.value, kind: shown };
   } catch (e) {
-    const message = e instanceof RangeError ? TOO_DEEP : String(e);
+    const message = e instanceof RangeError ? t('parse.tooDeep') : String(e);
     return { ok: false, text: stripBom(raw), error: { message, line: null, column: null, offset: null }, kind: shown };
   }
 }

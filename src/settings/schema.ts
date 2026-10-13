@@ -1,6 +1,7 @@
 import { bool, intInRange, nonEmptyId, oneOf, validateFields, type ObjectValidators } from './fields';
 import { defaultFontSettings, validateFontSettings, type FontSettings } from './font';
 import { validateExcludedHosts } from './hosts';
+import type { LocaleSetting } from '@/i18n/translate';
 import { defaultShortcuts, validateShortcuts, type Shortcuts } from './shortcuts';
 import {
   defaultFeatures,
@@ -24,6 +25,8 @@ export interface Settings {
   features: Features;
   /** Host patterns where detected JSON is left alone (see hosts.ts). */
   excludedHosts: string[];
+  /** UI language; `auto` follows the browser. */
+  locale: LocaleSetting;
 }
 
 export const defaultSettings: Settings = {
@@ -35,6 +38,7 @@ export const defaultSettings: Settings = {
   shortcuts: defaultShortcuts,
   features: defaultFeatures,
   excludedHosts: [],
+  locale: 'auto',
 };
 
 export const TAB_SIZE_MIN = 1;
@@ -73,6 +77,7 @@ const settingsValidators: ObjectValidators<Settings> = {
   shortcuts: (value) => validateShortcuts(value),
   features: (value) => validateFields(value, defaultFeatures, featureValidators),
   excludedHosts: validateExcludedHosts,
+  locale: oneOf<LocaleSetting>(['auto', 'en', 'es']),
 };
 
 /** Returns complete settings; every missing or invalid field falls back to its default. */
