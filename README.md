@@ -71,6 +71,9 @@ Se generan desde [tm-themes](https://github.com/shikijs/textmate-grammars-themes
 pnpm themes:build   # regenera src/themes/builtin/generated.json y LICENSES.md
 ```
 
+**Night Sky** es [One Dark Pro Night Flat](https://github.com/Binaryify/OneDark-Pro) (Binaryify, MIT), guardado en
+`scripts/themes/`, con las URLs en el azul de enlace del propio tema para que se distingan de los demás strings.
+
 ## Documentación
 
 - Diseño: `docs/superpowers/specs/2026-10-11-json-viewer-design.md`
