@@ -1,4 +1,5 @@
 import { JSONPath } from 'jsonpath-plus';
+import { t } from '@/i18n';
 import { formatJson, type FormatOptions } from '@/parse/format';
 
 export type FilterResult =
@@ -18,6 +19,6 @@ export function filterDocument(value: unknown, path: string, format: FormatOptio
   try {
     return { ok: true, text: formatJson(list, format), value: list, count: list.length };
   } catch (e) {
-    return { ok: false, message: e instanceof RangeError ? 'The result is nested too deeply to format' : String(e) };
+    return { ok: false, message: e instanceof RangeError ? t('viewer.filter.tooDeep') : String(e) };
   }
 }

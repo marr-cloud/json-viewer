@@ -1,5 +1,6 @@
 import type { JsonKind } from '@/detect/detect';
 import { jsonpBounds } from '@/detect/jsonp';
+import { t } from '@/i18n';
 import { offsetToLineColumn, parseJson, stripBom, type ParseError, type ParseResult } from './parse';
 
 /** Parses a response of the given kind. Error offsets, lines and columns refer to the BOM-stripped text. */
@@ -14,7 +15,7 @@ export function parseJsonp(text: string): ParseResult {
   const source = stripBom(text);
   const bounds = jsonpBounds(source);
   if (bounds === null) {
-    return { ok: false, error: { message: 'Not a JSONP response: expected callback(...)', line: 1, column: 1, offset: 0 } };
+    return { ok: false, error: { message: t('parse.notJsonp'), line: 1, column: 1, offset: 0 } };
   }
   const inner = parseJson(source.slice(bounds.from, bounds.to));
   if (inner.ok) return inner;
@@ -36,7 +37,7 @@ export function parseNdjson(text: string): ParseResult {
       const result = parseJson(lineText);
       if (!result.ok) {
         const error = shift(result.error, source, start);
-        return { ok: false, error: { ...error, message: `Line ${line}: ${result.error.message}` } };
+        return { ok: false, error: { ...error, message: t('parse.ndjsonLine', { line, message: result.error.message }) } };
       }
       values.push(result.value);
     }
@@ -44,7 +45,7 @@ export function parseNdjson(text: string): ParseResult {
     line++;
   }
   if (values.length === 0) {
-    return { ok: false, error: { message: 'No JSON values found', line: null, column: null, offset: null } };
+    return { ok: false, error: { message: t('parse.noValues'), line: null, column: null, offset: null } };
   }
   return { ok: true, value: values };
 }

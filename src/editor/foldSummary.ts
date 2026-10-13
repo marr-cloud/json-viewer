@@ -1,5 +1,6 @@
 import { codeFolding, syntaxTree } from '@codemirror/language';
 import type { EditorState, Extension } from '@codemirror/state';
+import { t, tc } from '@/i18n';
 
 export interface FoldSummary {
   type: 'object' | 'array';
@@ -24,8 +25,7 @@ export function summarizeFold(state: EditorState, from: number): FoldSummary | n
 }
 
 export function formatFoldSummary({ type, count }: FoldSummary): string {
-  const noun = type === 'array' ? 'item' : 'key';
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+  return tc(type === 'array' ? 'viewer.foldSummary.items' : 'viewer.foldSummary.keys', count);
 }
 
 /** Fold placeholders that show how many items/keys are hidden ("… 3 items"). */
@@ -36,7 +36,7 @@ export function foldSummaries(): Extension {
       const el = document.createElement('span');
       el.className = 'cm-foldPlaceholder';
       el.textContent = prepared ? `… ${formatFoldSummary(prepared)}` : '…';
-      el.title = 'Unfold';
+      el.title = t('viewer.fold.unfold');
       el.onclick = onclick;
       return el;
     },

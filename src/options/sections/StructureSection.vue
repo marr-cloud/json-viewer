@@ -5,7 +5,8 @@ import SelectField from '../fields/SelectField.vue';
 import ToggleField from '../fields/ToggleField.vue';
 import type { SelectOption } from '../types';
 import { TAB_SIZE_MAX, TAB_SIZE_MIN } from '@/settings/schema';
-import { FOLD_LEVELS, foldLevelLabel, type ViewerOptions } from '@/viewer/options';
+import { foldLevelLabel } from '@/viewer/foldLevelLabel';
+import { FOLD_LEVELS, type ViewerOptions } from '@/viewer/options';
 
 const props = defineProps<{ viewer: ViewerOptions }>();
 

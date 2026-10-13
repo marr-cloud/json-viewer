@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { n, t } from '@/i18n';
+
 withDefaults(
   defineProps<{
     path: string | null;
@@ -21,8 +23,8 @@ const emit = defineEmits<{ copyPath: [] }>();
       v-if="path !== null"
       type="button"
       class="jv-path"
-      :aria-label="`Copy path ${path}`"
-      title="Copy path"
+      :aria-label="t('viewer.status.copyPathOf', { path })"
+      :title="t('viewer.status.copyPath')"
       @click="emit('copyPath')"
     >
       {{ path }}
@@ -32,8 +34,8 @@ const emit = defineEmits<{ copyPath: [] }>();
       <span
         v-if="lightMode !== null"
         class="jv-light-mode"
-        :title="`Over ${lightMode} MB: color swatches and date and image previews are off.`"
-        >Light mode</span
+        :title="t('viewer.status.lightModeHint', { mb: n(lightMode) })"
+        >{{ t('viewer.status.lightMode') }}</span
       >
       <span v-if="note">{{ note }}</span>
       <span>{{ size }}</span>

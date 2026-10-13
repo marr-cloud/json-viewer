@@ -1,5 +1,6 @@
 import type { Extension } from '@codemirror/state';
 import { hoverTooltip, type EditorView, type Tooltip } from '@codemirror/view';
+import { t } from '@/i18n';
 import { valueTokenAt } from './jsonToken';
 
 const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.avif'];
@@ -22,7 +23,7 @@ function imageTooltipDom(src: string): HTMLElement {
   dom.className = 'cm-jv-image';
   const info = document.createElement('div');
   info.className = 'cm-jv-image-info';
-  info.textContent = 'Loading…';
+  info.textContent = t('values.image.loading');
   const img = document.createElement('img');
   img.alt = '';
   // The image is only requested when the tooltip opens, and without the page as referrer.
@@ -32,7 +33,7 @@ function imageTooltipDom(src: string): HTMLElement {
   });
   img.addEventListener('error', () => {
     img.remove();
-    info.textContent = 'The image could not be loaded.';
+    info.textContent = t('values.image.failed');
   });
   img.src = src;
   dom.append(img, info);

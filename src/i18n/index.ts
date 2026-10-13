@@ -1,4 +1,4 @@
-import { shallowRef } from 'vue';
+import { shallowRef, watch } from 'vue';
 import {
   formatNumber,
   resolveLocale,
@@ -24,6 +24,11 @@ export function getLocale(): Locale {
 
 export function setLocale(locale: Locale): void {
   current.value = locale;
+}
+
+/** Calls `callback` right after each language change, for DOM built outside Vue. Returns a stop function. */
+export function onLocaleChange(callback: (locale: Locale) => void): () => void {
+  return watch(current, callback, { flush: 'sync' });
 }
 
 /** Sets the page's language from the setting (`auto` follows the browser) and returns it. */

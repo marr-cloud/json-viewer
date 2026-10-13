@@ -4,6 +4,7 @@ import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it } from 'vitest';
+import { setLocale } from '@/i18n';
 import { dateTooltipAt, describeDate, epochDate, isoDate } from './dateTooltips';
 
 describe('epochDate', () => {
@@ -52,6 +53,21 @@ describe('describeDate', () => {
     const date = { ms: Date.UTC(2024, 9, 12), source: 'date' } as const;
     for (const offset of [-300, 600]) {
       expect(describeDate(date, offset)).toEqual(['2024-10-12 (Saturday)', 'Calendar date, no time zone']);
+    }
+  });
+
+  it('speaks the page language', () => {
+    setLocale('es');
+    try {
+      expect(describeDate({ ms: Date.UTC(2024, 9, 12), source: 'date' }, 0)).toEqual([
+        '2024-10-12 (sábado)',
+        'Fecha de calendario, sin zona horaria',
+      ]);
+      expect(describeDate({ ms: Date.UTC(2024, 9, 12), source: 'milliseconds' }, 0)[2]).toBe(
+        'Tiempo Unix en milisegundos',
+      );
+    } finally {
+      setLocale('en');
     }
   });
 });

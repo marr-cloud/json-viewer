@@ -40,10 +40,6 @@ export function countLines(text: string): number {
   return lines;
 }
 
-export function formatCount(count: number, singular: string, plural = `${singular}s`): string {
-  return `${count.toLocaleString('en-US')} ${count === 1 ? singular : plural}`;
-}
-
 /** Light mode: the document is bigger than the threshold (in MiB, like the status bar). */
 export function isLightMode(bytes: number, thresholdMB: number): boolean {
   return bytes > thresholdMB * MB;

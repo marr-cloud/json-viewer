@@ -41,11 +41,6 @@ export const FOLD_LEVELS = [2, 3, 4, 5, 6] as const;
 /** "Fold all" keeps the top-level value open and folds everything inside it. */
 export const FOLD_ALL_LEVEL = 2;
 
-/** How a fold level reads in the UI: level 2 shows one level of the document. */
-export function foldLevelLabel(level: number): string {
-  const shown = level - 1;
-  return `Show ${shown} level${shown === 1 ? '' : 's'}`;
-}
 
 export const LIGHT_MODE_MIN_MB = 1;
 export const LIGHT_MODE_MAX_MB = 1000;

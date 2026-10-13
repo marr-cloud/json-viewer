@@ -5,6 +5,7 @@ import JsonPathFilter from './JsonPathFilter.vue';
 import ViewerStatusBar from './ViewerStatusBar.vue';
 import ViewerToolbar from './ViewerToolbar.vue';
 import { fontCssVars } from '@/fonts/css';
+import { getLocale, t, tc, type MessageKey } from '@/i18n';
 import type { FontSettings } from '@/settings/font';
 import { actionFor, comboFromEvent, defaultShortcuts, type ShortcutAction, type Shortcuts } from '@/settings/shortcuts';
 import { toCssVars } from '@/themes/css';
@@ -17,7 +18,7 @@ import { downloadName, downloadText } from '@/viewer/download';
 import { defaultFeatures, FOLD_ALL_LEVEL, richValues, type Features, type ViewerOptions } from '@/viewer/options';
 import { filterDocument } from '@/viewer/jsonPath';
 import { prepareDocument } from '@/viewer/prepare';
-import { byteLength, countLines, formatBytes, formatCount, isLightMode } from '@/viewer/stats';
+import { byteLength, countLines, formatBytes, isLightMode } from '@/viewer/stats';
 
 const props = withDefaults(
   defineProps<{
@@ -94,7 +95,7 @@ const shown = computed<{ text: string; value: unknown; valid: boolean; error: Pa
 });
 // Filter results open unfolded, whatever "Fold on open" says.
 const codeOptions = computed(() => (filtered.value?.ok ? { ...props.options, foldFromLevel: 0 } : props.options));
-const matches = computed(() => (filtered.value?.ok ? formatCount(filtered.value.count, 'match', 'matches') : undefined));
+const matches = computed(() => (filtered.value?.ok ? tc('viewer.status.matches', filtered.value.count) : undefined));
 const cssVars = computed(() => ({
   ...toCssVars(resolveColors(props.theme)),
   ...(props.font ? fontCssVars(props.font) : {}),
@@ -109,7 +110,7 @@ const size = computed(() => formatBytes(bytes.value));
 /** Huge documents skip the value decorations; the status bar says so. */
 const lightMode = computed(() => isLightMode(bytes.value, props.options.lightModeThresholdMB));
 const rich = computed(() => richValues(props.features, lightMode.value));
-const lines = computed(() => formatCount(countLines(mode.value === 'code' ? shown.value.text : props.raw), 'line'));
+const lines = computed(() => tc('viewer.status.lines', countLines(mode.value === 'code' ? shown.value.text : props.raw)));
 
 const message = ref('');
 let flashTimer: ReturnType<typeof setTimeout> | undefined;
@@ -122,13 +123,13 @@ function flash(text: string): void {
 }
 onBeforeUnmount(() => clearTimeout(flashTimer));
 
-async function copy(text: string | null, what: string): Promise<void> {
+async function copy(text: string | null, done: MessageKey): Promise<void> {
   if (text === null || !root.value) return;
-  flash((await copyText(text, root.value)) ? `Copied ${what}` : 'Copy failed');
+  flash(t((await copyText(text, root.value)) ? done : 'viewer.copyFailed'));
 }
 
 function copyPath(): void {
-  void copy(cursorPath.value, 'path');
+  void copy(cursorPath.value, 'viewer.copied.path');
 }
 
 const codeView = ref<InstanceType<typeof CodeView>>();
@@ -151,7 +152,9 @@ function minified(): string | null {
 }
 
 function onCopy(variant: 'formatted' | 'minified'): void {
-  void (variant === 'formatted' ? copy(shown.value.text, 'formatted JSON') : copy(minified(), 'minified JSON'));
+  void (variant === 'formatted'
+    ? copy(shown.value.text, 'viewer.copied.formatted')
+    : copy(minified(), 'viewer.copied.minified'));
 }
 
 function onDownload(): void {
@@ -254,7 +257,15 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKeydown,
 </script>
 
 <template>
-  <div ref="root" class="jv-root" :class="`jv-${theme.type}`" :style="cssVars" @keydown.capture="onShortcut" @keydown="onEscape">
+  <div
+    ref="root"
+    class="jv-root"
+    :class="`jv-${theme.type}`"
+    :style="cssVars"
+    :lang="getLocale()"
+    @keydown.capture="onShortcut"
+    @keydown="onEscape"
+  >
     <component :is="'style'" v-if="customCss">{{ customCss }}</component>
     <ViewerToolbar
       v-model:mode="mode"
@@ -288,9 +299,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onDocumentKeydown,
     </ViewerToolbar>
     <div v-if="!prepared.ok" class="jv-error" role="alert">
       {{ prepared.error.message
-      }}<template v-if="prepared.error.line !== null">
-        — line {{ prepared.error.line }}, column {{ prepared.error.column }}</template
-      >
+      }}<template v-if="prepared.error.line !== null">{{
+        t('viewer.error.at', { line: prepared.error.line, column: prepared.error.column ?? '' })
+      }}</template>
     </div>
     <CodeView
       v-if="mode === 'code'"
