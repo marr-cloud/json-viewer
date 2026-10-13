@@ -313,5 +313,27 @@
       "punctuation": "#89ddff",
       "link": "#c3e88d"
     }
+  },
+  {
+    "id": "night-sky",
+    "name": "Night Sky",
+    "type": "dark",
+    "source": "builtin",
+    "colors": {
+      "background": "#16191d",
+      "foreground": "#abb2bf",
+      "gutterForeground": "#667187",
+      "selection": "#67769660",
+      "activeLine": "#2c313c",
+      "cursor": "#528bff",
+      "toolbarBackground": "#16191d",
+      "border": "#3e4452",
+      "key": "#e06c75",
+      "string": "#98c379",
+      "number": "#d19a66",
+      "boolean": "#d19a66",
+      "null": "#d19a66",
+      "link": "#61afef"
+    }
   }
 ]

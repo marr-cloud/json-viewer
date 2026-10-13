@@ -17,3 +17,12 @@ export interface OpenOptionsMessage {
 export function isOpenOptionsMessage(value: unknown): value is OpenOptionsMessage {
   return typeof value === 'object' && value !== null && (value as { type?: unknown }).type === OPEN_OPTIONS;
 }
+
+/**
+ * Set by the background on the content scripts' isolated world before injecting the viewer for "View as JSON":
+ * the viewer then opens even though the page wasn't detected as JSON.
+ */
+export const FORCE_VIEWER_FLAG = '__jsonViewerForced';
+
+/** The attribute the viewer puts on <html> while it shows the page; the background checks it before forcing. */
+export const VIEWER_GUARD = 'data-json-viewer';

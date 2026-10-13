@@ -34,6 +34,7 @@ describe('validateSettings', () => {
       font: defaultFontSettings,
       shortcuts: defaultShortcuts,
       features: defaultFeatures,
+      excludedHosts: [],
     });
   });
 
@@ -46,6 +47,7 @@ describe('validateSettings', () => {
       font: { ...defaultFontSettings, source: 'google', family: 'JetBrains Mono' },
       shortcuts: { ...defaultShortcuts, toggleRaw: 'Ctrl+Alt+R' },
       features: { ...defaultFeatures, imagePreview: false },
+      excludedHosts: ['api.example.com', '*.internal.test'],
     };
     expect(validateSettings(input)).toEqual(input);
   });
@@ -66,7 +68,13 @@ describe('validateSettings', () => {
       font: defaultFontSettings,
       shortcuts: defaultShortcuts,
       features: defaultFeatures,
+      excludedHosts: [],
     });
+  });
+
+  it('keeps only valid, distinct host patterns', () => {
+    expect(validateSettings({ excludedHosts: ['A.com', 'a.com', 'bad host', 3] }).excludedHosts).toEqual(['a.com']);
+    expect(validateSettings({ excludedHosts: 'a.com' }).excludedHosts).toEqual([]);
   });
 
   it('validates the features one by one', () => {
@@ -94,5 +102,6 @@ describe('validateSettings', () => {
   it('never returns the shared default objects', () => {
     const result = validateSettings(undefined);
     expect(result.viewer).not.toBe(defaultViewerOptions);
+    expect(result.excludedHosts).not.toBe(defaultSettings.excludedHosts);
   });
 });

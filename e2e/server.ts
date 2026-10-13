@@ -46,6 +46,7 @@ const routes: Record<string, Route> = {
   '/ld': { type: 'application/ld+json; charset=utf-8', body: '{"@context":"https://schema.org"}' },
   '/plain-json': { type: 'text/plain', body: '[{"a":1}]' },
   '/plain-log': { type: 'text/plain', body: '[INFO] server started' },
+  '/json-in-html': { type: 'text/html', body: '<!doctype html><title>t</title><p>{"b": 2}</p>' },
   '/page.html': { type: 'text/html', body: '<!doctype html><title>t</title><pre>{"a":1}</pre>' },
   '/invalid.json': { type: 'application/json', body: '{\n  "a": 1,\n}' },
   '/invalid-crlf.json': { type: 'application/json', body: '{\r\n  "a": 1,\r\n  "b": 2,\r\n}' },
@@ -55,6 +56,12 @@ const routes: Record<string, Route> = {
   '/rich.json': { type: 'application/json', body: richJson },
   '/rich-csp.json': { type: 'application/json', body: richJson, headers: { 'content-security-policy': "img-src 'none'" } },
   '/rich-broken.json': { type: 'application/json', body: richBrokenJson },
+  '/data.jsonp': { type: 'application/javascript', body: 'callback({"name":"jsonp","list":[1,2]});' },
+  '/plain.jsonp': { type: 'text/plain', body: '/**/ cb({"name":"plain jsonp"})' },
+  '/script.js': { type: 'application/javascript', body: 'console.log("not data");' },
+  // Chromium downloads application/x-ndjson and application/jsonl, so NDJSON reaches the viewer as text or JSON.
+  '/records.jsonl': { type: 'text/plain; charset=utf-8', body: '{"id":1,"name":"first"}\n{"id":2,"name":"second"}\n' },
+  '/ndjson-as-json': { type: 'application/json', body: '{"id":1}\n{"id":2}\n' },
   '/pixel.svg': { type: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="3"/>' },
 };
 

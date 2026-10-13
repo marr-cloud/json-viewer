@@ -1,17 +1,17 @@
 import '@/components/viewer.css';
 import { browser } from 'wxt/browser';
-import { computed, createApp, h, reactive } from 'vue';
+import { createApp, h } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
+import { sniffKind } from '@/detect/detect';
 import { readRawText } from '@/detect/readRawText';
-import { createFontLoader } from '@/fonts/loader';
-import { trackStoredFont } from '@/fonts/track';
-import { OPEN_OPTIONS, type OpenOptionsMessage } from '@/messages';
-import { customCssItem, loadSettings, watchSettings } from '@/settings/storage';
-import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
-import { listCustomThemes, watchCustomThemes } from '@/themes/store';
+import { FORCE_VIEWER_FLAG, OPEN_OPTIONS, VIEWER_GUARD as GUARD, type OpenOptionsMessage } from '@/messages';
 import { hideOriginal } from '@/viewer/hideOriginal';
+import { createViewerSession, type ViewerSession } from '@/viewer/session';
 
-const GUARD = 'data-json-viewer';
+/** "View as JSON" sets this on the content scripts' isolated world before injecting the viewer. */
+function isForced(): boolean {
+  return (globalThis as unknown as Record<string, unknown>)[FORCE_VIEWER_FLAG] === true;
+}
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -23,66 +23,33 @@ export default defineContentScript({
     const root = document.documentElement;
     const body = document.body;
     if (!body || root.hasAttribute(GUARD)) return;
-    const raw = readRawText(document);
+    // A forced viewer takes whatever text the page shows when it isn't a plain text response.
+    const raw = readRawText(document) ?? (isForced() ? body.innerText : null);
     if (raw === null) return;
     root.setAttribute(GUARD, '');
+    // The detector already validated the body; this only tells the format apart, without parsing it all again.
+    const format = sniffKind(raw, document.contentType);
 
     let restore: (() => void) | undefined;
     let ui: Awaited<ReturnType<typeof createShadowRootUi>> | undefined;
+    let session: ViewerSession | undefined;
     let failed = false;
     const fail = (error: unknown): void => {
       if (failed) return;
       failed = true;
       restore?.();
       ui?.remove();
+      session?.stop();
       root.removeAttribute(GUARD);
       console.warn('[json-viewer] viewer failed to render', error);
     };
 
     try {
-      const [settings, customCss, customThemes] = await Promise.all([
-        loadSettings(),
-        customCssItem.getValue(),
-        listCustomThemes(),
-      ]);
-      const media = window.matchMedia('(prefers-color-scheme: dark)');
-      const state = reactive({
-        settings,
-        customCss,
-        customThemes,
-        prefersDark: media.matches,
-        override: null as ThemeKind | null,
-      });
-      const theme = computed(() => activeTheme(state.settings, state.customThemes, state.prefersDark, state.override));
-      const kind = computed(() => pickThemeKind(state.settings.themeMode, state.prefersDark, state.override));
+      const current = await createViewerSession(document.fonts);
+      session = current;
+      ctx.onInvalidated(() => current.stop());
+      const { state } = current;
       const source = { url: location.href, loadedAt: new Date() };
-
-      const onMediaChange = (event: MediaQueryListEvent) => {
-        state.prefersDark = event.matches;
-      };
-      media.addEventListener('change', onMediaChange);
-      const stops = [
-        watchSettings((value) => {
-          state.settings = value;
-        }),
-        customCssItem.watch((value) => {
-          state.customCss = value ?? '';
-        }),
-        watchCustomThemes(() => {
-          void listCustomThemes()
-            .then((list) => {
-              state.customThemes = list;
-            })
-            .catch((error: unknown) => console.warn('[json-viewer] custom theme reload failed', error));
-        }),
-        // Faces go on the page's document.fonts, which the viewer's shadow root uses too.
-        trackStoredFont(
-          () => (state.settings.font.source === 'google' ? state.settings.font.family : ''),
-          createFontLoader(document.fonts),
-        ),
-        () => media.removeEventListener('change', onMediaChange),
-      ];
-      ctx.onInvalidated(() => stops.forEach((stop) => stop()));
 
       const openSettings = () => {
         const message: OpenOptionsMessage = { type: OPEN_OPTIONS };
@@ -99,18 +66,17 @@ export default defineContentScript({
               h('div', { class: 'jv-page' }, [
                 h(JsonViewer, {
                   raw,
+                  format,
                   options: state.settings.viewer,
                   font: state.settings.font,
                   shortcuts: state.settings.shortcuts,
                   features: state.settings.features,
                   documentShortcuts: true,
-                  theme: theme.value,
-                  kind: kind.value,
+                  theme: current.theme.value,
+                  kind: current.kind.value,
                   customCss: state.customCss,
                   source,
-                  onToggleTheme: () => {
-                    state.override = toggledKind(state.settings.themeMode, state.prefersDark, state.override);
-                  },
+                  onToggleTheme: current.toggleTheme,
                   onOpenSettings: openSettings,
                 }),
               ]),
@@ -123,7 +89,7 @@ export default defineContentScript({
           app?.unmount();
         },
       });
-      // Hide (don't remove) the browser's rendering so the original stays recoverable.
+      // Hide (don't remove) the page's own rendering so the original stays recoverable.
       restore = hideOriginal(body);
       ui.mount();
     } catch (error) {

@@ -1,10 +1,10 @@
 import type { BrowserContext } from '@playwright/test';
 
-type StorageArea = 'sync' | 'local';
+type StorageArea = 'sync' | 'local' | 'session';
 type ChromeStorage = { storage: Record<StorageArea, { set(items: Record<string, unknown>): Promise<void> }> };
 type ChromeGet = { storage: Record<StorageArea, { get(key: string): Promise<Record<string, unknown>> }> };
 
-/** Writes raw chrome.storage items from the extension's service worker (keys without WXT's "sync:"/"local:" prefix). */
+/** Writes raw chrome.storage items from the extension's service worker (keys without WXT's "sync:"/"local:"/"session:" prefix). */
 export async function setStorage(context: BrowserContext, area: StorageArea, items: Record<string, unknown>): Promise<void> {
   let [worker] = context.serviceWorkers();
   if (!worker) worker = await context.waitForEvent('serviceworker');

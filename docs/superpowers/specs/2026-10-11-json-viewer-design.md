@@ -45,8 +45,8 @@ Enfoque elegido: **detector mínimo + inyección bajo demanda**.
 
 | Entrypoint | Responsabilidad |
 |---|---|
-| `detector.content.ts` | `matches: ['<all_urls>']`, `runAt: 'document_end'`. Lee `document.contentType`, comprueba que el `<body>` contiene solo texto plano / un único `<pre>`, consulta la lista de sitios excluidos y, si corresponde, envía `{ type: 'json-detected' }` al background. Sin dependencias pesadas. |
-| `background.ts` | Al recibir `json-detected`, inyecta el visor en la pestaña con `browser.scripting.executeScript`. Registra el menú contextual "Ver como JSON". Ejecuta migraciones de configuración en `runtime.onInstalled`. Abre el scratchpad al pulsar el ícono. |
+| `detector.content.ts` | `matches: ['<all_urls>']`, `runAt: 'document_end'`. Lee `document.contentType`, comprueba que el `<body>` contiene solo texto plano / un único `<pre>`, y, si corresponde, envía `{ type: 'json-detected' }` al background. Sin dependencias pesadas. |
+| `background.ts` | Al recibir `json-detected`, comprueba la lista de sitios excluidos e inyecta el visor en la pestaña con `browser.scripting.executeScript`. Registra el menú contextual "Ver como JSON". Ejecuta migraciones de configuración en `runtime.onInstalled`. Abre el scratchpad al pulsar el ícono. |
 | `viewer.content/` | `registration: 'runtime'` (no aparece en el manifest). Lee el texto crudo, lo parsea, reemplaza el documento y monta la app Vue dentro de un shadow root (`createShadowRootUi`). |
 | `options/` | App Vue de opciones con vista previa en vivo. |
 | `scratchpad/` | Página para pegar JSON y verlo con el mismo componente del visor. |
@@ -218,6 +218,20 @@ Decisiones de la Fase 5:
 - Menú contextual "Ver como JSON" para forzar el visor.
 - Scratchpad: página de la extensión para pegar JSON; se abre desde el ícono.
 
+Decisiones de la Fase 6a:
+
+- JSONP: `/**/` opcional + nombre de callback (con puntos) + `( … )` + `;` opcional. Con tipo JSON se reconoce por
+  la forma; con `text/plain` o JavaScript, solo si lo envuelto es un objeto o array válido.
+- NDJSON: Chromium descarga `application/x-ndjson` y `application/jsonl` sin mostrarlos; llega como `text/plain`
+  (≥ 2 líneas, cada una objeto o array) o como JSON que resulta ser NDJSON. Se muestra como array; los errores
+  dicen "Line N".
+- Sitios excluidos: se comprueban en el background antes de inyectar (no en el detector); patrones de host con `*`,
+  `*.x` incluye `x`, sin puertos; máximo 50 de 100 caracteres. "View as JSON" los ignora.
+- Menú contextual: "View as JSON" (página) fuerza el visor en el frame; "View selection as JSON" abre la selección en
+  el scratchpad vía `storage.session`. Si la inyección falla, insignia "!" con el motivo en el ícono (sin permiso
+  `notifications`).
+- Scratchpad: el ícono (sin popup) lo abre en una pestaña nueva; no guarda el texto.
+
 ### 6.7 Configuración (`sync:settings`)
 
 | Original | Nuevo |
@@ -253,7 +267,7 @@ en y es con `@wxt-dev/i18n`; `locale: 'auto'` sigue el idioma del navegador.
 |---|---|
 | JSON inválido | Visor en modo Raw con la línea del error resaltada y banner con mensaje, línea y columna. |
 | Detección dudosa (`text/plain` que no parsea) | No se inyecta nada. |
-| Inyección fallida (páginas restringidas, permisos) | Se registra en el background; la página queda intacta. Si vino del menú contextual, notificación con el motivo. |
+| Inyección fallida (páginas restringidas, permisos) | Se registra en el background; la página queda intacta. Si vino del menú contextual, insignia «!» en el ícono con el motivo. |
 | Descarga de fuente fallida (red, familia inexistente) | Mensaje en opciones; el visor usa la pila de respaldo. |
 | Importación de tema fallida | Lista de errores concretos; no se guarda nada. |
 | Configuración corrupta o de versión desconocida | Migraciones + `validateSettings` rellenan campos inválidos con defaults. |

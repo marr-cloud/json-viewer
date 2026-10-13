@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { SAMPLE_JSON, SAMPLE_URL } from './sample';
 import JsonViewer from '@/components/JsonViewer.vue';
-import viewerCss from '@/components/viewer.css?inline';
+import ViewerShadowRoot from '@/components/ViewerShadowRoot.vue';
 import { createFontLoader } from '@/fonts/loader';
 import { trackStoredFont } from '@/fonts/track';
 import type { Settings } from '@/settings/schema';
@@ -22,16 +22,12 @@ const override = ref<ThemeKind | null>(null);
 const onMediaChange = (event: MediaQueryListEvent) => {
   prefersDark.value = event.matches;
 };
-// The viewer's custom CSS is a plain <style>; a shadow root keeps it from leaking into the options page.
-const host = ref<HTMLDivElement>();
-const shadowRoot = shallowRef<ShadowRoot>();
 const viewerOptions = computed(() => ({ ...props.settings.viewer }));
 const viewerFont = computed(() => ({ ...props.settings.font }));
 const viewerShortcuts = computed(() => ({ ...props.settings.shortcuts }));
 const viewerFeatures = computed(() => ({ ...props.settings.features }));
 let stopFont: (() => void) | undefined;
 onMounted(() => {
-  shadowRoot.value = host.value!.attachShadow({ mode: 'open' });
   media.addEventListener('change', onMediaChange);
   stopFont = trackStoredFont(
     () => (props.settings.font.source === 'google' ? props.settings.font.family : ''),
@@ -56,9 +52,7 @@ function toggleTheme(): void {
 
 <template>
   <div class="opt-preview-frame">
-    <div ref="host" class="opt-preview-host" />
-    <Teleport v-if="shadowRoot" :to="shadowRoot">
-      <component :is="'style'">{{ viewerCss }}</component>
+    <ViewerShadowRoot>
       <!-- autoHighlight only sets the initial tab, so remount when it changes. -->
       <JsonViewer
         :key="String(settings.viewer.autoHighlight)"
@@ -74,6 +68,6 @@ function toggleTheme(): void {
         toggle-label="Preview: switch between light and dark"
         @toggle-theme="toggleTheme"
       />
-    </Teleport>
+    </ViewerShadowRoot>
   </div>
 </template>

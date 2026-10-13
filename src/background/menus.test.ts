@@ -1,0 +1,66 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Browser } from 'wxt/browser';
+import { fakeBrowser } from 'wxt/testing/fake-browser';
+import { scratchpadInputItem } from '@/scratchpad/input';
+import { createMenus, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
+import { SCRATCHPAD_PAGE } from './scratchpad';
+import { VIEWER_SCRIPT } from './viewer';
+
+const tab = { id: 7, index: 2 } as Browser.tabs.Tab;
+const click = (menuItemId: string, extra: Partial<Browser.contextMenus.OnClickData> = {}) =>
+  ({ menuItemId, editable: false, pageUrl: 'https://example.com/', frameId: 0, ...extra }) as Browser.contextMenus.OnClickData;
+
+describe('context menus', () => {
+  let executeScript: ReturnType<typeof vi.fn>;
+  let createTab: ReturnType<typeof vi.fn>;
+  beforeEach(() => {
+    fakeBrowser.reset();
+    executeScript = vi.fn().mockResolvedValue([]);
+    vi.spyOn(fakeBrowser.scripting, 'executeScript').mockImplementation(executeScript as never);
+    createTab = vi.fn().mockResolvedValue({});
+    vi.spyOn(fakeBrowser.tabs, 'create').mockImplementation(createTab as never);
+  });
+
+  it('creates "View as JSON" for pages and "View selection as JSON" for selections', async () => {
+    const removeAll = vi.spyOn(fakeBrowser.contextMenus, 'removeAll').mockResolvedValue(undefined);
+    const create = vi.spyOn(fakeBrowser.contextMenus, 'create').mockReturnValue(1);
+    await createMenus();
+    expect(removeAll).toHaveBeenCalledOnce();
+    expect(create.mock.calls.map(([props]) => props)).toEqual([
+      { id: MENU_VIEW_PAGE, title: 'View as JSON', contexts: ['page'] },
+      { id: MENU_VIEW_SELECTION, title: 'View selection as JSON', contexts: ['selection'] },
+    ]);
+  });
+
+  it('forces the viewer into the clicked frame', async () => {
+    await onMenuClick(click(MENU_VIEW_PAGE, { frameId: 4 }), tab);
+    expect(executeScript).toHaveBeenCalledTimes(2);
+    expect(executeScript.mock.calls[1]![0]).toEqual({ target: { tabId: 7, frameIds: [4] }, files: [VIEWER_SCRIPT] });
+  });
+
+  it('opens the selection in a scratchpad next to the tab', async () => {
+    executeScript.mockResolvedValue([{ result: '{"a":\n1}' }]);
+    await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '{"a": 1}' }), tab);
+    expect(await scratchpadInputItem.getValue()).toBe('{"a":\n1}');
+    expect(createTab).toHaveBeenCalledWith({ url: fakeBrowser.runtime.getURL(SCRATCHPAD_PAGE), index: 3 });
+  });
+
+  it('falls back to the menu selection text when the frame cannot be read', async () => {
+    executeScript.mockRejectedValue(new Error('Cannot access contents of the page'));
+    await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1, 2]' }), tab);
+    expect(await scratchpadInputItem.getValue()).toBe('[1, 2]');
+  });
+
+  it('marks the toolbar icon when the viewer cannot run on the page', async () => {
+    executeScript.mockRejectedValue(new Error('Cannot access a chrome:// URL'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('!');
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toContain('Cannot access a chrome:// URL');
+  });
+
+  it('ignores clicks without a tab', async () => {
+    await onMenuClick(click(MENU_VIEW_PAGE), undefined);
+    expect(executeScript).not.toHaveBeenCalled();
+  });
+});
