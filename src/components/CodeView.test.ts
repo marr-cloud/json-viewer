@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { foldAll, foldEffect, foldedRanges } from '@codemirror/language';
+import { ensureSyntaxTree, foldAll, foldEffect, foldedRanges } from '@codemirror/language';
 import type { TransactionSpec } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -88,6 +88,8 @@ describe('CodeView', () => {
 
   it('keeps the same editor and its folds when options change', async () => {
     const { state, editor, view } = mount('{\n  "a": [\n    1,\n    2\n  ]\n}');
+    // foldAll needs the syntax tree; on a busy machine the background parse may not have finished.
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
     foldAll(view);
     expect(editor.querySelectorAll('.cm-foldPlaceholder').length).toBeGreaterThan(0);
     state.options = { ...state.options, lineNumbers: false };
