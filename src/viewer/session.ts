@@ -1,6 +1,7 @@
-import { computed, reactive, type ComputedRef } from 'vue';
+import { computed, reactive, watchEffect, type ComputedRef } from 'vue';
 import { createFontLoader, type FontFaceTarget } from '@/fonts/loader';
 import { trackStoredFont } from '@/fonts/track';
+import { applyLocaleSetting } from '@/i18n';
 import type { Settings } from '@/settings/schema';
 import { customCssItem, loadSettings, watchSettings } from '@/settings/storage';
 import { activeTheme, pickThemeKind, toggledKind, type ThemeKind } from '@/themes/active';
@@ -28,7 +29,7 @@ export interface ViewerSession {
 
 /**
  * Loads what a full-page viewer needs (settings, custom CSS and themes, the downloaded font) and keeps it in sync
- * with storage and the system color scheme. Used by the content script and the scratchpad.
+ * with storage and the system color scheme. It also sets the page's language from the settings. Used by the content script and the scratchpad.
  */
 export async function createViewerSession(
   fonts: FontFaceTarget,
@@ -54,6 +55,7 @@ export async function createViewerSession(
   };
   media.addEventListener('change', onMediaChange);
   const stops = [
+    watchEffect(() => applyLocaleSetting(state.settings.locale)),
     watchSettings((value) => {
       state.settings = value;
     }),

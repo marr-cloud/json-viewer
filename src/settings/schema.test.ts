@@ -35,6 +35,7 @@ describe('validateSettings', () => {
       shortcuts: defaultShortcuts,
       features: defaultFeatures,
       excludedHosts: [],
+      locale: 'auto',
     });
   });
 
@@ -48,6 +49,7 @@ describe('validateSettings', () => {
       shortcuts: { ...defaultShortcuts, toggleRaw: 'Ctrl+Alt+R' },
       features: { ...defaultFeatures, imagePreview: false },
       excludedHosts: ['api.example.com', '*.internal.test'],
+      locale: 'es',
     };
     expect(validateSettings(input)).toEqual(input);
   });
@@ -69,12 +71,19 @@ describe('validateSettings', () => {
       shortcuts: defaultShortcuts,
       features: defaultFeatures,
       excludedHosts: [],
+      locale: 'auto',
     });
   });
 
   it('keeps only valid, distinct host patterns', () => {
     expect(validateSettings({ excludedHosts: ['A.com', 'a.com', 'bad host', 3] }).excludedHosts).toEqual(['a.com']);
     expect(validateSettings({ excludedHosts: 'a.com' }).excludedHosts).toEqual([]);
+  });
+
+  it('accepts auto, en and es as the language', () => {
+    expect(validateSettings({ locale: 'en' }).locale).toBe('en');
+    expect(validateSettings({ locale: 'fr' }).locale).toBe('auto');
+    expect(validateSettings({ locale: 1 }).locale).toBe('auto');
   });
 
   it('validates the features one by one', () => {

@@ -77,8 +77,15 @@ body {
   background: var(--opt-border);
 }
 
-.opt-reset {
+.opt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: auto;
+}
+
+.opt-actions p {
+  margin: 0;
 }
 
 .opt-main {

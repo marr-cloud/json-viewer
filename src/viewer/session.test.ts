@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
+import { getLocale, setLocale } from '@/i18n';
 import { createViewerSession, type ViewerSession } from './session';
 
 /** A MediaQueryList whose `matches` the test flips. */
@@ -25,6 +26,7 @@ describe('createViewerSession', () => {
   afterEach(() => {
     session?.stop();
     session = undefined;
+    setLocale('en');
   });
 
   const open = async (media = fakeMedia(false)) => {
@@ -57,6 +59,14 @@ describe('createViewerSession', () => {
     expect(session.kind.value).toBe('light');
     session.toggleTheme();
     expect(session.kind.value).toBe('dark');
+  });
+
+  it('sets the page language from the settings and follows changes', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'es' } });
+    await open();
+    expect(getLocale()).toBe('es');
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    await vi.waitFor(() => expect(getLocale()).toBe('en'));
   });
 
   it('stops listening when stopped', async () => {

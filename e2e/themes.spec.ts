@@ -28,7 +28,7 @@ test('imports a pasted VS Code theme and uses it', async ({ context, server, ext
   await openOptions(options, extensionId);
   await options.getByLabel('Theme mode').selectOption('dark');
   await options.getByLabel('VS Code theme JSON').fill(VSCODE_THEME);
-  await options.getByRole('button', { name: 'Import' }).click();
+  await options.getByRole('button', { name: 'Import', exact: true }).click();
   await expect(options.locator('p.opt-success')).toContainText('Imported “Test Night” as a dark theme.');
   await expect(options.getByLabel('Dark theme')).toHaveValue('test-night');
   await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ darkThemeId: 'test-night' });
@@ -42,7 +42,7 @@ test('reports invalid theme files', async ({ context, extensionId }) => {
   const options = await context.newPage();
   await openOptions(options, extensionId);
   await options.getByLabel('VS Code theme JSON').fill('{"colors": ');
-  await options.getByRole('button', { name: 'Import' }).click();
+  await options.getByRole('button', { name: 'Import', exact: true }).click();
   await expect(options.getByRole('alert')).toContainText('Invalid JSON');
 });
 
@@ -61,7 +61,7 @@ test('deletes a custom theme and falls back to the default', async ({ context, e
   const options = await context.newPage();
   await openOptions(options, extensionId);
   await options.getByLabel('VS Code theme JSON').fill(VSCODE_THEME);
-  await options.getByRole('button', { name: 'Import' }).click();
+  await options.getByRole('button', { name: 'Import', exact: true }).click();
   await expect(options.getByLabel('Dark theme')).toHaveValue('test-night');
   options.once('dialog', (dialog) => void dialog.accept());
   await options.getByRole('button', { name: 'Delete Test Night' }).click();
@@ -147,7 +147,7 @@ test('exports a custom theme as compact JSON', async ({ context, extensionId }) 
   const options = await context.newPage();
   await openOptions(options, extensionId);
   await options.getByLabel('VS Code theme JSON').fill(VSCODE_THEME);
-  await options.getByRole('button', { name: 'Import' }).click();
+  await options.getByRole('button', { name: 'Import', exact: true }).click();
   const [download] = await Promise.all([
     options.waitForEvent('download'),
     options.getByRole('button', { name: 'Export Test Night' }).click(),
