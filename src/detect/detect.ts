@@ -46,8 +46,12 @@ export function detect(contentType: string, text: string): Detection | null {
   return null;
 }
 
-/** The kind of a text with no content type to go by (pasted text, a page forced into the viewer). */
-export function sniffKind(text: string): JsonKind {
+/**
+ * The kind of a text without parsing it whole: from an NDJSON content type, the JSONP shape or NDJSON lines.
+ * For the viewer (the detector already validated the body), pasted text and pages forced into the viewer.
+ */
+export function sniffKind(text: string, contentType = ''): JsonKind {
+  if (NDJSON_TYPES.has(normalizeContentType(contentType))) return 'ndjson';
   if (jsonpBounds(text)) return 'jsonp';
   return isNdjson(text) ? 'ndjson' : 'json';
 }
@@ -76,8 +80,14 @@ function isValidJsonp(text: string): boolean {
  * Stops at the first line that doesn't, so a pretty-printed document fails on its first line.
  */
 export function isNdjson(text: string): boolean {
-  let records = 0;
   let start = text.charCodeAt(0) === 0xfeff ? 1 : 0;
+  // A single line (a big minified document) can't be NDJSON: don't parse it just to find out.
+  const firstBreak = text.indexOf('\n', start);
+  if (firstBreak === -1) return false;
+  let next = firstBreak + 1;
+  while (next < text.length && /\s/.test(text[next]!)) next++;
+  if (next === text.length) return false;
+  let records = 0;
   while (start < text.length) {
     let end = text.indexOf('\n', start);
     if (end === -1) end = text.length;

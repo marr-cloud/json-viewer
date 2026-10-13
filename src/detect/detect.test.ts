@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { detect, isJsonContentType, isNdjson, normalizeContentType, sniffKind } from './detect';
 
 const BOM = String.fromCharCode(0xfeff);
@@ -83,6 +83,14 @@ describe('isNdjson', () => {
     expect(isNdjson('{\n  "a": 1\n}')).toBe(false);
     expect(isNdjson('')).toBe(false);
   });
+
+  it('parses nothing when there is no second line', () => {
+    // A big minified document is one line: parsing it here would only be thrown away.
+    const parse = vi.spyOn(JSON, 'parse');
+    expect(isNdjson('{"a":1}\n  \n')).toBe(false);
+    expect(parse).not.toHaveBeenCalled();
+    parse.mockRestore();
+  });
 });
 
 describe('sniffKind', () => {
@@ -92,5 +100,11 @@ describe('sniffKind', () => {
     expect(sniffKind('{"a":1}')).toBe('json');
     expect(sniffKind('not json')).toBe('json');
     expect(sniffKind('')).toBe('json');
+  });
+
+  it('goes by an NDJSON content type when there is one', () => {
+    expect(sniffKind('{"a":1}', 'application/x-ndjson; charset=utf-8')).toBe('ndjson');
+    expect(sniffKind('{"a":1}\n{"a":2}', 'application/json')).toBe('ndjson');
+    expect(sniffKind('cb([1])', 'text/plain')).toBe('jsonp');
   });
 });

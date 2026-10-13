@@ -2,7 +2,7 @@ import '@/components/viewer.css';
 import { browser } from 'wxt/browser';
 import { createApp, h } from 'vue';
 import JsonViewer from '@/components/JsonViewer.vue';
-import { detect, sniffKind } from '@/detect/detect';
+import { sniffKind } from '@/detect/detect';
 import { readRawText } from '@/detect/readRawText';
 import { FORCE_VIEWER_FLAG, OPEN_OPTIONS, VIEWER_GUARD as GUARD, type OpenOptionsMessage } from '@/messages';
 import { hideOriginal } from '@/viewer/hideOriginal';
@@ -27,7 +27,8 @@ export default defineContentScript({
     const raw = readRawText(document) ?? (isForced() ? body.innerText : null);
     if (raw === null) return;
     root.setAttribute(GUARD, '');
-    const format = detect(document.contentType, raw)?.kind ?? sniffKind(raw);
+    // The detector already validated the body; this only tells the format apart, without parsing it all again.
+    const format = sniffKind(raw, document.contentType);
 
     let restore: (() => void) | undefined;
     let ui: Awaited<ReturnType<typeof createShadowRootUi>> | undefined;
