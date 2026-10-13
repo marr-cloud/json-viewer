@@ -88,6 +88,16 @@ test('opens clicked URLs in a new tab', async ({ context, server }) => {
   await popup.waitForURL('https://example.com/a');
 });
 
+test('opens root-relative paths against the page origin', async ({ context, server }) => {
+  const page = await context.newPage();
+  await page.goto(server.url('/api/'));
+  const [popup] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator(`${viewer} .cm-url`, { hasText: '/data.json' }).click(),
+  ]);
+  await popup.waitForURL(server.url('/data.json'));
+});
+
 test('does not open tabs when double-clicking a URL', async ({ context, server }) => {
   await context.route('https://example.com/**', (route) =>
     route.fulfill({ contentType: 'text/html', body: '<p>ok</p>' }),

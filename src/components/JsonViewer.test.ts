@@ -181,6 +181,14 @@ describe('JsonViewer', () => {
     expect(link?.download).toBe('users.json');
   });
 
+  it('links root-relative paths against the source URL', () => {
+    const host = mount({
+      raw: '{"breads": "/breads"}',
+      source: { url: 'https://api.test/v1/', loadedAt: new Date() },
+    });
+    expect(host.querySelector<HTMLElement>('.cm-url')?.dataset.url).toBe('https://api.test/breads');
+  });
+
   it('folds all, unfolds all and folds to a level', async () => {
     const host = mount({ raw: '{"a":{"b":{"c":[1]}}}' });
     const folds = () => foldedRanges(editorOf(host).state).size;

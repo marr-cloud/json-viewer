@@ -50,6 +50,9 @@ solos y se aplican en vivo a las pestañas abiertas.
 - **Formatos:** además de JSON, JSONP (`callback({...})`, se muestra el JSON de dentro) y NDJSON / JSON Lines (un
   valor por línea, se muestra como array). `text/plain` y JavaScript solo se abren si el cuerpo es JSON o JSONP
   válido. La barra inferior indica el formato.
+- **Enlaces:** las URLs `http(s)` son clicables, y también los strings que son una ruta desde la raíz
+  (`"/breads"`, `"/breads/:id"`), resueltos contra la página (`https://api.example.com/breads`). Las claves no se
+  enlazan, ni `//host` ni `"/"` sueltos; en el scratchpad no hay página contra la que resolverlos.
 - **Valores enriquecidos:** muestra de color junto a `#ff5500`, `rgb(…)` o `hsl(…)`; al pasar el ratón por una fecha
   Unix (segundos o milisegundos) o ISO 8601, su hora local y UTC; al pasarlo por la URL de una imagen, una miniatura.
   Por encima del umbral de **modo ligero** (20 MB por defecto) se desactivan y la barra inferior lo indica.

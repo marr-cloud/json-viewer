@@ -18,6 +18,8 @@ const props = defineProps<{
   error: ErrorLocation | null;
   /** Color swatches and date/image tooltips; replace the object to change them. */
   rich?: RichValues;
+  /** The page the document came from: root-relative paths link against it. */
+  pageUrl?: string;
 }>();
 const emit = defineEmits<{ path: [path: string] }>();
 
@@ -26,7 +28,13 @@ const config = new Compartment();
 let view: EditorView | undefined;
 
 function currentExtensions() {
-  return buildExtensions({ options: props.options, theme: props.theme, error: props.error, rich: props.rich });
+  return buildExtensions({
+    options: props.options,
+    theme: props.theme,
+    error: props.error,
+    rich: props.rich,
+    pageUrl: props.pageUrl,
+  });
 }
 
 function revealError(): void {
@@ -74,7 +82,7 @@ watch(
 
 // Reconfigure in place so scroll position, folds and selection survive option and theme changes.
 watch(
-  () => [props.options, props.theme, props.error, props.rich] as const,
+  () => [props.options, props.theme, props.error, props.rich, props.pageUrl] as const,
   () => view?.dispatch({ effects: config.reconfigure(currentExtensions()) }),
 );
 
