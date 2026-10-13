@@ -13,7 +13,13 @@ watch(hosts, (value) => {
   if (value.join('\n') !== parseHostList(text.value).hosts.join('\n')) text.value = value.join('\n');
 });
 
-/** Saves on change (blur), not per key; the text is rewritten in canonical form. */
+/** Saves as you type (useSettings debounces the writes), so closing the tab loses nothing. */
+function onInput(): void {
+  const list = parseHostList(text.value);
+  if (list.hosts.join('\n') !== hosts.value.join('\n')) hosts.value = list.hosts;
+}
+
+/** On change (blur) the text is rewritten in canonical form and problems are reported. */
 function onChange(): void {
   const list = parseHostList(text.value);
   invalid.value = list.invalid;
@@ -33,6 +39,7 @@ function onChange(): void {
         rows="5"
         spellcheck="false"
         placeholder="api.example.com&#10;*.internal.example.com"
+        @input="onInput"
         @change="onChange"
       />
       <small class="opt-hint">

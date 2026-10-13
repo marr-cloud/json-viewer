@@ -130,3 +130,10 @@ test('"View as JSON" on a page that already shows the viewer leaves it as it is'
   await page.waitForTimeout(500);
   await expect(page.locator(`${viewer} .cm-content`)).toContainText('"name": "x"');
 });
+
+test('the Sites section saves while typing, without leaving the field', async ({ context, extensionId }) => {
+  const options = await context.newPage();
+  await options.goto(`chrome-extension://${extensionId}/options.html`);
+  await options.getByLabel("Don't open the viewer on").fill('typed.example.com');
+  await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ excludedHosts: ['typed.example.com'] });
+});
