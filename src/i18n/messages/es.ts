@@ -200,6 +200,8 @@ export const es: Messages = {
   'menu.viewSelection': 'Ver la selección como JSON',
   'action.title': 'Abrir el bloc de JSON',
   'action.cantOpen': 'JSON Viewer no puede abrir esta página: {reason}',
+  'action.cantOpenSelection': 'JSON Viewer no puede abrir la selección: {reason}',
+  'action.notHtml': 'no es una página HTML (XML, SVG…)',
 
   'scratchpad.title': 'Bloc de JSON',
   'scratchpad.hint': 'Pega JSON, JSONP o NDJSON a la izquierda.',

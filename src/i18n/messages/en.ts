@@ -197,6 +197,8 @@ export const en = {
   'menu.viewSelection': 'View selection as JSON',
   'action.title': 'Open the JSON scratchpad',
   'action.cantOpen': "JSON Viewer can't open this page: {reason}",
+  'action.cantOpenSelection': "JSON Viewer can't open the selection: {reason}",
+  'action.notHtml': "it isn't an HTML page (XML, SVG…)",
 
   'scratchpad.title': 'JSON Scratchpad',
   'scratchpad.hint': 'Paste JSON, JSONP or NDJSON on the left.',

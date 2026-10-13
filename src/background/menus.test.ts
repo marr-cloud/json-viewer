@@ -94,6 +94,37 @@ describe('context menus', () => {
     );
   });
 
+  it('says when the page is not HTML', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    executeScript.mockResolvedValueOnce([{ result: 'no-body' }]);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
+      "JSON Viewer can't open this page: it isn't an HTML page (XML, SVG…)",
+    );
+  });
+
+  it('clears the mark once the viewer opens', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    executeScript.mockRejectedValueOnce(new Error('Cannot access a chrome:// URL'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('!');
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('');
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe('Open the JSON scratchpad');
+  });
+
+  it('names the selection when it cannot be opened', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    createTab.mockRejectedValueOnce(new Error('Tabs cannot be edited right now'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1]' }), tab);
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
+      "JSON Viewer can't open the selection: Tabs cannot be edited right now",
+    );
+  });
+
   it('ignores clicks without a tab', async () => {
     await onMenuClick(click(MENU_VIEW_PAGE), undefined);
     expect(executeScript).not.toHaveBeenCalled();
