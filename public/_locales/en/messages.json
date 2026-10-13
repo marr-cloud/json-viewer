@@ -1,0 +1,5 @@
+{
+  "extName": { "message": "JSON Viewer" },
+  "extDescription": { "message": "Fast, themeable JSON viewer with VS Code themes and Google Fonts." },
+  "actionTitle": { "message": "Open the JSON scratchpad" }
+}

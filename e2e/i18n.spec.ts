@@ -28,3 +28,32 @@ test('the viewer speaks the chosen language and follows a change live', async ({
   await expect(viewer.getByRole('button', { name: 'Fold all', exact: true })).toBeVisible();
   await expect(viewer.locator('.jv-status')).toContainText('lines');
 });
+
+test('the scratchpad speaks the chosen language', async ({ context, extensionId }) => {
+  await setStorage(context, 'sync', { settings: { locale: 'es' } });
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/scratchpad.html`);
+  await expect(page.getByRole('heading', { name: 'Bloc de JSON' })).toBeVisible();
+  await expect(page).toHaveTitle('Bloc de JSON');
+  await page.getByLabel('Entrada JSON').fill('{"a": 1}');
+  await expect(page.locator('.sp-output').getByRole('button', { name: 'Plegar todo', exact: true })).toBeVisible();
+});
+
+test('the manifest texts come from _locales', async ({ context }) => {
+  let [worker] = context.serviceWorkers();
+  if (!worker) worker = await context.waitForEvent('serviceworker');
+  type Chrome = { chrome: { i18n: { getMessage(key: string): string; getUILanguage(): string } } };
+  // chrome.i18n follows the browser's UI language (the machine's), not the page locale Playwright sets.
+  const { language, messages } = await worker.evaluate(() => {
+    const { i18n } = (globalThis as unknown as Chrome).chrome;
+    return {
+      language: i18n.getUILanguage(),
+      messages: ['extName', 'extDescription', 'actionTitle'].map((key) => i18n.getMessage(key)),
+    };
+  });
+  expect(messages).toEqual(
+    language.startsWith('es')
+      ? ['JSON Viewer', 'Visor de JSON rápido y personalizable, con temas de VS Code y Google Fonts.', 'Abrir el bloc de JSON']
+      : ['JSON Viewer', 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.', 'Open the JSON scratchpad'],
+  );
+});

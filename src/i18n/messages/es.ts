@@ -195,6 +195,18 @@ export const es: Messages = {
   'options.advanced.hint':
     'CSS propio para el visor. Selectores útiles: {selectors}. Variables: {variables}… Las variables de fuente ({fontVariables}…) vienen de la sección Fuentes; añade {important} para cambiarlas aquí.',
 
+  'menu.viewPage': 'Ver como JSON',
+  'menu.viewSelection': 'Ver la selección como JSON',
+  'action.title': 'Abrir el bloc de JSON',
+  'action.cantOpen': 'JSON Viewer no puede abrir esta página: {reason}',
+
+  'scratchpad.title': 'Bloc de JSON',
+  'scratchpad.hint': 'Pega JSON, JSONP o NDJSON a la izquierda.',
+  'scratchpad.clear': 'Borrar',
+  'scratchpad.input': 'Entrada JSON',
+  'scratchpad.empty': 'Aquí aparece el resultado formateado.',
+  'scratchpad.loadFailed': 'El bloc no pudo cargar la configuración. Recarga la página para volver a intentarlo.',
+
   'viewer.mode.code': 'Código',
   'viewer.mode.raw': 'Texto',
   'viewer.fold.group': 'Plegado',

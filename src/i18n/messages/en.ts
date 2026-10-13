@@ -192,6 +192,18 @@ export const en = {
   'options.advanced.hint':
     'Custom CSS for the viewer. Useful selectors: {selectors}. Variables: {variables}… Font variables ({fontVariables}…) come from the Fonts section; add {important} to override them here.',
 
+  'menu.viewPage': 'View as JSON',
+  'menu.viewSelection': 'View selection as JSON',
+  'action.title': 'Open the JSON scratchpad',
+  'action.cantOpen': "JSON Viewer can't open this page: {reason}",
+
+  'scratchpad.title': 'JSON Scratchpad',
+  'scratchpad.hint': 'Paste JSON, JSONP or NDJSON on the left.',
+  'scratchpad.clear': 'Clear',
+  'scratchpad.input': 'JSON input',
+  'scratchpad.empty': 'The formatted result appears here.',
+  'scratchpad.loadFailed': 'The scratchpad could not load its settings. Reload the page to try again.',
+
   'viewer.mode.code': 'Code',
   'viewer.mode.raw': 'Raw',
   'viewer.fold.group': 'Folding',

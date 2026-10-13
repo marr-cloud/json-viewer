@@ -18,11 +18,14 @@ export default defineConfig({
     },
   }),
   manifest: {
-    name: 'JSON Viewer',
-    description: 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.',
+    // Manifest texts come from public/_locales and follow the browser's language; the UI follows the
+    // Language setting instead (src/i18n), and the background relabels the toolbar tooltip at startup.
+    default_locale: 'en',
+    name: '__MSG_extName__',
+    description: '__MSG_extDescription__',
     permissions: ['storage', 'scripting', 'contextMenus'],
     // No popup: clicking the icon opens the scratchpad (background.ts).
-    action: { default_title: 'Open the JSON scratchpad' },
+    action: { default_title: '__MSG_actionTitle__' },
     homepage_url: 'https://github.com/marr-cloud/json-viewer',
   },
 });
