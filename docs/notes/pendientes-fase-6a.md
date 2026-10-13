@@ -21,6 +21,4 @@
 - El visor forzado en páginas HTML vive en un shadow root abierto junto a los scripts de la página.
 - Comprobar a mano "View as JSON" en una página HTML con CSP estricta (`style-src`).
 
-## Para la Fase 6b
-- Exportar / importar configuración y restablecer (§6.8).
-- i18n en/es (§6.9): incluye los textos nuevos de esta fase (menú contextual, Sites, scratchpad).
+La Fase 6b (exportar / importar e i18n) está hecha; sus pendientes, en `pendientes-fase-6b.md`.

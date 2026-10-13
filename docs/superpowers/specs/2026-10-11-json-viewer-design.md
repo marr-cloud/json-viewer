@@ -32,7 +32,7 @@ Uso personal primero (Edge y Chrome, cargada sin empaquetar), con estructura lis
 - **Vue 3** (`@wxt-dev/module-vue`) para visor, opciones y scratchpad.
 - **CodeMirror 6** (`@codemirror/lang-json`, fold, search, view, state).
 - `jsonpath-plus` (con `eval: 'safe'`: intérprete propio, sin `eval`/`Function`; ver §6.2) para el filtro.
-- `@wxt-dev/i18n` para en/es.
+- i18n en/es propio (`src/i18n`): diccionarios TypeScript tipados, porque `@wxt-dev/i18n` (como `browser.i18n`) no permite elegir el idioma desde los ajustes. Solo el manifest usa `_locales`.
 - `tm-themes` (devDependency) como fuente de los temas incluidos.
 - Vitest (`WxtVitest`, `fakeBrowser`) y Playwright.
 - Ícono: `vscode-icons:file-type-json` (ya presente en la raíz como `vscode-icons_file-type-light-json.svg`; se moverá a `assets/` y se generarán los PNG del manifest).
@@ -259,7 +259,7 @@ Navegación lateral: Apariencia (temas), Fuentes, Comportamiento, Estructura, Fu
 
 ### 6.9 Idiomas
 
-en y es con `@wxt-dev/i18n`; `locale: 'auto'` sigue el idioma del navegador.
+en y es con diccionarios propios (`src/i18n`); `locale: 'auto'` sigue el idioma del navegador y `en`/`es` lo fijan. El cambio se aplica en vivo. El nombre, la descripción y el título por defecto del manifest van en `public/_locales` y siguen al navegador (el background re-etiqueta el ícono y el menú contextual según el ajuste).
 
 ## 7. Manejo de errores
 
