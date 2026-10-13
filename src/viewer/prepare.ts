@@ -1,4 +1,4 @@
-import { isNdjson, type JsonKind } from '@/detect/detect';
+import type { JsonKind } from '@/detect/detect';
 import { formatJson } from '@/parse/format';
 import { parseDocument } from '@/parse/formats';
 import { stripBom, type ParseError } from '@/parse/parse';
@@ -12,8 +12,27 @@ export type PreparedDocument = (
 ) & { kind: JsonKind };
 
 /**
+ * JSON that fails but whose first line is a whole object or array, with more lines after it, can only be NDJSON
+ * (some APIs send it as application/json): JSON can't hold two values.
+ */
+function looksLikeNdjson(raw: string): boolean {
+  const text = stripBom(raw).trimStart();
+  const firstBreak = text.indexOf('\n');
+  // A single line (a big minified document) is never NDJSON: don't parse it again.
+  if (firstBreak === -1 || text.slice(firstBreak).trim() === '') return false;
+  const first = text.slice(0, firstBreak).trim();
+  if (first[0] !== '{' && first[0] !== '[') return false;
+  try {
+    JSON.parse(first);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Parses and formats the raw response. Never throws: failures carry the raw text.
- * JSON that doesn't parse but is valid NDJSON (some APIs send NDJSON as application/json) is shown as NDJSON.
+ * JSON that doesn't parse but looks like NDJSON is parsed and shown as NDJSON, errors included ("Line 3: …").
  */
 export function prepareDocument(
   raw: string,
@@ -22,7 +41,7 @@ export function prepareDocument(
 ): PreparedDocument {
   let shown = kind;
   let parsed = parseDocument(raw, kind);
-  if (!parsed.ok && kind === 'json' && isNdjson(raw)) {
+  if (!parsed.ok && kind === 'json' && looksLikeNdjson(raw)) {
     shown = 'ndjson';
     parsed = parseDocument(raw, 'ndjson');
   }

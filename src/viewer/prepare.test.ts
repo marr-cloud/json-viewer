@@ -116,6 +116,14 @@ describe('prepareDocument with other formats', () => {
       kind: 'jsonp',
       text: 'cb({"a":})',
     });
-    expect(prepareDocument('{"a":1}\n{oops}', defaultViewerOptions, 'json')).toMatchObject({ ok: false, kind: 'json' });
+    expect(prepareDocument('{\n  "a": 1,\n}\n', defaultViewerOptions, 'json')).toMatchObject({ ok: false, kind: 'json' });
+  });
+
+  it('reports a broken record of NDJSON sent as JSON by its line', () => {
+    // The first line is a whole value and more follow: it can only be NDJSON, so name the bad line.
+    const result = prepareDocument('{"a":1}\n{"a":2}\n{oops}\n', defaultViewerOptions, 'json');
+    expect(result).toMatchObject({ ok: false, kind: 'ndjson' });
+    expect(!result.ok && result.error.message).toMatch(/^Line 3: /);
+    expect(!result.ok && result.error.line).toBe(3);
   });
 });
