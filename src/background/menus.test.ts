@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Browser } from 'wxt/browser';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import { scratchpadInputItem } from '@/scratchpad/input';
+import { INPUT_PARAM, takeScratchpadInput } from '@/scratchpad/input';
 import { createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
 import { SCRATCHPAD_PAGE } from './scratchpad';
 import { VIEWER_SCRIPT } from './viewer';
@@ -61,17 +61,24 @@ describe('context menus', () => {
     expect(executeScript.mock.calls[1]![0]).toEqual({ target: { tabId: 7, frameIds: [4] }, files: [VIEWER_SCRIPT] });
   });
 
+  /** The text the opened scratchpad receives, through the id in its URL. */
+  const handedText = () => {
+    const url = new URL((createTab.mock.calls[0]![0] as { url: string }).url);
+    expect(url.href.split('?')[0]).toBe(fakeBrowser.runtime.getURL(SCRATCHPAD_PAGE));
+    return takeScratchpadInput(url.searchParams.get(INPUT_PARAM));
+  };
+
   it('opens the selection in a scratchpad next to the tab', async () => {
     executeScript.mockResolvedValue([{ result: '{"a":\n1}' }]);
     await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '{"a": 1}' }), tab);
-    expect(await scratchpadInputItem.getValue()).toBe('{"a":\n1}');
-    expect(createTab).toHaveBeenCalledWith({ url: fakeBrowser.runtime.getURL(SCRATCHPAD_PAGE), index: 3 });
+    expect(await handedText()).toBe('{"a":\n1}');
+    expect(createTab).toHaveBeenCalledWith(expect.objectContaining({ index: 3 }));
   });
 
   it('falls back to the menu selection text when the frame cannot be read', async () => {
     executeScript.mockRejectedValue(new Error('Cannot access contents of the page'));
     await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1, 2]' }), tab);
-    expect(await scratchpadInputItem.getValue()).toBe('[1, 2]');
+    expect(await handedText()).toBe('[1, 2]');
   });
 
   it('marks the toolbar icon when the viewer cannot run on the page', async () => {

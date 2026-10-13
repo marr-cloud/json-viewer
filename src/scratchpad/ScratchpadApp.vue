@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import { browser } from 'wxt/browser';
-import { takeScratchpadInput } from './input';
+import { INPUT_PARAM, takeScratchpadInput } from './input';
 import JsonViewer from '@/components/JsonViewer.vue';
 import ViewerShadowRoot from '@/components/ViewerShadowRoot.vue';
 import { sniffKind } from '@/detect/detect';
@@ -50,7 +50,9 @@ watchEffect(() => {
 });
 
 onMounted(async () => {
-  const handed = await takeScratchpadInput();
+  const handed = await takeScratchpadInput(new URLSearchParams(location.search).get(INPUT_PARAM));
+  // The text was taken; a reload or a copied URL should open an empty scratchpad.
+  history.replaceState(null, '', location.pathname);
   if (handed !== '') {
     input.value = handed;
     show(handed);
