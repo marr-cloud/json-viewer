@@ -24,6 +24,7 @@ describe('createViewerSession', () => {
   let session: ViewerSession | undefined;
   beforeEach(() => fakeBrowser.reset());
   afterEach(() => {
+    vi.restoreAllMocks();
     session?.stop();
     session = undefined;
     setLocale('en');
@@ -67,6 +68,17 @@ describe('createViewerSession', () => {
     expect(getLocale()).toBe('es');
     await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
     await vi.waitFor(() => expect(getLocale()).toBe('en'));
+  });
+
+  it('stops without throwing when the extension context is gone (extension reloaded)', async () => {
+    const { session, media } = await open();
+    // What the browser does to a content script whose extension was reloaded or disabled.
+    vi.spyOn(fakeBrowser.storage.onChanged, 'removeListener').mockImplementation(() => {
+      throw new Error('Extension context invalidated.');
+    });
+    vi.spyOn(console, 'debug').mockImplementation(() => undefined);
+    expect(() => session.stop()).not.toThrow();
+    expect(media.listeners.size).toBe(0);
   });
 
   it('stops listening when stopped', async () => {

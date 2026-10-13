@@ -85,7 +85,15 @@ export async function createViewerSession(
       state.override = toggledKind(state.settings.themeMode, state.prefersDark, state.override);
     },
     stop() {
-      for (const stop of stops) stop();
+      for (const stop of stops) {
+        try {
+          stop();
+        } catch (error) {
+          // Once the extension is reloaded or disabled its APIs throw ("Extension context invalidated"); those
+          // listeners died with the context anyway. Keep going, so the page-side listeners are removed too.
+          console.debug('[json-viewer] cleanup skipped', error);
+        }
+      }
     },
   };
 }

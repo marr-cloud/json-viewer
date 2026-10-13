@@ -22,3 +22,15 @@ export function readRawText(doc: Document): string | null {
   }
   return pre ? (pre.textContent ?? '') : null;
 }
+
+const DESCRIBED_CHILDREN = 10;
+
+/** The body's children as "pre, div.json-formatter-container": what a rejected page held, for the console. */
+export function describeBody(doc: Document): string {
+  const children = Array.from(doc.body?.children ?? []);
+  if (children.length === 0) return '(empty body)';
+  const names = children
+    .slice(0, DESCRIBED_CHILDREN)
+    .map((el) => [el.tagName.toLowerCase(), ...Array.from(el.classList)].join('.'));
+  return children.length > DESCRIBED_CHILDREN ? `${names.join(', ')}, … (${children.length} elements)` : names.join(', ');
+}

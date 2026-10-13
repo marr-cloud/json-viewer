@@ -1,11 +1,24 @@
 // @vitest-environment happy-dom
 import { describe, expect, it } from 'vitest';
-import { readRawText } from './readRawText';
+import { describeBody, readRawText } from './readRawText';
 
 function docWith(bodyHtml: string): Document {
   document.body.innerHTML = bodyHtml;
   return document;
 }
+
+describe('describeBody', () => {
+  it('lists the body children with their classes, for diagnostics', () => {
+    expect(describeBody(docWith('<pre>a</pre><div class="json-formatter-container x"></div><p></p>'))).toBe(
+      'pre, div.json-formatter-container.x, p',
+    );
+    expect(describeBody(docWith(''))).toBe('(empty body)');
+  });
+
+  it('keeps a long list short', () => {
+    expect(describeBody(docWith('<p></p>'.repeat(30)))).toBe(`${Array(10).fill('p').join(', ')}, … (30 elements)`);
+  });
+});
 
 describe('readRawText', () => {
   it('reads a lone <pre>', () => {
