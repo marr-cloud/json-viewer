@@ -93,6 +93,13 @@ test('the Features section switches features and saves them', async ({ context, 
 test('the options preview shows a date tooltip', async ({ context, extensionId }) => {
   const options = await context.newPage();
   await options.goto(`chrome-extension://${extensionId}/options.html`);
-  await options.locator('.opt-preview .cm-line span', { hasText: '1728691200' }).hover();
-  await expect(options.locator('.opt-preview .cm-jv-date')).toContainText('2024-10-12 00:00:00 UTC');
+  // The sections render once the settings load; the preview is reconfigured then, which drops a pending hover.
+  await expect(options.locator('#sites')).toBeVisible();
+  const value = options.locator('.opt-preview .cm-line span', { hasText: '1728691200' });
+  const tooltip = options.locator('.opt-preview .cm-jv-date');
+  await expect(async () => {
+    await options.mouse.move(0, 0);
+    await value.hover();
+    await expect(tooltip).toContainText('2024-10-12 00:00:00 UTC', { timeout: 1500 });
+  }).toPass({ timeout: 10_000 });
 });
