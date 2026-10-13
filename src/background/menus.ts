@@ -32,6 +32,20 @@ export async function labelExtension(locale: Locale): Promise<void> {
   }
 }
 
+/**
+ * labelExtension for a stream of settings changes: it only does the work (three browser calls) when the language
+ * differs from the last one it applied.
+ */
+export function createLabeler(): (locale: Locale) => Promise<void> {
+  let last: Locale | null = null;
+  return async (locale) => {
+    if (locale === last) return;
+    await labelExtension(locale);
+    // Only once applied: a failure is retried on the next settings change.
+    last = locale;
+  };
+}
+
 /** The selection with its line breaks (info.selectionText may lose them), or the fallback. */
 async function selectedText({ tabId, frameId }: FrameTarget, fallback: string): Promise<string> {
   try {

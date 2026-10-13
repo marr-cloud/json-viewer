@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Browser } from 'wxt/browser';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { INPUT_PARAM, takeScratchpadInput } from '@/scratchpad/input';
-import { createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
+import { createLabeler, createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
 import { SCRATCHPAD_PAGE } from './scratchpad';
 import { VIEWER_SCRIPT } from './viewer';
 
@@ -47,6 +47,16 @@ describe('context menus', () => {
       [MENU_VIEW_SELECTION, { title: 'Ver la selección como JSON' }],
     ]);
     expect(await fakeBrowser.action.getTitle({})).toBe('Abrir el bloc de JSON');
+  });
+
+  it('relabels only when the language actually changes', async () => {
+    const update = vi.spyOn(fakeBrowser.contextMenus, 'update').mockResolvedValue(undefined);
+    const label = createLabeler();
+    await label('es');
+    await label('es');
+    expect(update).toHaveBeenCalledTimes(2);
+    await label('en');
+    expect(update).toHaveBeenCalledTimes(4);
   });
 
   it('still labels the toolbar icon when the menus do not exist yet', async () => {
