@@ -71,12 +71,15 @@ test('the scratchpad formats pasted text', async ({ context, extensionId }) => {
 });
 
 test('the scratchpad opens with handed-over text', async ({ context, extensionId }) => {
-  await setStorage(context, 'session', { scratchpadInput: '[1, 2, 3]' });
+  await setStorage(context, 'session', { 'scratchpadInput:abc': '[1, 2, 3]', 'scratchpadInput:other': '"not mine"' });
   const page = await context.newPage();
-  await page.goto(`chrome-extension://${extensionId}/scratchpad.html`);
+  await page.goto(`chrome-extension://${extensionId}/scratchpad.html?input=abc`);
   await expect(page.getByLabel('JSON input')).toHaveValue('[1, 2, 3]');
   await expect(page.locator('.sp-output .cm-content')).toContainText('3');
-  await expect.poll(() => getStorage(context, 'session', 'scratchpadInput')).toBeUndefined();
+  await expect.poll(() => getStorage(context, 'session', 'scratchpadInput:abc')).toBeUndefined();
+  // Another tab's hand-off stays, and a reload of this one starts empty.
+  expect(await getStorage(context, 'session', 'scratchpadInput:other')).toBe('"not mine"');
+  expect(page.url()).toBe(`chrome-extension://${extensionId}/scratchpad.html`);
 });
 
 /** What "View as JSON" does (src/background/viewer.ts injectViewer with force), run from the service worker. */

@@ -19,9 +19,10 @@ const draft = ref<Theme>({
 });
 
 const jsonText = ref('');
-const jsonErrors = ref<string[]>([]);
+// Functions, so the messages are worded again when the language changes.
+const jsonErrors = ref<(() => string)[]>([]);
 const saveError = ref('');
-const colorError = ref('');
+const colorError = ref<ThemeColorKey | null>(null);
 let editingJson = false;
 
 const resolved = computed(() => resolveColors(draft.value));
@@ -51,7 +52,7 @@ function setColor(key: ThemeColorKey, input: HTMLInputElement): void {
   const trimmed = input.value.trim();
   if (trimmed === '' && key !== 'background' && key !== 'foreground') {
     // Clearing an optional color makes it derived again.
-    colorError.value = '';
+    colorError.value = null;
     delete (draft.value.colors as Partial<ThemeColors>)[key];
     return;
   }
@@ -59,10 +60,10 @@ function setColor(key: ThemeColorKey, input: HTMLInputElement): void {
   if (hex === null) {
     // Vue won't repatch an unchanged :value, so restore the field by hand.
     input.value = draft.value.colors[key] ?? '';
-    colorError.value = t('options.editor.invalidColor', { key });
+    colorError.value = key;
     return;
   }
-  colorError.value = '';
+  colorError.value = null;
   draft.value.colors[key] = hex;
 }
 
@@ -71,12 +72,13 @@ function onJsonInput(): void {
   try {
     parsed = JSON.parse(jsonText.value);
   } catch (error) {
-    jsonErrors.value = [t('options.editor.invalidJson', { reason: error instanceof Error ? error.message : String(error) })];
+    const reason = error instanceof Error ? error.message : String(error);
+    jsonErrors.value = [() => t('options.editor.invalidJson', { reason })];
     return;
   }
   const result = parseCompactTheme({ ...(parsed as object), id: draft.value.id, source: 'custom' });
   if (!result.ok) {
-    jsonErrors.value = result.errors;
+    jsonErrors.value = result.errors.map((message) => () => message);
     return;
   }
   jsonErrors.value = [];
@@ -140,9 +142,9 @@ async function save(): Promise<void> {
       <textarea v-model="jsonText" rows="12" spellcheck="false" @input="onJsonInput" />
     </label>
     <ul v-if="jsonErrors.length" class="opt-errors" role="alert">
-      <li v-for="error in jsonErrors" :key="error">{{ error }}</li>
+      <li v-for="(error, index) in jsonErrors" :key="index">{{ error() }}</li>
     </ul>
-    <p v-if="colorError" class="opt-errors" role="alert">{{ colorError }}</p>
+    <p v-if="colorError" class="opt-errors" role="alert">{{ t('options.editor.invalidColor', { key: colorError }) }}</p>
     <p v-if="saveError" class="opt-errors" role="alert">{{ saveError }}</p>
     <div class="opt-row">
       <button type="button" :disabled="!canSave" @click="save">{{ t('options.editor.save') }}</button>

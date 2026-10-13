@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Browser } from 'wxt/browser';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import { scratchpadInputItem } from '@/scratchpad/input';
-import { createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
+import { INPUT_PARAM, takeScratchpadInput } from '@/scratchpad/input';
+import { createLabeler, createMenus, labelExtension, MENU_VIEW_PAGE, MENU_VIEW_SELECTION, onMenuClick } from './menus';
 import { SCRATCHPAD_PAGE } from './scratchpad';
 import { VIEWER_SCRIPT } from './viewer';
 
@@ -49,6 +49,16 @@ describe('context menus', () => {
     expect(await fakeBrowser.action.getTitle({})).toBe('Abrir el bloc de JSON');
   });
 
+  it('relabels only when the language actually changes', async () => {
+    const update = vi.spyOn(fakeBrowser.contextMenus, 'update').mockResolvedValue(undefined);
+    const label = createLabeler();
+    await label('es');
+    await label('es');
+    expect(update).toHaveBeenCalledTimes(2);
+    await label('en');
+    expect(update).toHaveBeenCalledTimes(4);
+  });
+
   it('still labels the toolbar icon when the menus do not exist yet', async () => {
     vi.spyOn(fakeBrowser.contextMenus, 'update').mockRejectedValue(new Error('Cannot find menu item'));
     await labelExtension('en');
@@ -61,17 +71,24 @@ describe('context menus', () => {
     expect(executeScript.mock.calls[1]![0]).toEqual({ target: { tabId: 7, frameIds: [4] }, files: [VIEWER_SCRIPT] });
   });
 
+  /** The text the opened scratchpad receives, through the id in its URL. */
+  const handedText = () => {
+    const url = new URL((createTab.mock.calls[0]![0] as { url: string }).url);
+    expect(url.href.split('?')[0]).toBe(fakeBrowser.runtime.getURL(SCRATCHPAD_PAGE));
+    return takeScratchpadInput(url.searchParams.get(INPUT_PARAM));
+  };
+
   it('opens the selection in a scratchpad next to the tab', async () => {
     executeScript.mockResolvedValue([{ result: '{"a":\n1}' }]);
     await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '{"a": 1}' }), tab);
-    expect(await scratchpadInputItem.getValue()).toBe('{"a":\n1}');
-    expect(createTab).toHaveBeenCalledWith({ url: fakeBrowser.runtime.getURL(SCRATCHPAD_PAGE), index: 3 });
+    expect(await handedText()).toBe('{"a":\n1}');
+    expect(createTab).toHaveBeenCalledWith(expect.objectContaining({ index: 3 }));
   });
 
   it('falls back to the menu selection text when the frame cannot be read', async () => {
     executeScript.mockRejectedValue(new Error('Cannot access contents of the page'));
     await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1, 2]' }), tab);
-    expect(await scratchpadInputItem.getValue()).toBe('[1, 2]');
+    expect(await handedText()).toBe('[1, 2]');
   });
 
   it('marks the toolbar icon when the viewer cannot run on the page', async () => {
@@ -91,6 +108,37 @@ describe('context menus', () => {
     await onMenuClick(click(MENU_VIEW_PAGE), tab);
     expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
       'JSON Viewer no puede abrir esta página: Cannot access a chrome:// URL',
+    );
+  });
+
+  it('says when the page is not HTML', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    executeScript.mockResolvedValueOnce([{ result: 'no-body' }]);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
+      "JSON Viewer can't open this page: it isn't an HTML page (XML, SVG…)",
+    );
+  });
+
+  it('clears the mark once the viewer opens', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    executeScript.mockRejectedValueOnce(new Error('Cannot access a chrome:// URL'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('!');
+    await onMenuClick(click(MENU_VIEW_PAGE), tab);
+    expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('');
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe('Open the JSON scratchpad');
+  });
+
+  it('names the selection when it cannot be opened', async () => {
+    await fakeBrowser.storage.sync.set({ settings: { locale: 'en' } });
+    createTab.mockRejectedValueOnce(new Error('Tabs cannot be edited right now'));
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1]' }), tab);
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
+      "JSON Viewer can't open the selection: Tabs cannot be edited right now",
     );
   });
 

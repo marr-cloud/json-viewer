@@ -1,19 +1,33 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
-import { scratchpadInputItem, takeScratchpadInput } from './input';
+import { handOffScratchpadInput, takeScratchpadInput } from './input';
 
-describe('takeScratchpadInput', () => {
+describe('scratchpad hand-off', () => {
   beforeEach(() => fakeBrowser.reset());
 
-  it('returns the handed-over text once', async () => {
-    await scratchpadInputItem.setValue('{"a":1}');
-    expect(await takeScratchpadInput()).toBe('{"a":1}');
-    expect(await takeScratchpadInput()).toBe('');
+  it('gives the text to the scratchpad opened with its id, once', async () => {
+    const id = await handOffScratchpadInput('{"a":1}');
+    expect(await takeScratchpadInput(id)).toBe('{"a":1}');
+    expect(await takeScratchpadInput(id)).toBe('');
+  });
+
+  it('keeps two hand-offs apart', async () => {
+    const first = await handOffScratchpadInput('[1]');
+    const second = await handOffScratchpadInput('[2]');
+    expect(first).not.toBe(second);
+    expect(await takeScratchpadInput(second)).toBe('[2]');
+    expect(await takeScratchpadInput(first)).toBe('[1]');
+  });
+
+  it('gives nothing without an id or for an unknown one', async () => {
+    await handOffScratchpadInput('[1]');
+    expect(await takeScratchpadInput(null)).toBe('');
+    expect(await takeScratchpadInput('nope')).toBe('');
   });
 
   it('keeps the text in session storage only', async () => {
-    await scratchpadInputItem.setValue('[1]');
-    expect(await fakeBrowser.storage.session.get('scratchpadInput')).toEqual({ scratchpadInput: '[1]' });
+    const id = await handOffScratchpadInput('[1]');
+    expect(await fakeBrowser.storage.session.get(null)).toEqual({ [`scratchpadInput:${id}`]: '[1]' });
     expect(await fakeBrowser.storage.local.get(null)).toEqual({});
   });
 });

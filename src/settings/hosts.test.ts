@@ -23,6 +23,13 @@ describe('normalizeHostPattern', () => {
     expect(normalizeHostPattern('localhost:3000')).toBe('localhost');
   });
 
+  it('turns international domain names into their punycode form, as URLs report them', () => {
+    expect(normalizeHostPattern('MÜNCHEN.de')).toBe('xn--mnchen-3ya.de');
+    expect(normalizeHostPattern('https://bücher.example/x')).toBe('xn--bcher-kva.example');
+    expect(normalizeHostPattern('*.bücher.example')).toBe('*.xn--bcher-kva.example');
+    expect(normalizeHostPattern('bü*.example')).toBeNull();
+  });
+
   it('rejects anything else', () => {
     for (const value of ['', '   ', 'a b.com', 'exa_mple.com', '.example.com', 'example..com', 'user@example.com', '[::1]']) {
       expect(normalizeHostPattern(value), value).toBeNull();
@@ -77,6 +84,15 @@ describe('hostMatches', () => {
     expect(hostMatches('10.0.3.4', '10.0.*')).toBe(true);
     expect(hostMatches('api-staging.example.com', 'api-*.example.com')).toBe(true);
     expect(hostMatches('api.example.com', 'api-*.example.com')).toBe(false);
+    expect(hostMatches('ab', 'a*b*')).toBe(true);
+    expect(hostMatches('a.b.c', '*.*')).toBe(true);
+    expect(hostMatches('abc', '*x*')).toBe(false);
+  });
+
+  it('stays fast with many wildcards (no backtracking)', () => {
+    const start = performance.now();
+    for (let i = 0; i < 20; i++) expect(hostMatches('a'.repeat(250), `${'a*'.repeat(49)}b`)).toBe(false);
+    expect(performance.now() - start).toBeLessThan(200);
   });
 });
 

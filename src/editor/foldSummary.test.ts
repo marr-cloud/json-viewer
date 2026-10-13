@@ -10,7 +10,8 @@ import { foldSummaries, formatFoldSummary, summarizeFold } from './foldSummary';
 // Offsets: "{" 0, "[" 9, inner "{" 16, outer "c" value "{" 37
 const doc = '{\n  "a": [1, 2, {"b": null}],\n  "c": {}\n}';
 const state = EditorState.create({ doc, extensions: [json()] });
-ensureSyntaxTree(state, state.doc.length);
+// A generous budget: the default 50 ms can run out on a busy machine, leaving no tree to summarize.
+ensureSyntaxTree(state, state.doc.length, 5000);
 
 describe('summarizeFold', () => {
   it('counts array items', () => {
@@ -56,7 +57,7 @@ describe('foldSummaries in a mounted view', () => {
       }),
       parent: document.body,
     });
-    ensureSyntaxTree(view.state, view.state.doc.length);
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
     return view;
   };
   afterEach(() => {

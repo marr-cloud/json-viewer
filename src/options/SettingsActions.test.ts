@@ -121,7 +121,7 @@ describe('SettingsActions', () => {
       }),
     );
     expect(confirm).toHaveBeenCalledWith(
-      'Replace your settings with the ones in “backup.json”? Custom themes in the file are added to yours.',
+      'Replace your settings and custom CSS with the ones in “backup.json”? Its custom themes are added, replacing yours that have the same id.',
     );
     expect(model.settings.value.viewer.tabSize).toBe(3);
     expect(model.customCss.value).toBe('b{}');
@@ -132,7 +132,9 @@ describe('SettingsActions', () => {
       '1 custom theme added or updated.',
       '1 theme in the file was left out.',
     ]);
-    expect(texts(host, 'alert')).toEqual(['1 theme could not be saved: storage is full.']);
+    expect(texts(host, 'alert')).toEqual([
+      '1 theme could not be saved: sync storage is full or busy. Try again in a minute, or remove other custom themes.',
+    ]);
   });
 
   it('stops and says so when the settings cannot be saved', async () => {

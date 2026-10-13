@@ -2,7 +2,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fakeBrowser } from 'wxt/testing/fake-browser';
 import { FORCE_VIEWER_FLAG, VIEWER_GUARD } from '@/messages';
-import { injectViewer, onJsonDetected, VIEWER_SCRIPT } from './viewer';
+import { injectViewer, NotHtmlPageError, onJsonDetected, VIEWER_SCRIPT } from './viewer';
 
 describe('background viewer injection', () => {
   let executeScript: ReturnType<typeof vi.fn>;
@@ -27,11 +27,11 @@ describe('background viewer injection', () => {
     expect(flag).toMatchObject({ target: { tabId: 7, frameIds: [3] }, args: [FORCE_VIEWER_FLAG, VIEWER_GUARD] });
     // In the browser the function runs in the page's isolated world; run it here to see what it does.
     const scope = globalThis as unknown as Record<string, unknown>;
-    const setFlag = flag.func as (name: string, guard: string) => boolean;
-    expect(setFlag(FORCE_VIEWER_FLAG, VIEWER_GUARD)).toBe(false);
+    const setFlag = flag.func as (name: string, guard: string) => string;
+    expect(setFlag(FORCE_VIEWER_FLAG, VIEWER_GUARD)).toBe('ready');
     expect(scope[FORCE_VIEWER_FLAG]).toBe(true);
     document.documentElement.setAttribute(VIEWER_GUARD, '');
-    expect(setFlag(FORCE_VIEWER_FLAG, VIEWER_GUARD)).toBe(true);
+    expect(setFlag(FORCE_VIEWER_FLAG, VIEWER_GUARD)).toBe('shown');
     document.documentElement.removeAttribute(VIEWER_GUARD);
     delete scope[FORCE_VIEWER_FLAG];
     expect(viewer).toEqual({ target: { tabId: 7, frameIds: [3] }, files: [VIEWER_SCRIPT] });
@@ -39,8 +39,14 @@ describe('background viewer injection', () => {
 
   it('does not inject a second viewer into a page that already shows one', async () => {
     // A second injection would invalidate the first viewer (WXT's content-script-started event) and blank the page.
-    executeScript.mockResolvedValueOnce([{ frameId: 3, result: true }]);
+    executeScript.mockResolvedValueOnce([{ frameId: 3, result: 'shown' }]);
     await injectViewer(target, true);
+    expect(executeScript).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a page without a body (XML, SVG) instead of failing silently', async () => {
+    executeScript.mockResolvedValueOnce([{ frameId: 3, result: 'no-body' }]);
+    await expect(injectViewer(target, true)).rejects.toBeInstanceOf(NotHtmlPageError);
     expect(executeScript).toHaveBeenCalledTimes(1);
   });
 

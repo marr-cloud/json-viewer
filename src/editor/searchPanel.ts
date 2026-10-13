@@ -9,7 +9,7 @@ import {
 } from '@codemirror/search';
 import type { EditorState } from '@codemirror/state';
 import { runScopeHandlers, type EditorView, type Panel, type ViewUpdate } from '@codemirror/view';
-import { onLocaleChange, t, tc, type MessageKey } from '@/i18n';
+import { n, onLocaleChange, t, tc, type MessageKey } from '@/i18n';
 
 /** Counting stops here; the panel then shows "1000+". */
 export const MAX_COUNTED_MATCHES = 1000;
@@ -43,8 +43,8 @@ export function countMatches(state: EditorState, query: SearchQuery): MatchCount
 export function describeCount(count: MatchCount | null): string {
   if (count === null) return '';
   if (count.total === 0) return t('search.none');
-  const total = count.more ? `${count.total}+` : String(count.total);
-  if (count.current > 0) return t('search.position', { current: String(count.current), total });
+  const total = count.more ? `${n(count.total)}+` : n(count.total);
+  if (count.current > 0) return t('search.position', { current: count.current, total });
   return count.more ? t('search.manyMatches', { total }) : tc('viewer.status.matches', count.total);
 }
 

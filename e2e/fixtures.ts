@@ -22,6 +22,8 @@ export const test = base.extend<
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       colorScheme: 'dark',
+      // Pinned: with the Language setting on auto, pages follow it (the default UI language is English).
+      locale: 'en-US',
       args: [
         `--disable-extensions-except=${extensionPath}`,
         `--load-extension=${extensionPath}`,

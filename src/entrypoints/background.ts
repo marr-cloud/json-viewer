@@ -1,5 +1,5 @@
 import { backgroundLocale } from '@/background/locale';
-import { createMenus, labelExtension, onMenuClick } from '@/background/menus';
+import { createLabeler, createMenus, onMenuClick } from '@/background/menus';
 import { openScratchpad } from '@/background/scratchpad';
 import { onJsonDetected } from '@/background/viewer';
 import { resolveLocale } from '@/i18n/translate';
@@ -13,8 +13,9 @@ export default defineBackground(() => {
       .catch((error: unknown) => console.warn('[json-viewer] context menus failed', error));
   });
   // The menus and the toolbar tooltip follow the language setting, live.
-  const relabel = (locale: Parameters<typeof labelExtension>[0]) =>
-    labelExtension(locale).catch((error: unknown) => console.warn('[json-viewer] relabeling failed', error));
+  const label = createLabeler();
+  const relabel = (locale: Parameters<typeof label>[0]) =>
+    label(locale).catch((error: unknown) => console.warn('[json-viewer] relabeling failed', error));
   void backgroundLocale().then(relabel);
   watchSettings((settings) => void relabel(resolveLocale(settings.locale, navigator.languages)));
   browser.contextMenus.onClicked.addListener((info, tab) => void onMenuClick(info, tab));

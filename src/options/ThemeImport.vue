@@ -11,7 +11,8 @@ const emit = defineEmits<{ imported: [theme: Theme] }>();
 const text = ref('');
 const errors = ref<string[]>([]);
 const warnings = ref<string[]>([]);
-const message = ref('');
+/** The theme just imported; the message about it is worded in the current language. */
+const imported = ref<Theme | null>(null);
 const importing = ref(false);
 // Set once the converter has loaded on demand (it and jsonc-parser are only needed when importing).
 let ImportError: typeof import('@/themes/fromVSCode').ThemeImportError | undefined;
@@ -19,7 +20,7 @@ let ImportError: typeof import('@/themes/fromVSCode').ThemeImportError | undefin
 async function importTheme(input: string | File): Promise<void> {
   errors.value = [];
   warnings.value = [];
-  message.value = '';
+  imported.value = null;
   importing.value = true;
   try {
     const source = typeof input === 'string' ? input : await input.text();
@@ -29,10 +30,7 @@ async function importTheme(input: string | File): Promise<void> {
     const theme: Theme = { ...result.theme, id: uniqueThemeId(result.theme.name, props.takenIds) };
     await saveCustomTheme(theme);
     warnings.value = result.warnings;
-    message.value = t('options.import.done', {
-      name: theme.name,
-      type: t(theme.type === 'dark' ? 'options.theme.typeDark' : 'options.theme.typeLight'),
-    });
+    imported.value = theme;
     text.value = '';
     emit('imported', theme);
   } catch (error) {
@@ -71,7 +69,14 @@ async function onFile(event: Event): Promise<void> {
         <input type="file" accept=".json,.jsonc,application/json" @change="onFile" />
       </label>
     </div>
-    <p v-if="message" class="opt-success" role="status">{{ message }}</p>
+    <p v-if="imported" class="opt-success" role="status">
+      {{
+        t('options.import.done', {
+          name: imported.name,
+          type: t(imported.type === 'dark' ? 'options.theme.typeDark' : 'options.theme.typeLight'),
+        })
+      }}
+    </p>
     <ul v-if="warnings.length" class="opt-warnings">
       <li v-for="warning in warnings" :key="warning">{{ warning }}</li>
     </ul>

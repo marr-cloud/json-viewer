@@ -22,14 +22,17 @@ export const en = {
 
   'options.backup.export': 'Export settings',
   'options.backup.import': 'Import settings',
-  'options.backup.confirm': 'Replace your settings with the ones in “{file}”? Custom themes in the file are added to yours.',
+  'options.backup.confirm':
+    'Replace your settings and custom CSS with the ones in “{file}”? Its custom themes are added, replacing yours that have the same id.',
   'options.backup.imported': 'Settings imported from “{file}”.',
   'options.backup.themesSaved.one': '{count} custom theme added or updated.',
   'options.backup.themesSaved.other': '{count} custom themes added or updated.',
   'options.backup.themesSkipped.one': '{count} theme in the file was left out.',
   'options.backup.themesSkipped.other': '{count} themes in the file were left out.',
-  'options.backup.themesFailed.one': '{count} theme could not be saved: storage is full.',
-  'options.backup.themesFailed.other': '{count} themes could not be saved: storage is full.',
+  'options.backup.themesFailed.one':
+    '{count} theme could not be saved: sync storage is full or busy. Try again in a minute, or remove other custom themes.',
+  'options.backup.themesFailed.other':
+    '{count} themes could not be saved: sync storage is full or busy. Try again in a minute, or remove other custom themes.',
   'options.backup.error.tooLarge': 'That file is too big to be a JSON Viewer settings file.',
   'options.backup.error.notJson': 'That file is not valid JSON.',
   'options.backup.error.notABackup': 'That file is not a JSON Viewer settings file.',
@@ -197,6 +200,8 @@ export const en = {
   'menu.viewSelection': 'View selection as JSON',
   'action.title': 'Open the JSON scratchpad',
   'action.cantOpen': "JSON Viewer can't open this page: {reason}",
+  'action.cantOpenSelection': "JSON Viewer can't open the selection: {reason}",
+  'action.notHtml': "it isn't an HTML page (XML, SVG…)",
 
   'scratchpad.title': 'JSON Scratchpad',
   'scratchpad.hint': 'Paste JSON, JSONP or NDJSON on the left.',

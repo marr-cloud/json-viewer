@@ -1,14 +1,26 @@
 import { storage } from '#imports';
 
-/**
- * Text handed to the next scratchpad that opens ("View selection as JSON"). Session storage: it never reaches
- * disk or sync, and only extension pages and the background can read it.
- */
-export const scratchpadInputItem = storage.defineItem<string>('session:scratchpadInput', { fallback: '' });
+/** The scratchpad URL parameter naming the text handed to it. */
+export const INPUT_PARAM = 'input';
 
-/** Reads and clears the handed-over text, so a reload or a second scratchpad starts empty. */
-export async function takeScratchpadInput(): Promise<string> {
-  const text = await scratchpadInputItem.getValue();
-  if (text !== '') await scratchpadInputItem.removeValue();
+// Session storage: the text never reaches disk or sync, and only extension pages and the background can read it.
+const inputKey = (id: string) => `session:scratchpadInput:${id}` as const;
+
+/**
+ * Keeps text for one scratchpad ("View selection as JSON") and returns the id to open it with. Each hand-off has
+ * its own id, so two quick ones can't swap texts between tabs.
+ */
+export async function handOffScratchpadInput(text: string): Promise<string> {
+  const id = crypto.randomUUID();
+  await storage.setItem(inputKey(id), text);
+  return id;
+}
+
+/** Reads and clears the text handed to this scratchpad, so a reload starts empty. */
+export async function takeScratchpadInput(id: string | null): Promise<string> {
+  if (id === null || id === '') return '';
+  const text = await storage.getItem<string>(inputKey(id));
+  if (text === null) return '';
+  await storage.removeItem(inputKey(id));
   return text;
 }
