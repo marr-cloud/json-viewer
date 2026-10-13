@@ -9,6 +9,9 @@ test('the options page switches language live and saves the choice', async ({ co
   await expect(options.getByRole('link', { name: 'Apariencia' })).toBeVisible();
   await expect(options.locator('html')).toHaveAttribute('lang', 'es');
   await expect(options).toHaveTitle('Configuración de JSON Viewer');
+  await expect(options.getByRole('heading', { name: 'Comportamiento' })).toBeVisible();
+  await expect(options.getByRole('switch', { name: 'Ordenar las claves de los objetos' })).toBeVisible();
+  await expect(options.getByRole('button', { name: 'Exportar configuración' })).toBeVisible();
   await expect.poll(() => getStorage(context, 'sync', 'settings')).toMatchObject({ locale: 'es' });
   await options.getByLabel('Idioma').selectOption('auto');
   await expect(options.getByRole('link', { name: 'Appearance' })).toBeVisible();

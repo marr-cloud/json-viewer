@@ -1,3 +1,4 @@
+import type { MessageKey } from '@/i18n/translate';
 import { validateFields, type FieldValidator, type ObjectValidators } from './fields';
 
 export const SHORTCUT_ACTIONS = ['search', 'filter', 'toggleRaw', 'foldAll', 'unfoldAll', 'copyPath'] as const;
@@ -15,13 +16,14 @@ export const defaultShortcuts: Shortcuts = {
   copyPath: 'Ctrl+Shift+C',
 };
 
-export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
-  search: 'Search',
-  filter: 'JSONPath filter',
-  toggleRaw: 'Toggle Raw',
-  foldAll: 'Fold all',
-  unfoldAll: 'Unfold all',
-  copyPath: 'Copy cursor path',
+/** Message keys (src/i18n) naming each action; this module stays free of the UI's translation runtime. */
+export const SHORTCUT_LABEL_KEYS: Record<ShortcutAction, MessageKey> = {
+  search: 'options.shortcuts.action.search',
+  filter: 'options.shortcuts.action.filter',
+  toggleRaw: 'options.shortcuts.action.toggleRaw',
+  foldAll: 'options.shortcuts.action.foldAll',
+  unfoldAll: 'options.shortcuts.action.unfoldAll',
+  copyPath: 'options.shortcuts.action.copyPath',
 };
 
 const PUNCTUATION_KEYS: Record<string, string> = {
@@ -113,9 +115,9 @@ export function shortcutLabel(combo: string, mac = IS_MAC): string {
     .join('+');
 }
 
-/** Why a key press can't be a shortcut, naming this platform's modifiers. */
-export function modifierHint(mac = IS_MAC): string {
-  return mac ? 'Use Cmd, Option or a function key (F1–F24).' : 'Use Ctrl, Alt or a function key (F1–F24).';
+/** The message key saying why a key press can't be a shortcut, naming this platform's modifiers. */
+export function modifierHint(mac = IS_MAC): MessageKey {
+  return mac ? 'options.shortcuts.modifiersMac' : 'options.shortcuts.modifiers';
 }
 
 const COMBO = /^(Ctrl\+)?(Alt\+)?(Shift\+)?(Meta\+)?(.+)$/;

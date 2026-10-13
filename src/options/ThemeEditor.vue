@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { t } from '@/i18n';
 import { parseHex, toHex } from '@/themes/color';
 import { resolveColors } from '@/themes/resolve';
 import { saveCustomTheme, uniqueThemeId } from '@/themes/store';
@@ -13,7 +14,7 @@ const clone = (theme: Theme): Theme => JSON.parse(JSON.stringify(theme)) as Them
 const start = clone(props.initial);
 const draft = ref<Theme>({
   ...start,
-  name: props.isNew ? `${start.name} (copy)` : start.name,
+  name: props.isNew ? t('options.editor.copyName', { name: start.name }) : start.name,
   source: 'custom',
 });
 
@@ -58,7 +59,7 @@ function setColor(key: ThemeColorKey, input: HTMLInputElement): void {
   if (hex === null) {
     // Vue won't repatch an unchanged :value, so restore the field by hand.
     input.value = draft.value.colors[key] ?? '';
-    colorError.value = `Invalid color for ${key}: use #rgb, #rgba, #rrggbb or #rrggbbaa`;
+    colorError.value = t('options.editor.invalidColor', { key });
     return;
   }
   colorError.value = '';
@@ -70,7 +71,7 @@ function onJsonInput(): void {
   try {
     parsed = JSON.parse(jsonText.value);
   } catch (error) {
-    jsonErrors.value = [`Invalid JSON: ${error instanceof Error ? error.message : String(error)}`];
+    jsonErrors.value = [t('options.editor.invalidJson', { reason: error instanceof Error ? error.message : String(error) })];
     return;
   }
   const result = parseCompactTheme({ ...(parsed as object), id: draft.value.id, source: 'custom' });
@@ -101,17 +102,17 @@ async function save(): Promise<void> {
 </script>
 
 <template>
-  <section class="opt-editor" aria-label="Theme editor">
-    <h3>{{ isNew ? 'New theme' : 'Edit theme' }}</h3>
+  <section class="opt-editor" :aria-label="t('options.editor.label')">
+    <h3>{{ isNew ? t('options.editor.new') : t('options.editor.edit') }}</h3>
     <label class="opt-field">
-      <span class="opt-label">Theme name</span>
+      <span class="opt-label">{{ t('options.editor.name') }}</span>
       <input v-model="draft.name" type="text" />
     </label>
     <label class="opt-field">
-      <span class="opt-label">Type</span>
+      <span class="opt-label">{{ t('options.editor.type') }}</span>
       <select v-model="draft.type">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
+        <option value="dark">{{ t('options.editor.dark') }}</option>
+        <option value="light">{{ t('options.editor.light') }}</option>
       </select>
     </label>
     <div class="opt-color-grid">
@@ -119,23 +120,23 @@ async function save(): Promise<void> {
         <span class="opt-color-name">{{ key }}</span>
         <input
           type="color"
-          :aria-label="`${key} picker`"
+          :aria-label="t('options.editor.picker', { key })"
           :value="resolved[key].slice(0, 7)"
           @input="setColor(key, $event.target as HTMLInputElement)"
         />
         <input
           type="text"
-          :aria-label="`${key} hex`"
+          :aria-label="t('options.editor.hex', { key })"
           :value="draft.colors[key] ?? ''"
           :placeholder="resolved[key]"
           spellcheck="false"
           @change="setColor(key, $event.target as HTMLInputElement)"
         />
-        <small v-if="!draft.colors[key]" class="opt-hint">derived</small>
+        <small v-if="!draft.colors[key]" class="opt-hint">{{ t('options.editor.derived') }}</small>
       </div>
     </div>
     <label class="opt-field">
-      <span class="opt-label">Theme JSON</span>
+      <span class="opt-label">{{ t('options.editor.json') }}</span>
       <textarea v-model="jsonText" rows="12" spellcheck="false" @input="onJsonInput" />
     </label>
     <ul v-if="jsonErrors.length" class="opt-errors" role="alert">
@@ -144,8 +145,8 @@ async function save(): Promise<void> {
     <p v-if="colorError" class="opt-errors" role="alert">{{ colorError }}</p>
     <p v-if="saveError" class="opt-errors" role="alert">{{ saveError }}</p>
     <div class="opt-row">
-      <button type="button" :disabled="!canSave" @click="save">Save theme</button>
-      <button type="button" @click="emit('cancel')">Cancel</button>
+      <button type="button" :disabled="!canSave" @click="save">{{ t('options.editor.save') }}</button>
+      <button type="button" @click="emit('cancel')">{{ t('options.editor.cancel') }}</button>
     </div>
   </section>
 </template>

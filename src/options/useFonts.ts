@@ -1,5 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue';
 import { downloadFont, FontDownloadError } from '@/fonts/download';
+import { t } from '@/i18n';
 import { deleteFont, listFonts, saveFont, watchFontIndex } from '@/fonts/store';
 import type { FontSummary, StoredFont } from '@/fonts/types';
 
@@ -41,7 +42,8 @@ export function useFonts(): FontsModel {
         return font;
       } catch (cause) {
         // Storage errors (e.g. the 10 MB local quota) are not download errors but still need a message.
-        error.value = cause instanceof FontDownloadError ? cause.message : `Could not save the font: ${describe(cause)}`;
+        error.value =
+          cause instanceof FontDownloadError ? cause.message : t('options.fonts.saveFailed', { reason: describe(cause) });
         return null;
       } finally {
         busy.value = false;
@@ -53,7 +55,7 @@ export function useFonts(): FontsModel {
         await deleteFont(family);
         await reload();
       } catch (cause) {
-        error.value = `Could not delete the font: ${describe(cause)}`;
+        error.value = t('options.fonts.deleteFailed', { reason: describe(cause) });
       }
     },
   };

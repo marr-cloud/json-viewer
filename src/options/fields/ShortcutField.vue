@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { t } from '@/i18n';
 import { comboFromEvent, IS_MAC, isValidShortcut, modifierHint, shortcutLabel } from '@/settings/shortcuts';
 
 const props = withDefaults(
@@ -59,20 +60,25 @@ function onKeyup(event: KeyboardEvent): void {
         type="button"
         class="opt-shortcut-key"
         :class="{ 'opt-recording': recording }"
-        :aria-label="`${label} shortcut`"
+        :aria-label="t('options.shortcuts.keyLabel', { action: label })"
         :aria-pressed="recording"
         @click="toggle"
         @keydown="onKeydown"
         @keyup="onKeyup"
         @blur="recording = false"
       >
-        {{ recording ? 'Press keys…' : model ? shortcutLabel(model, mac) : 'None' }}
+        {{ recording ? t('options.shortcuts.recording') : model ? shortcutLabel(model, mac) : t('options.shortcuts.none') }}
       </button>
-      <button v-if="model !== defaultValue" type="button" :aria-label="`Reset ${label} shortcut`" @click="model = defaultValue">
-        Reset
+      <button
+        v-if="model !== defaultValue"
+        type="button"
+        :aria-label="t('options.shortcuts.resetLabel', { action: label })"
+        @click="model = defaultValue"
+      >
+        {{ t('options.shortcuts.reset') }}
       </button>
     </div>
-    <small v-if="invalid" class="opt-hint opt-errors" role="alert">{{ modifierHint(mac) }}</small>
-    <small v-else-if="conflict" class="opt-hint opt-errors">Also assigned to {{ conflict }}.</small>
+    <small v-if="invalid" class="opt-hint opt-errors" role="alert">{{ t(modifierHint(mac)) }}</small>
+    <small v-else-if="conflict" class="opt-hint opt-errors">{{ t('options.shortcuts.conflict', { action: conflict }) }}</small>
   </div>
 </template>

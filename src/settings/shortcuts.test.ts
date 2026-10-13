@@ -140,7 +140,7 @@ describe('on a Mac', () => {
   });
 
   it('names the modifiers in the hint', () => {
-    expect(modifierHint(true)).toBe('Use Cmd, Option or a function key (F1–F24).');
-    expect(modifierHint(false)).toBe('Use Ctrl, Alt or a function key (F1–F24).');
+    expect(modifierHint(true)).toBe('options.shortcuts.modifiersMac');
+    expect(modifierHint(false)).toBe('options.shortcuts.modifiers');
   });
 });

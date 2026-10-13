@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import NumberField from '../fields/NumberField.vue';
 import ToggleField from '../fields/ToggleField.vue';
+import { t } from '@/i18n';
 import { LIGHT_MODE_MAX_MB, LIGHT_MODE_MIN_MB, type Features, type ViewerOptions } from '@/viewer/options';
 
 defineProps<{ features: Features; viewer: ViewerOptions }>();
@@ -8,29 +9,29 @@ defineProps<{ features: Features; viewer: ViewerOptions }>();
 
 <template>
   <section id="features" class="opt-section">
-    <h2>Features</h2>
-    <ToggleField v-model="features.jsonPath" label="JSONPath filter" hint="The filter box in the toolbar." />
+    <h2>{{ t('options.section.features') }}</h2>
+    <ToggleField v-model="features.jsonPath" :label="t('options.features.jsonPath')" :hint="t('options.features.jsonPathHint')" />
     <ToggleField
       v-model="features.colorSwatches"
-      label="Color swatches"
-      hint="A small square next to values like #ff5500 or rgb(0, 128, 255)."
+      :label="t('options.features.colorSwatches')"
+      :hint="t('options.features.colorSwatchesHint')"
     />
     <ToggleField
       v-model="features.dateTooltips"
-      label="Date tooltips"
-      hint="Hover a Unix time or an ISO 8601 date to see it in local time and UTC."
+      :label="t('options.features.dateTooltips')"
+      :hint="t('options.features.dateTooltipsHint')"
     />
     <ToggleField
       v-model="features.imagePreview"
-      label="Image previews"
-      hint="Hover an image URL to see it. The image is loaded from its site."
+      :label="t('options.features.imagePreview')"
+      :hint="t('options.features.imagePreviewHint')"
     />
     <NumberField
       v-model="viewer.lightModeThresholdMB"
-      label="Light mode above (MB)"
+      :label="t('options.features.lightMode')"
       :min="LIGHT_MODE_MIN_MB"
       :max="LIGHT_MODE_MAX_MB"
-      hint="Bigger documents skip color swatches and date and image previews."
+      :hint="t('options.features.lightModeHint')"
     />
   </section>
 </template>

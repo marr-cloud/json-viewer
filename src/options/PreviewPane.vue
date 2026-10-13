@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { SAMPLE_JSON, SAMPLE_URL } from './sample';
 import JsonViewer from '@/components/JsonViewer.vue';
+import { t } from '@/i18n';
 import ViewerShadowRoot from '@/components/ViewerShadowRoot.vue';
 import { createFontLoader } from '@/fonts/loader';
 import { trackStoredFont } from '@/fonts/track';
@@ -65,7 +66,7 @@ function toggleTheme(): void {
         :kind="kind"
         :custom-css="customCss"
         :source="source"
-        toggle-label="Preview: switch between light and dark"
+        :toggle-label="t('options.preview.toggle')"
         @toggle-theme="toggleTheme"
       />
     </ViewerShadowRoot>
