@@ -98,7 +98,7 @@ describe('context menus', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await onMenuClick(click(MENU_VIEW_PAGE), tab);
     expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('!');
-    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe("JSON Viewer can't open this page: Cannot access a chrome:// URL");
+    expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe("JSON Viewer Extended can't open this page: Cannot access a chrome:// URL");
   });
 
   it('explains the failure in the chosen language', async () => {
@@ -107,7 +107,7 @@ describe('context menus', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await onMenuClick(click(MENU_VIEW_PAGE), tab);
     expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
-      'JSON Viewer no puede abrir esta página: Cannot access a chrome:// URL',
+      'JSON Viewer Extended no puede abrir esta página: Cannot access a chrome:// URL',
     );
   });
 
@@ -117,7 +117,7 @@ describe('context menus', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await onMenuClick(click(MENU_VIEW_PAGE), tab);
     expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
-      "JSON Viewer can't open this page: it isn't an HTML page (XML, SVG…)",
+      "JSON Viewer Extended can't open this page: it isn't an HTML page (XML, SVG…)",
     );
   });
 
@@ -138,7 +138,7 @@ describe('context menus', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     await onMenuClick(click(MENU_VIEW_SELECTION, { selectionText: '[1]' }), tab);
     expect(await fakeBrowser.action.getTitle({ tabId: 7 })).toBe(
-      "JSON Viewer can't open the selection: Tabs cannot be edited right now",
+      "JSON Viewer Extended can't open the selection: Tabs cannot be edited right now",
     );
   });
 

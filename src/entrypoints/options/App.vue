@@ -62,7 +62,7 @@ function onSaved(theme: Theme): void {
 <template>
   <div class="opt-app">
     <aside class="opt-nav">
-      <h1 class="opt-title"><img :src="iconUrl" alt="" width="24" height="24" /> JSON Viewer</h1>
+      <h1 class="opt-title"><img :src="iconUrl" alt="" width="24" height="24" /> JSON Viewer Extended</h1>
       <nav :aria-label="t('options.nav.label')">
         <a href="#appearance">{{ t('options.section.appearance') }}</a>
         <a href="#fonts">{{ t('options.section.fonts') }}</a>

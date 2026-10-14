@@ -28,8 +28,8 @@ describe('translate', () => {
   });
 
   it('fills {placeholders}, leaving unknown ones as they are', () => {
-    expect(translate('en', 'options.about.version', { version: '1.2.3' })).toBe('JSON Viewer 1.2.3');
-    expect(translate('en', 'options.about.version')).toBe('JSON Viewer {version}');
+    expect(translate('en', 'options.about.version', { version: '1.2.3' })).toBe('JSON Viewer Extended 1.2.3');
+    expect(translate('en', 'options.about.version')).toBe('JSON Viewer Extended {version}');
   });
 });
 

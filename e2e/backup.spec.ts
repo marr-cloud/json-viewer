@@ -89,7 +89,7 @@ test('says why a file cannot be imported and changes nothing', async ({ context,
     void dialog.dismiss();
   });
   await importFile(options, file('theme.json', theme));
-  await expect(options.getByRole('alert')).toHaveText('That file is not a JSON Viewer settings file.');
+  await expect(options.getByRole('alert')).toHaveText('That file is not a JSON Viewer Extended settings file.');
   await importFile(options, file('broken.json', '{oops'));
   await expect(options.getByRole('alert')).toHaveText('That file is not valid JSON.');
   expect(asked).toBe(false);

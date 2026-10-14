@@ -2,7 +2,7 @@
   "name": "json-viewer",
   "description": "Fast, themeable JSON viewer with VS Code themes and Google Fonts.",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:e2e": "wxt build && playwright test",
     "themes:build": "tsx scripts/build-themes.ts",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "store:assets": "tsx scripts/store-assets.ts"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.1",
