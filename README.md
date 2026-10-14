@@ -86,3 +86,5 @@ pnpm themes:build   # regenera src/themes/builtin/generated.json y LICENSES.md
 
 - Diseño: `docs/superpowers/specs/2026-10-11-json-viewer-design.md`
 - Visores nativos: `docs/notes/native-viewers.md`
+- Publicación en tiendas (textos de la ficha, permisos, capturas, pasos de envío): `docs/store/README.md`
+- Política de privacidad: [`PRIVACY.md`](PRIVACY.md)
