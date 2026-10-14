@@ -164,7 +164,7 @@ describe('SettingsActions', () => {
     Object.defineProperty(file, 'size', { value: MAX_BACKUP_BYTES + 1 });
     const read = vi.spyOn(file, 'text');
     await pick(host, file);
-    expect(texts(host, 'alert')).toEqual(['That file is too big to be a JSON Viewer settings file.']);
+    expect(texts(host, 'alert')).toEqual(['That file is too big to be a JSON Viewer Extended settings file.']);
     expect(read).not.toHaveBeenCalled();
     expect(confirm).not.toHaveBeenCalled();
   });

@@ -1,7 +1,7 @@
 import type { Messages } from '../translate';
 
 export const es: Messages = {
-  'options.title': 'Configuración de JSON Viewer',
+  'options.title': 'Configuración de JSON Viewer Extended',
   'options.nav.label': 'Secciones',
   'options.section.appearance': 'Apariencia',
   'options.section.fonts': 'Fuentes',
@@ -33,17 +33,17 @@ export const es: Messages = {
     'No se pudo guardar {count} tema: el almacenamiento sincronizado está lleno u ocupado. Vuelve a intentarlo en un minuto o elimina otros temas personalizados.',
   'options.backup.themesFailed.other':
     'No se pudieron guardar {count} temas: el almacenamiento sincronizado está lleno u ocupado. Vuelve a intentarlo en un minuto o elimina otros temas personalizados.',
-  'options.backup.error.tooLarge': 'Ese archivo es demasiado grande para ser una configuración de JSON Viewer.',
+  'options.backup.error.tooLarge': 'Ese archivo es demasiado grande para ser una configuración de JSON Viewer Extended.',
   'options.backup.error.notJson': 'Ese archivo no es JSON válido.',
-  'options.backup.error.notABackup': 'Ese archivo no es una configuración de JSON Viewer.',
+  'options.backup.error.notABackup': 'Ese archivo no es una configuración de JSON Viewer Extended.',
   'options.backup.error.newerVersion':
-    'Ese archivo viene de una versión más nueva de JSON Viewer. Actualiza la extensión y vuelve a intentarlo.',
+    'Ese archivo viene de una versión más nueva de JSON Viewer Extended. Actualiza la extensión y vuelve a intentarlo.',
   'options.backup.error.unreadable': 'No se pudo leer el archivo.',
   'options.backup.error.saveFailed': 'No se pudo guardar la configuración: {reason}',
   'options.backup.hint':
     'El archivo guarda tus ajustes, el CSS propio y los temas personalizados. No incluye las fuentes descargadas.',
 
-  'options.about.version': 'JSON Viewer {version}',
+  'options.about.version': 'JSON Viewer Extended {version}',
   'options.about.inspired': 'Inspirado en {link}.',
   'options.about.licenses': 'Los temas incluidos se convierten desde temas de VS Code con tm-themes; consulta sus {link}.',
   'options.about.licensesLink': 'licencias',
@@ -201,8 +201,8 @@ export const es: Messages = {
   'menu.viewPage': 'Ver como JSON',
   'menu.viewSelection': 'Ver la selección como JSON',
   'action.title': 'Abrir el bloc de JSON',
-  'action.cantOpen': 'JSON Viewer no puede abrir esta página: {reason}',
-  'action.cantOpenSelection': 'JSON Viewer no puede abrir la selección: {reason}',
+  'action.cantOpen': 'JSON Viewer Extended no puede abrir esta página: {reason}',
+  'action.cantOpenSelection': 'JSON Viewer Extended no puede abrir la selección: {reason}',
   'action.notHtml': 'no es una página HTML (XML, SVG…)',
 
   'scratchpad.title': 'Bloc de JSON',

@@ -2,7 +2,7 @@
   "name": "json-viewer",
   "description": "Fast, themeable JSON viewer with VS Code themes and Google Fonts.",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",

@@ -1,7 +1,7 @@
 // English messages: the source of every key. es.ts must have the same keys and {placeholders}.
 // Plurals use `.one` / `.other` suffixes (Intl.PluralRules); `{count}` is filled in for them.
 export const en = {
-  'options.title': 'JSON Viewer Settings',
+  'options.title': 'JSON Viewer Extended Settings',
   'options.nav.label': 'Sections',
   'options.section.appearance': 'Appearance',
   'options.section.fonts': 'Fonts',
@@ -33,16 +33,16 @@ export const en = {
     '{count} theme could not be saved: sync storage is full or busy. Try again in a minute, or remove other custom themes.',
   'options.backup.themesFailed.other':
     '{count} themes could not be saved: sync storage is full or busy. Try again in a minute, or remove other custom themes.',
-  'options.backup.error.tooLarge': 'That file is too big to be a JSON Viewer settings file.',
+  'options.backup.error.tooLarge': 'That file is too big to be a JSON Viewer Extended settings file.',
   'options.backup.error.notJson': 'That file is not valid JSON.',
-  'options.backup.error.notABackup': 'That file is not a JSON Viewer settings file.',
+  'options.backup.error.notABackup': 'That file is not a JSON Viewer Extended settings file.',
   'options.backup.error.newerVersion':
-    'That file comes from a newer version of JSON Viewer. Update the extension and try again.',
+    'That file comes from a newer version of JSON Viewer Extended. Update the extension and try again.',
   'options.backup.error.unreadable': 'The file could not be read.',
   'options.backup.error.saveFailed': 'The settings could not be saved: {reason}',
   'options.backup.hint': 'The file holds your settings, custom CSS and custom themes. Downloaded fonts are not included.',
 
-  'options.about.version': 'JSON Viewer {version}',
+  'options.about.version': 'JSON Viewer Extended {version}',
   'options.about.inspired': 'Inspired by {link}.',
   'options.about.licenses': 'Built-in themes are converted from VS Code themes via tm-themes; see their {link}.',
   'options.about.licensesLink': 'licenses',
@@ -199,8 +199,8 @@ export const en = {
   'menu.viewPage': 'View as JSON',
   'menu.viewSelection': 'View selection as JSON',
   'action.title': 'Open the JSON scratchpad',
-  'action.cantOpen': "JSON Viewer can't open this page: {reason}",
-  'action.cantOpenSelection': "JSON Viewer can't open the selection: {reason}",
+  'action.cantOpen': "JSON Viewer Extended can't open this page: {reason}",
+  'action.cantOpenSelection': "JSON Viewer Extended can't open the selection: {reason}",
   'action.notHtml': "it isn't an HTML page (XML, SVG…)",
 
   'scratchpad.title': 'JSON Scratchpad',

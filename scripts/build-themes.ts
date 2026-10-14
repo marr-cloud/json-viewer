@@ -51,8 +51,12 @@ const sections = notice.split(/^=+$/m).filter((section) => {
   return line.split(',').some((file) => files.includes(file.trim()));
 });
 const licenses = [
-  '# Third-party theme licenses',
+  '# Third-party licenses',
   '',
+  'The extension icon (`src/assets/icon.svg`) is `file-type-json` from',
+  '[vscode-icons](https://github.com/vscode-icons/vscode-icons), under this license:',
+  '',
+  ['```text', readFileSync(fileURLToPath(new URL('../src/assets/icon.LICENSE.txt', import.meta.url)), 'utf8').trim(), '```', ''].join('\n'),
   'Dark+ and Light+ (`dark-plus.json`, `light-plus.json`) are hand-written from the VS Code defaults (MIT, Microsoft).',
   'The themes in `generated.json` are converted with `pnpm themes:build` from',
   '[tm-themes](https://github.com/shikijs/textmate-grammars-themes) (MIT), which redistributes them under their',

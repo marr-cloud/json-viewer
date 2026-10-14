@@ -8,7 +8,7 @@ test('the options page switches language live and saves the choice', async ({ co
   await options.getByLabel('Language').selectOption('es');
   await expect(options.getByRole('link', { name: 'Apariencia' })).toBeVisible();
   await expect(options.locator('html')).toHaveAttribute('lang', 'es');
-  await expect(options).toHaveTitle('Configuración de JSON Viewer');
+  await expect(options).toHaveTitle('Configuración de JSON Viewer Extended');
   await expect(options.getByRole('heading', { name: 'Comportamiento' })).toBeVisible();
   await expect(options.getByRole('switch', { name: 'Ordenar las claves de los objetos' })).toBeVisible();
   await expect(options.getByRole('button', { name: 'Exportar configuración' })).toBeVisible();
@@ -53,7 +53,7 @@ test('the manifest texts come from _locales', async ({ context }) => {
   });
   expect(messages).toEqual(
     language.startsWith('es')
-      ? ['JSON Viewer', 'Visor de JSON rápido y personalizable, con temas de VS Code y Google Fonts.', 'Abrir el bloc de JSON']
-      : ['JSON Viewer', 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.', 'Open the JSON scratchpad'],
+      ? ['JSON Viewer Extended', 'Visor de JSON rápido y personalizable, con temas de VS Code y Google Fonts.', 'Abrir el bloc de JSON']
+      : ['JSON Viewer Extended', 'Fast, themeable JSON viewer with VS Code themes and Google Fonts.', 'Open the JSON scratchpad'],
   );
 });
